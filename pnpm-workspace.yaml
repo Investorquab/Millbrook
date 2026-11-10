@@ -1,6 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "outlayer/*"
 allowBuilds:
   esbuild: true
   secp256k1: false

@@ -1,0 +1,26 @@
+{
+  "name": "@millbrook/game-master",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The Game Master job that runs in an OutLayer TEE enclave: reads town state + a real weather feed, asks a NEAR AI Cloud model to pick and explain an event from the capped catalog, and returns the event with an attested receipt.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "gm": "tsx src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@millbrook/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

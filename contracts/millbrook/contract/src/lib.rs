@@ -165,6 +165,19 @@ impl Contract {
         );
     }
 
+    /// Anchor a Game Master receipt on-chain (operator only). The OutLayer
+    /// enclave decides an event and produces a receipt hash over its inputs and
+    /// decision; recording it here emits an on-chain event so the "Why did this
+    /// happen?" card can prove the decision was not changed after the fact. This
+    /// touches no balance and no goods — it only logs.
+    pub fn record_receipt(&mut self, event_id: String, day: u64, receipt_hash: String) {
+        self.assert_operator();
+        self.log_event(
+            "gm_receipt",
+            json!({ "event": event_id, "day": day, "receiptHash": receipt_hash }),
+        );
+    }
+
     /// Move goods between accounts (a sale's delivery).
     pub fn transfer_items(&mut self, moves: Vec<ItemTransfer>) {
         self.assert_operator();

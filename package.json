@@ -20,6 +20,9 @@
     "contract:deploy:testnet": "tsx scripts/deploy-contract.ts"
   },
   "devDependencies": {
+    "@millbrook/economy": "workspace:*",
+    "@millbrook/game-master": "workspace:*",
+    "@millbrook/shared": "workspace:*",
     "@playwright/test": "^1.65.0",
     "@types/node": "^22.10.2",
     "near-api-js": "^5.1.1",
