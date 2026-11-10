@@ -12,6 +12,11 @@
   z-index: 0;
   pointer-events: none;
 }
+.town__scene-loading {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 20%, #2b3a4f 0%, #223041 55%, #1b2430 100%);
+}
 .town__scene img {
   position: absolute;
   left: 50%;

@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN, type FeedLine } from "@millbrook/economy";
 import { useSolo } from "../game/SoloProvider";
 import { faceFor } from "../game/faces";
 import "./Town.css";
+
+// The 3D town pulls in three.js (~1 MB); load it only on this screen so the
+// Title/SignIn/Hub stay light.
+const TownScene = lazy(() => import("../town3d/TownScene").then((m) => ({ default: m.TownScene })));
 
 /**
  * In the town — the main HUD, ported from `design/screenshots/Town.png` and
@@ -11,9 +15,10 @@ import "./Town.css";
  * {@link useSoloSession}). The steppers, stats, coins, unemployment, mood and
  * feed all reflect the real simulation; press play to advance the days.
  *
- * The town is still the SVG stand-in (the R3F scene lands next in M2). The
- * Game Master decision card is a scripted placeholder until M4 wires the real
- * Game Master. Design fix applied: Ada's bubble is kept clear of the feed.
+ * The town is now the live R3F diorama ({@link TownScene}) — a low-poly mill
+ * town at dusk whose shops react to the simulation. The Game Master decision
+ * card is a scripted placeholder until M4. Design fix applied: Ada's bubble is
+ * kept clear of the feed.
  */
 
 type Decided = null | "lock" | "wait";
@@ -87,10 +92,9 @@ export function Town() {
   return (
     <div className="town">
       <div className="town__scene" aria-hidden="true">
-        <img
-          src="/art/town.svg"
-          alt="The town at dusk. Coins fly from a resident to your bakery; smoke rises from the smithy."
-        />
+        <Suspense fallback={<div className="town__scene-loading" />}>
+          <TownScene />
+        </Suspense>
       </div>
 
       {/* ── Top bar ── */}
