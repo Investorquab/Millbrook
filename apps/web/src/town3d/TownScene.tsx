@@ -16,6 +16,7 @@ import { useSolo } from "../game/SoloProvider";
 import { diorama } from "./palette";
 import { Ground } from "./ground";
 import { Residents } from "./Residents";
+import { CoinFlow } from "./CoinFlow";
 import {
   Barn,
   Field,
@@ -119,6 +120,7 @@ export function TownScene() {
       <Ground />
       <Buildings />
       <Residents />
+      <CoinFlow />
     </Canvas>
   );
 }

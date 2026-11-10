@@ -1,12 +1,15 @@
 /**
- * The townsfolk. Each resident is a small low-poly figure in a trade outfit,
- * placed where the simulation has them: bakers by the bakery, miners by the
- * mine, farmers in the Co-op fields, the idle unemployed by the well. The AI
- * owners get signature silhouettes (Gus's tall hat, Sam's plain cap, Rita's
- * bright coat). Figures idle-bob; full walking paths come next.
+ * The townsfolk. Each resident is a small low-poly figure in a trade outfit who
+ * walks between their workplace and a home, pausing at each end — bakers near
+ * the bakery, miners by the mine, farmers in the fields, the idle unemployed
+ * around the well. The AI owners pace by their own shops with signature
+ * silhouettes (Gus's tall hat, Rita's bright coat). Legs swing while walking;
+ * everyone idles when paused.
  *
- * Reads the shared world directly (like the Proof screen) so the crowd reflects
- * the live season. Capped so we stay well under ~40 animated characters.
+ * The strolling is ambient life, decoupled from the economy clock (so the town
+ * feels alive even before you press play); where each person belongs is read
+ * live from the simulation. Capped well under the ~40-character budget, and the
+ * whole layer goes still under prefers-reduced-motion (frameloop "demand").
  */
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
@@ -15,7 +18,7 @@ import { COOP_ID, type WorkshopType } from "@millbrook/shared";
 import { rules } from "@millbrook/economy";
 import { useSolo } from "../game/SoloProvider";
 import { diorama, tradeColor } from "./palette";
-import { COOP, MINE, TOWN_HALL, WELL, WORKSHOPS, type Vec2 } from "./layout";
+import { COOP, HOUSES, MINE, TOWN_HALL, WELL, WORKSHOPS, type Vec2 } from "./layout";
 
 const SKIN = ["#e4b58e", "#c88e63", "#a56a40", "#8a5635"];
 const MAX_FIGURES = 16;
@@ -29,97 +32,146 @@ function hash01(id: string, salt = 0): number {
   return ((h >>> 0) % 1000) / 1000;
 }
 
+/** Offset a point by a deterministic small amount, so figures don't stack. */
+function jitter(p: Vec2, seed: string, salt: number, spread: number): Vec2 {
+  const a = hash01(seed, salt) * Math.PI * 2;
+  const d = 0.3 + hash01(seed, salt + 9) * spread;
+  return [p[0] + Math.cos(a) * d, p[1] + Math.sin(a) * d];
+}
+
 interface FigureProps {
-  anchor: Vec2;
+  /** Ping-pong path: the figure ambles between these points. */
+  waypoints: [Vec2, Vec2];
   seed: string;
   outfit: string;
   owner?: OwnerKey;
-  spread?: number;
 }
 
-function Person({ anchor, seed, outfit, owner, spread = 1.1 }: FigureProps) {
+function Person({ waypoints, seed, outfit, owner }: FigureProps) {
   const ref = useRef<Group>(null);
-  const r1 = hash01(seed, 1);
-  const r2 = hash01(seed, 2);
-  const angle = r1 * Math.PI * 2;
-  const dist = owner ? 1.5 : 0.7 + r2 * spread;
-  const x = anchor[0] + Math.cos(angle) * dist;
-  const z = anchor[1] + Math.sin(angle) * dist;
-  const facing = hash01(seed, 3) * Math.PI * 2;
+  const legL = useRef<Group>(null);
+  const legR = useRef<Group>(null);
   const skin = SKIN[Math.floor(hash01(seed, 4) * SKIN.length)]!;
-  const phase = r1 * 6.28;
+  const speed = 0.7 + hash01(seed, 5) * 0.6;
+  const pauseDur = 1.4 + hash01(seed, 6) * 2.6;
 
-  useFrame((state) => {
+  // Mutable walk state (not React state — mutated every frame).
+  const walk = useRef({
+    i: 0,
+    p: hash01(seed, 7), // start somewhere along the path
+    mode: "move" as "move" | "pause",
+    timer: hash01(seed, 8) * pauseDur,
+    heading: 0,
+    phase: hash01(seed, 1) * 6.28,
+  });
+
+  useFrame((state, delta) => {
     const g = ref.current;
     if (!g) return;
+    const w = walk.current;
+    const dt = Math.min(delta, 0.05);
+    const a = w.i === 0 ? waypoints[0] : waypoints[1];
+    const b = w.i === 0 ? waypoints[1] : waypoints[0];
+    const dx = b[0] - a[0];
+    const dz = b[1] - a[1];
+    const len = Math.max(0.001, Math.hypot(dx, dz));
+
+    let moving = false;
+    let x = a[0];
+    let z = a[1];
+    if (w.mode === "move") {
+      moving = true;
+      w.p += (speed * dt) / len;
+      if (w.p >= 1) {
+        w.p = 1;
+        w.mode = "pause";
+        w.timer = pauseDur;
+      }
+      x = a[0] + dx * w.p;
+      z = a[1] + dz * w.p;
+      w.heading = Math.atan2(dx, dz); // face direction of travel (model front is +z)
+    } else {
+      x = b[0];
+      z = b[1];
+      w.timer -= dt;
+      if (w.timer <= 0) {
+        w.i = (w.i + 1) % 2;
+        w.p = 0;
+        w.mode = "move";
+      }
+    }
+
     const t = state.clock.elapsedTime;
-    g.position.y = Math.abs(Math.sin(t * 1.6 + phase)) * 0.04; // gentle idle bob
-    g.rotation.y = facing + Math.sin(t * 0.5 + phase) * 0.15;
+    const stride = moving ? Math.sin(t * 7 + w.phase) : 0;
+    g.position.set(x, moving ? Math.abs(Math.sin(t * 7 + w.phase)) * 0.03 : 0, z);
+    g.rotation.y = w.heading;
+    if (legL.current) legL.current.rotation.x = stride * 0.7;
+    if (legR.current) legR.current.rotation.x = -stride * 0.7;
   });
 
   const hatColor = owner === "rita" ? "#e06a2c" : owner === "gus" ? "#1f242b" : outfit;
 
   return (
-    <group position={[x, 0, z]} scale={0.72}>
-      <group ref={ref}>
-        {/* legs */}
-        {[-0.09, 0.09].map((lx) => (
-          <mesh key={lx} position={[lx, 0.22, 0]} castShadow>
-            <boxGeometry args={[0.12, 0.44, 0.13]} />
-            <meshStandardMaterial color={diorama.timberDark} flatShading />
-          </mesh>
-        ))}
-        {/* torso / coat */}
-        <mesh position={[0, 0.66, 0]} castShadow>
-          <boxGeometry args={[0.36, 0.5, 0.24]} />
-          <meshStandardMaterial color={owner === "rita" ? "#e06a2c" : outfit} flatShading />
+    <group ref={ref} scale={0.72}>
+      {/* legs (pivot at the hip so they swing) */}
+      <group ref={legL} position={[-0.09, 0.44, 0]}>
+        <mesh position={[0, -0.22, 0]} castShadow>
+          <boxGeometry args={[0.12, 0.44, 0.13]} />
+          <meshStandardMaterial color={diorama.timberDark} flatShading />
         </mesh>
-        {/* apron / shawl accent */}
-        {(owner === "fern" || !owner) && (
-          <mesh position={[0, 0.6, 0.13]}>
-            <boxGeometry args={[0.3, 0.34, 0.03]} />
-            <meshStandardMaterial color={owner === "fern" ? "#6e9b5a" : diorama.plaster} flatShading />
-          </mesh>
-        )}
-        {/* head */}
-        <mesh position={[0, 1.02, 0]} castShadow>
-          <boxGeometry args={[0.26, 0.26, 0.26]} />
-          <meshStandardMaterial color={skin} flatShading />
-        </mesh>
-        {/* hat — the silhouette cue */}
-        {owner === "gus" ? (
-          <group position={[0, 1.28, 0]}>
-            <mesh castShadow>
-              <cylinderGeometry args={[0.02, 0.02, 0.0, 6]} />
-            </mesh>
-            <mesh position={[0, 0.02, 0]} castShadow>
-              <cylinderGeometry args={[0.24, 0.24, 0.04, 10]} />
-              <meshStandardMaterial color="#1f242b" flatShading />
-            </mesh>
-            <mesh position={[0, 0.22, 0]} castShadow>
-              <cylinderGeometry args={[0.15, 0.15, 0.4, 10]} />
-              <meshStandardMaterial color="#1f242b" flatShading />
-            </mesh>
-          </group>
-        ) : (
-          <mesh position={[0, 1.2, 0]} castShadow>
-            <coneGeometry args={[0.2, 0.18, 8]} />
-            <meshStandardMaterial color={hatColor} flatShading />
-          </mesh>
-        )}
       </group>
+      <group ref={legR} position={[0.09, 0.44, 0]}>
+        <mesh position={[0, -0.22, 0]} castShadow>
+          <boxGeometry args={[0.12, 0.44, 0.13]} />
+          <meshStandardMaterial color={diorama.timberDark} flatShading />
+        </mesh>
+      </group>
+      {/* torso / coat */}
+      <mesh position={[0, 0.66, 0]} castShadow>
+        <boxGeometry args={[0.36, 0.5, 0.24]} />
+        <meshStandardMaterial color={owner === "rita" ? "#e06a2c" : outfit} flatShading />
+      </mesh>
+      {/* apron / shawl accent */}
+      {(owner === "fern" || !owner) && (
+        <mesh position={[0, 0.6, 0.13]}>
+          <boxGeometry args={[0.3, 0.34, 0.03]} />
+          <meshStandardMaterial color={owner === "fern" ? "#6e9b5a" : diorama.plaster} flatShading />
+        </mesh>
+      )}
+      {/* head */}
+      <mesh position={[0, 1.02, 0]} castShadow>
+        <boxGeometry args={[0.26, 0.26, 0.26]} />
+        <meshStandardMaterial color={skin} flatShading />
+      </mesh>
+      {/* hat — the silhouette cue */}
+      {owner === "gus" ? (
+        <group position={[0, 1.18, 0]}>
+          <mesh position={[0, 0.02, 0]} castShadow>
+            <cylinderGeometry args={[0.24, 0.24, 0.04, 10]} />
+            <meshStandardMaterial color="#1f242b" flatShading />
+          </mesh>
+          <mesh position={[0, 0.24, 0]} castShadow>
+            <cylinderGeometry args={[0.15, 0.15, 0.42, 10]} />
+            <meshStandardMaterial color="#1f242b" flatShading />
+          </mesh>
+        </group>
+      ) : (
+        <mesh position={[0, 1.2, 0]} castShadow>
+          <coneGeometry args={[0.2, 0.18, 8]} />
+          <meshStandardMaterial color={hatColor} flatShading />
+        </mesh>
+      )}
     </group>
   );
 }
 
 export function Residents() {
   const { session, view } = useSolo();
-  void view.day; // re-place as the season advances
+  void view.day; // re-place as the season advances (employment can change)
 
   const { owners, folk } = useMemo(() => {
     const world = session.world;
 
-    // workshop id -> anchor position + outfit colour, by type
     const byType = new Map<WorkshopType, Vec2>(WORKSHOPS.map((w) => [w.type, w.pos]));
     const shopAnchor = new Map<string, { pos: Vec2; type: WorkshopType }>();
     for (const w of world.workshops.values()) {
@@ -137,20 +189,29 @@ export function Residents() {
       return { pos: WELL, outfit: diorama.plasterWarm };
     };
 
-    // AI owners → signature figures by their shop (miners/mine handled via folk).
-    const owners: { key: OwnerKey; pos: Vec2; outfit: string }[] = [];
+    const owners: { key: OwnerKey; waypoints: [Vec2, Vec2]; outfit: string }[] = [];
     for (const o of world.owners.values()) {
       if (!o.strategy) continue; // skip the player
       const shop = shopAnchor.get(o.workshopId);
-      if (shop) owners.push({ key: o.strategy as OwnerKey, pos: shop.pos, outfit: tradeColor[shop.type as keyof typeof tradeColor] ?? diorama.plaster });
+      if (!shop) continue;
+      const outfit = tradeColor[shop.type as keyof typeof tradeColor] ?? diorama.plaster;
+      // Owners pace a short beat outside their own shop.
+      owners.push({
+        key: o.strategy as OwnerKey,
+        waypoints: [jitter(shop.pos, `o-${o.strategy}`, 1, 0.4), jitter(shop.pos, `o-${o.strategy}`, 3, 0.7)],
+        outfit,
+      });
     }
 
-    // Residents, capped and sorted so the pick is stable across renders.
     const alive = rules.aliveResidents(world).slice(0, MAX_FIGURES);
     const folk = alive.map((r) => {
       const a = anchorFor(r.employerId);
-      // Miners/woodcutters at the Co-op get scattered toward the mine sometimes.
-      return { id: r.id, pos: a.pos, outfit: a.outfit };
+      const home = HOUSES[Math.floor(hash01(r.id, 0) * HOUSES.length)]!.pos;
+      // Amble between their workplace and a home; the unemployed between the
+      // well and a home. A touch of jitter so paths don't overlap exactly.
+      const work = jitter(a.pos, r.id, 11, 1.0);
+      const rest = jitter(home, r.id, 13, 0.7);
+      return { id: r.id, waypoints: [work, rest] as [Vec2, Vec2], outfit: a.outfit };
     });
 
     return { owners, folk };
@@ -159,14 +220,14 @@ export function Residents() {
   return (
     <group>
       {folk.map((f) => (
-        <Person key={f.id} anchor={f.pos} seed={f.id} outfit={f.outfit} />
+        <Person key={f.id} waypoints={f.waypoints} seed={f.id} outfit={f.outfit} />
       ))}
       {owners.map((o) => (
-        <Person key={`owner-${o.key}`} anchor={o.pos} seed={`owner-${o.key}`} outfit={o.outfit} owner={o.key} />
+        <Person key={`owner-${o.key}`} waypoints={o.waypoints} seed={`owner-${o.key}`} outfit={o.outfit} owner={o.key} />
       ))}
-      {/* a couple of miners by the mine */}
-      <Person anchor={MINE.pos} seed="miner-1" outfit={tradeColor.mine} spread={0.6} />
-      <Person anchor={MINE.pos} seed="miner-2" outfit={tradeColor.mine} spread={0.6} />
+      {/* a couple of miners pacing by the mine */}
+      <Person waypoints={[jitter(MINE.pos, "miner-1", 1, 0.5), jitter(MINE.pos, "miner-1", 4, 0.9)]} seed="miner-1" outfit={tradeColor.mine} />
+      <Person waypoints={[jitter(MINE.pos, "miner-2", 2, 0.6), jitter(MINE.pos, "miner-2", 5, 1.0)]} seed="miner-2" outfit={tradeColor.mine} />
     </group>
   );
 }
