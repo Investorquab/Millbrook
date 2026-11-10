@@ -12,7 +12,7 @@ live deploy.
 | NEAR AI Cloud key | Game Master, Gazette, Foreman messages | you create |
 | OutLayer account/key | Game Master enclave + receipts | you create |
 | Email provider key | magic-link login | you create |
-| Weather API key | real-world Game Master events | you create (free) |
+| Weather feed | real-world Game Master events | ✅ keyless (Open-Meteo), no action |
 | Domain + VPS | the live deploy | later (M6) |
 | Mainnet NEAR account | prize payout on the form | you create (M6) |
 
@@ -100,10 +100,27 @@ down the Game Master falls back to town metrics.
 
 ---
 
+### Verifying each key
+
+Each spike reads `.env`, prints `OK` or an exact next step, and never prints a
+secret. Run one after you paste its key:
+
+```
+node scripts/spikes/verify-operator.mjs   # NEAR operator matches the account on-chain  ✅
+node scripts/spikes/weather.mjs           # Open-Meteo feed → GM event (no key needed)   ✅
+node scripts/spikes/near-ai.mjs           # NEAR AI key auth + a completion + proof check
+node scripts/spikes/outlayer.mjs          # OutLayer key present + API reachable
+node scripts/spikes/email.mjs             # email provider key valid (sends nothing)
+```
+
+Nothing here blocks building: without these keys the Game Master uses its
+town-metrics fallback, weather is keyless, and login prints the magic link to the
+server console.
+
 ### Quick check
 
 ```
 pnpm install
 pnpm sim --seed 42 --days 28   # no keys needed — should print a 28-day season
-pnpm test                      # 26 economy tests, incl. the 10,000-coin invariant
+pnpm test                      # economy tests, incl. the 10,000-coin invariant
 ```
