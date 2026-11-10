@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "paths": {
+      "@millbrook/shared": ["../../packages/shared/src/index.ts"],
+      "@millbrook/economy": ["../../packages/economy/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}
