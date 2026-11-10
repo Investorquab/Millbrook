@@ -26,4 +26,12 @@ export {
   type Holdings,
   type ResidentCard,
   type ResidentNeed,
+  type MetricsSeries,
+  type SeasonEvent,
+  type GoalCardInfo,
+  type StandingRow,
+  type SeasonSummary,
+  type Gazette,
+  type GazetteStory,
+  type GazettePriceRow,
 } from "./session.js";

@@ -12,14 +12,17 @@ const screens = [
   { name: "town", path: "/play" },
   { name: "resident", path: "/resident" },
   { name: "proof", path: "/proof" },
+  { name: "fast-forward", path: "/fast-forward", settle: 2200 },
+  { name: "gazette", path: "/gazette" },
+  { name: "scoreboard", path: "/scoreboard" },
 ];
 
 for (const screen of screens) {
   test(`screenshot ${screen.name}`, async ({ page }, testInfo) => {
     await page.goto(screen.path);
-    // Let fonts and the SVG town settle.
+    // Let fonts and the SVG town settle (fast-forward also needs its charts to fill).
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(screen.settle ?? 400);
     await page.screenshot({
       path: `e2e/__screens__/${screen.name}-${testInfo.project.name}.png`,
       fullPage: false,

@@ -5,6 +5,9 @@ import { Hub } from "./screens/Hub";
 import { Town } from "./screens/Town";
 import { Resident } from "./screens/Resident";
 import { Proof } from "./screens/Proof";
+import { FastForward } from "./screens/FastForward";
+import { Gazette } from "./screens/Gazette";
+import { Scoreboard } from "./screens/Scoreboard";
 import { SoloProvider } from "./game/SoloProvider";
 import { Placeholder } from "./screens/Placeholder";
 
@@ -18,9 +21,9 @@ const router = createBrowserRouter([
   { path: "/join", element: <Placeholder title="Join with a code" blurb="Enter a room code to land in the lobby and wait for the host to let you in." /> },
   { path: "/resident", element: <Resident /> },
   { path: "/proof", element: <Proof /> },
-  { path: "/gazette", element: <Placeholder title="The Gazette" blurb="The weekly town newspaper, written by NEAR AI from the week's real events." /> },
-  { path: "/fast-forward", element: <Placeholder title="Fast-forward" blurb="A week in about 60 seconds: unemployment and wage charts, residents' share of the money, and what happened." /> },
-  { path: "/scoreboard", element: <Placeholder title="Season end" blurb="Standings, your trophy, and how the town did against your goal card." /> },
+  { path: "/gazette", element: <Gazette /> },
+  { path: "/fast-forward", element: <FastForward /> },
+  { path: "/scoreboard", element: <Scoreboard /> },
 ]);
 
 export function App() {

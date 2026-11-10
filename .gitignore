@@ -36,3 +36,6 @@ e2e/__screens__/
 .vscode/*
 !.vscode/extensions.json
 *.local.md
+
+# TypeScript incremental build info
+*.tsbuildinfo

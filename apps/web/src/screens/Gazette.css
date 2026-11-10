@@ -1,0 +1,248 @@
+.gz {
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--deep);
+  box-sizing: border-box;
+  display: flex;
+  gap: 24px;
+  padding: 36px 40px 48px;
+}
+.gz__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.gz__backdrop img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1600px, 150%);
+  height: auto;
+  filter: blur(6px) brightness(0.32);
+}
+
+.gz__rail {
+  position: relative;
+  z-index: 2;
+  width: 160px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 4px;
+}
+.gz__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  color: var(--linen);
+}
+.gz__rail-note {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.gz__paper {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  max-width: 1000px;
+  box-sizing: border-box;
+  padding: 34px 44px;
+  background: #e8e1d0;
+  color: #2a2622;
+  border-radius: 4px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  transform: rotate(-0.5deg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.gz__masthead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 3px double #2a2622;
+  text-align: center;
+}
+.gz__masthead h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 64px;
+  line-height: 0.95;
+  letter-spacing: 1px;
+}
+.gz__masthead span {
+  font-size: 15px;
+  color: #57504a;
+}
+
+.gz__columns {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 30px;
+  flex: 1;
+}
+.gz__main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.gz__lead-head {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 1.02;
+}
+.gz__lead-body {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+.gz__figure {
+  width: 120px;
+  height: 186px;
+  flex: none;
+  filter: grayscale(0.35) sepia(0.2);
+}
+.gz__lead-text {
+  columns: 2;
+  column-gap: 22px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.gz__lead-text p {
+  margin: 0 0 10px;
+}
+.gz__secondary {
+  border-top: 1px solid #2a2622;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gz__secondary h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 26px;
+}
+.gz__secondary p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.gz__aside {
+  border-left: 1px solid #2a2622;
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.gz__block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gz__block h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 26px;
+}
+.gz__block p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.gz__aside table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.gz__aside th {
+  font-weight: 600;
+  padding: 4px 0;
+  border-bottom: 1px solid #2a2622;
+  text-align: right;
+}
+.gz__aside th:first-child {
+  text-align: left;
+}
+.gz__aside td {
+  padding: 5px 0;
+  text-align: right;
+}
+.gz__aside td:first-child {
+  text-align: left;
+}
+.gz__num {
+  font-variant-numeric: tabular-nums;
+}
+.gz__up {
+  font-weight: 700;
+  color: #8e2d39;
+}
+.gz__down {
+  font-weight: 700;
+  color: #3f6b43;
+}
+.gz__notice {
+  margin-top: auto;
+  padding: 12px;
+  border: 1px solid #2a2622;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .gz {
+    flex-direction: column;
+    padding: 20px 16px 32px;
+  }
+  .gz__rail {
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .gz__rail-note {
+    flex-basis: 100%;
+  }
+  .gz__paper {
+    padding: 22px 20px;
+    transform: none;
+  }
+  .gz__masthead h1 {
+    font-size: 40px;
+  }
+  .gz__columns {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .gz__lead-head {
+    font-size: 30px;
+  }
+  .gz__lead-text {
+    columns: 1;
+  }
+  .gz__aside {
+    border-left: none;
+    border-top: 1px solid #2a2622;
+    padding-left: 0;
+    padding-top: 16px;
+  }
+}
