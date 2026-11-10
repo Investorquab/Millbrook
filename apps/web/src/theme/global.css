@@ -1,0 +1,85 @@
+:root {
+  --millstone: #2f3640;
+  --deep: #1e242b;
+  --inset: #232a32;
+  --linen: #ede6d6;
+  --text-secondary: #b9b2a4;
+  --text-soft: #cfc8b8;
+  --wheat: #d9a441;
+  --wheat-light: #f2c76b;
+  --wheat-shadow: #a8761f;
+  --meadow: #6e9b5a;
+  --meadow-text: #8fc07a;
+  --madder: #b23a48;
+  --madder-text: #e58a94;
+  --river: #5e8c93;
+  --river-text: #8fb8c0;
+  --sky: #27384a;
+
+  --font-display: "Grenze", Georgia, "Times New Roman", serif;
+  --font-body: "Barlow", system-ui, sans-serif;
+  --font-number: "Barlow Semi Condensed", "Barlow", system-ui, sans-serif;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--linen);
+  background: var(--deep);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Tabular numbers everywhere a figure appears. */
+.num {
+  font-family: var(--font-number);
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: var(--linen);
+}
+a:hover {
+  color: var(--wheat-light);
+}
+
+:focus-visible {
+  outline: 2px solid var(--wheat-light);
+  outline-offset: 3px;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Honour reduced-motion: swap travel animations for fades. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

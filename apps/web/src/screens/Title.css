@@ -1,0 +1,174 @@
+.title {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 78% 18%, #33506b 0%, #27384a 42%, #1e242b 100%);
+}
+
+/* The diorama is the hero. (SVG stand-in until the 3D town lands.) */
+.title__scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.title__scene img {
+  position: absolute;
+  right: -2%;
+  top: 4%;
+  height: min(90%, 880px);
+  width: auto;
+  filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.35));
+}
+
+/* Scrim keeps the headline legible over the bright town. */
+.title__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    90deg,
+    rgba(30, 36, 43, 0.9) 0%,
+    rgba(30, 36, 43, 0.55) 34%,
+    rgba(39, 56, 74, 0) 58%
+  );
+}
+
+.title__topbar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
+  padding: 24px 32px;
+}
+.title__signin {
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: rgba(47, 54, 64, 0.85);
+  border: 1px solid rgba(237, 230, 214, 0.25);
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  color: var(--linen);
+}
+
+.title__content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 4px 72px;
+  max-width: 560px;
+}
+.title__wordmark {
+  font-size: clamp(64px, 12vw, 128px);
+  line-height: 0.9;
+  letter-spacing: 0.5px;
+  color: var(--linen);
+  text-shadow: 0 4px 0 #1e242b;
+}
+.title__tagline {
+  margin: 0;
+  font-size: clamp(18px, 2.4vw, 24px);
+  line-height: 1.35;
+  color: var(--linen);
+  max-width: 440px;
+}
+.title__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 248px;
+  margin-top: 6px;
+}
+
+.title__bubble {
+  position: absolute;
+  z-index: 2;
+  left: 48%;
+  top: clamp(180px, 30%, 320px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 260px;
+}
+.title__bubble-body {
+  background: var(--linen);
+  color: var(--millstone);
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+.title__bubble-tail {
+  margin-left: 28px;
+}
+
+.title__cast {
+  position: absolute;
+  right: 26px;
+  bottom: 26px;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+.title__cast img.gus {
+  height: clamp(190px, 30vw, 279px);
+  width: auto;
+}
+.title__cast img.fern {
+  height: clamp(168px, 26vw, 248px);
+  width: auto;
+}
+
+.title__footer {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  padding: 24px 72px 36px;
+  font-size: 15px;
+  color: var(--linen);
+  opacity: 0.85;
+}
+
+/* ── Narrow / phone: stack, scene becomes a top band, hide the cast ── */
+@media (max-width: 820px) {
+  .title {
+    background: radial-gradient(140% 60% at 50% 6%, #33506b 0%, #27384a 40%, #1e242b 78%);
+  }
+  .title__scene img {
+    right: 50%;
+    transform: translateX(50%);
+    top: 48px;
+    height: 34vh;
+  }
+  .title__scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(39, 56, 74, 0) 0%,
+      rgba(30, 36, 43, 0.55) 34%,
+      rgba(30, 36, 43, 0.96) 52%
+    );
+  }
+  .title__content {
+    padding: calc(34vh + 72px) 24px 0;
+    max-width: none;
+  }
+  .title__actions {
+    width: 100%;
+    max-width: 360px;
+  }
+  .title__bubble,
+  .title__cast {
+    display: none;
+  }
+  .title__footer {
+    padding: 28px 24px 32px;
+  }
+}
