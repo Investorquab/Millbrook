@@ -23,6 +23,7 @@ export function Proof() {
   const { session } = useSolo();
   const h = session.holdings();
   const pct = (n: number) => (h.total > 0 ? (n / h.total) * 100 : 0);
+  const gmEvents = session.gmEvents(4);
 
   return (
     <div className="proof">
@@ -116,26 +117,38 @@ export function Proof() {
             </div>
           </section>
 
-          {/* ── Game Master receipt (lands with the Game Master, M4) ── */}
+          {/* ── Game Master receipts — live from the season (M4) ── */}
           <section className="proof__panel proof__panel--receipt" aria-label="Game Master receipt">
             <div className="proof__panel-head sm">
               <h2>Game Master receipt</h2>
-              <span className="proof__badge">With the Game Master · M4</span>
+              <span className="proof__badge proof__badge--live">Live · M4</span>
             </div>
-            <div className="proof__receipt-grid">
+            <p className="proof__lede" style={{ fontSize: 15 }}>
+              Each event reads a real-world feed (the weather) plus the town's own metrics, picks one event within the
+              caps the contract enforces, and the decision is anchored on NEAR testnet by the enclave's{" "}
+              <code>record_receipt</code>.
+            </p>
+            {gmEvents.length === 0 ? (
               <div className="proof__receipt-card">
-                <span>What it reads</span>
-                A real-world feed (such as the weather) plus the town's own metrics.
+                <span>No events yet</span>
+                Run the season from the town — the Game Master fires at most one event a game week.
               </div>
-              <div className="proof__receipt-card">
-                <span>What it decides</span>
-                One event from the catalog, never beyond the caps the contract enforces.
-              </div>
-              <div className="proof__receipt-card">
-                <span>Where it runs</span>
-                Inside an OutLayer enclave; the receipt ties the code to the data and the decision.
-              </div>
-            </div>
+            ) : (
+              <ul className="proof__gm-list">
+                {gmEvents.map((e) => (
+                  <li key={`${e.day}-${e.id}`} className="proof__gm-item">
+                    <div className="proof__gm-head">
+                      <b>{e.title}</b>
+                      <span className={`proof__gm-src proof__gm-src--${e.source}`}>
+                        {e.source === "feed" ? "weather feed" : "town metrics"}
+                      </span>
+                      <span className="proof__gm-day">Day {e.day}</span>
+                    </div>
+                    <p className="proof__gm-why">{e.reason}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </div>
       </div>

@@ -21,8 +21,6 @@ const TownScene = lazy(() => import("../town3d/TownScene").then((m) => ({ defaul
  * kept clear of the feed.
  */
 
-type Decided = null | "lock" | "wait";
-
 const CoinIcon = () => (
   <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
     <circle cx="11" cy="11" r="9" fill="#D9A441" />
@@ -76,15 +74,32 @@ function FeedIcon({ kind }: { kind: string }) {
   );
 }
 
-export function Town() {
-  const { view, running, play, pause, setPrice, setWage, hire } = useSolo();
-  const [decided, setDecided] = useState<Decided>(null);
-  const [tab, setTab] = useState<"town" | "chat">("town");
+/** A short, readable line for one key of the data the Game Master read. */
+function dataLine(key: string, value: string | number): string | null {
+  const map: Record<string, (v: string | number) => string> = {
+    unemployment: (v) => `Unemployment ${(Number(v) * 100).toFixed(0)}%`,
+    avgWage: (v) => `Average wage ${Number(v).toFixed(1)}`,
+    wheatPrice: (v) => `Wheat price ${v}`,
+    tempC: (v) => `${v}°C`,
+    weather: (v) => `Sky: ${v}`,
+    leaderCoins: (v) => `Leader holds ${v} coins`,
+    days: (v) => `Lasts ${v} day${Number(v) === 1 ? "" : "s"}`,
+    arrivals: (v) => `${v} newcomers`,
+    taxed: (v) => `${v} coins moved to the Co-op`,
+  };
+  return map[key] ? map[key]!(value) : null;
+}
 
-  const toast =
-    decided === "lock"
-      ? "Wheat locked in at today's price for 5 days."
-      : "You'll buy wheat at drought prices. Watch your margins.";
+export function Town() {
+  const { view, session, running, play, pause, setPrice, setWage, hire } = useSolo();
+  const [tab, setTab] = useState<"town" | "chat">("town");
+  const [whyOpen, setWhyOpen] = useState(false);
+  const [dismissed, setDismissed] = useState<string | null>(null);
+
+  // The latest Game Master event, straight from the live season (M4).
+  const gm = session.gmEvents(1)[0];
+  const gmKey = gm ? `${gm.day}-${gm.id}` : null;
+  const showGm = gm && dismissed !== gmKey;
 
   const deltaLabel =
     view.coinsDelta === 0 ? "even today" : `${view.coinsDelta > 0 ? "+" : "−"}${Math.abs(view.coinsDelta)} today`;
@@ -317,9 +332,11 @@ export function Town() {
           </div>
         </section>
 
-        {/* Decision card → toast once resolved (Game Master lands in M4) */}
-        {decided === null ? (
-          <section className="town__decision" aria-label="Decision">
+        {/* Game Master event card — live from the season (M4). It shows the most
+            recent event, its real reasoning and the data it read; "Why did this
+            happen?" opens the proof, and the receipt is anchored on NEAR. */}
+        {showGm ? (
+          <section className="town__decision" aria-label="Game Master">
             <div className="town__decision-head">
               <span className="town__decision-source">
                 <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
@@ -330,35 +347,71 @@ export function Town() {
                     strokeWidth="1.4"
                   />
                 </svg>
-                From the Game Master, based on real weather
+                {gm.source === "feed" ? "From the Game Master · real weather feed" : "From the Game Master · town metrics"}
               </span>
-              <span className="town__decision-deadline">Decide by dawn</span>
+              <span className="town__decision-deadline">
+                Day {gm.day}
+                {gm.active ? " · in effect" : ""}
+              </span>
             </div>
-            <h2>Drought. Wheat costs three times as much for 5 days.</h2>
-            <p>
-              A real heatwave in the host's city reached Millbrook. The Co-op can sell you a 5-day wheat contract at
-              today's price.
-            </p>
+            <h2>
+              {gm.title}. {gm.effect}
+            </h2>
+            {whyOpen ? (
+              <div className="town__why-panel" data-testid="gm-why-panel">
+                <p>{gm.reason}</p>
+                <ul className="town__why-data">
+                  {Object.entries(gm.data)
+                    .map(([k, v]) => dataLine(k, v))
+                    .filter((l): l is string => l !== null)
+                    .slice(0, 5)
+                    .map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                </ul>
+              </div>
+            ) : (
+              <p>The Game Master read the town and acted within the catalog's caps.</p>
+            )}
             <div className="town__decision-actions">
-              <button type="button" className="town__decide-primary" onClick={() => setDecided("lock")}>
-                Lock in wheat for 240 coins
+              <button
+                type="button"
+                className="town__decide-primary"
+                aria-expanded={whyOpen}
+                onClick={() => setWhyOpen((o) => !o)}
+              >
+                {whyOpen ? "Hide the reasoning" : "Why did this happen?"}
               </button>
-              <button type="button" className="town__decide-ghost" onClick={() => setDecided("wait")}>
-                Wait it out
+              <button type="button" className="town__decide-ghost" onClick={() => setDismissed(gmKey)}>
+                Got it
               </button>
               <Link to="/proof" className="town__why">
-                Why did this happen?
+                See the receipt
               </Link>
             </div>
           </section>
         ) : (
-          <section className="town__toast" aria-live="polite">
-            <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
-              <circle cx="11" cy="11" r="9" fill="#6E9B5A" />
-              <path d="M7 11l3 3 5-6" stroke="#1E242B" strokeWidth="2.2" fill="none" />
-            </svg>
-            {toast}
-            <Link to="/proof">Why did this happen?</Link>
+          <section className="town__decision town__decision--idle" aria-label="Game Master">
+            <div className="town__decision-head">
+              <span className="town__decision-source">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="8" r="4" fill="#E0703A" />
+                  <path
+                    d="M8 0v2M8 14v2M0 8h2M14 8h2M2.3 2.3l1.4 1.4M12.3 12.3l1.4 1.4M2.3 13.7l1.4-1.4M12.3 3.7l1.4-1.4"
+                    stroke="#E0703A"
+                    strokeWidth="1.4"
+                  />
+                </svg>
+                The Game Master
+              </span>
+            </div>
+            <h2>Watching the weather and the town.</h2>
+            <p>Events appear here as the season runs — at most one a week, each within the caps the contract enforces.</p>
+            <div className="town__decision-actions">
+              <Link to="/proof" className="town__why">
+                How the Game Master proves itself
+              </Link>
+            </div>
           </section>
         )}
 

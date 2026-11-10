@@ -42,13 +42,18 @@ test.describe("Town HUD", () => {
     await expect(page.getByText(/You hired/)).toBeVisible();
   });
 
-  test("deciding on the drought swaps the card for a confirmation", async ({ page }) => {
-    const decision = page.getByRole("region", { name: "Decision" });
-    await expect(decision.getByText("Drought. Wheat costs three times as much for 5 days.")).toBeVisible();
+  test("the Game Master card goes live once an event fires and explains itself", async ({ page }) => {
+    const gm = page.getByRole("region", { name: "Game Master" });
+    // At day 1 the card is idle, watching the town.
+    await expect(gm.getByText("Watching the weather and the town.")).toBeVisible();
 
-    await decision.getByRole("button", { name: "Lock in wheat for 240 coins" }).click();
+    // Run the season; within a game week an event fires and the card updates.
+    await page.getByRole("button", { name: "Play" }).click();
+    await expect(gm.getByText("From the Game Master")).toBeVisible({ timeout: 20000 });
+    await page.getByRole("button", { name: "Pause" }).click();
 
-    await expect(page.getByText("Wheat locked in at today's price for 5 days.")).toBeVisible();
-    await expect(page.getByText("Drought. Wheat costs three times as much for 5 days.")).toBeHidden();
+    // "Why did this happen?" reveals the reasoning and the data it read.
+    await gm.getByRole("button", { name: "Why did this happen?" }).click();
+    await expect(gm.getByTestId("gm-why-panel")).toBeVisible();
   });
 });
