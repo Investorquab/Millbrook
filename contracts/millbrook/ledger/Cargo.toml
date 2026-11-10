@@ -1,0 +1,14 @@
+[package]
+name = "millbrook-ledger"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "The pure Millbrook coin-ledger: fixed 10,000-coin invariant logic, no NEAR dependency."
+license = "MIT"
+
+[lib]
+crate-type = ["rlib"]
+
+# Deliberately no dependencies. This crate is pure std, so `cargo test` for it
+# links no host functions and needs no NEAR VM or C/NASM toolchain.
+[dependencies]

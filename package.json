@@ -14,7 +14,10 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "build": "pnpm -r --if-present build",
     "dev": "pnpm --filter @millbrook/web dev",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "contract:build": "cargo build --release --target wasm32-unknown-unknown -p millbrook-contract --manifest-path contracts/millbrook/Cargo.toml",
+    "contract:test": "cargo test -p millbrook-ledger --manifest-path contracts/millbrook/Cargo.toml",
+    "contract:deploy:testnet": "tsx scripts/deploy-contract.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",

@@ -1,0 +1,22 @@
+[package]
+name = "millbrook-contract"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Millbrook economy ledger on NEAR: a fixed 10,000-coin supply, no admin key, no mint."
+repository = "https://github.com/Investorquab/Millbrook"
+license = "MIT"
+
+[lib]
+# cdylib -> the wasm the chain runs. This crate is only ever built for the
+# wasm32 target, so near-sdk's host functions resolve as wasm imports; it is
+# never host-linked, and therefore needs no `unit-testing` feature.
+crate-type = ["cdylib"]
+
+[dependencies]
+# Pinned to 5.5.0 on purpose. near-sdk 5.7+ requires the external `cargo-near`
+# tool and blocks a plain `cargo build`; 5.5.0 keeps the standard
+# `cargo build --target wasm32-unknown-unknown` path, which needs no extra
+# tooling. Bump this only alongside adopting `cargo near build`.
+near-sdk = "=5.5.0"
+millbrook-ledger = { path = "../ledger" }

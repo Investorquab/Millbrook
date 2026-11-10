@@ -1,0 +1,6 @@
+# Pin the toolchain so the deployed wasm is reproducible. The wasm target is
+# listed here so `cargo build` has it without a manual `rustup target add`.
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]

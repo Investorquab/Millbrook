@@ -1,0 +1,26 @@
+# Millbrook contract workspace.
+#
+# Two crates on purpose:
+#   * `ledger`   — the pure economic core. No near-sdk, no host calls. All the
+#                  invariant logic lives here and is unit-tested on the host with
+#                  a plain `cargo test` (no NEAR VM, no C/NASM toolchain).
+#   * `contract` — the thin `#[near]` on-chain shell. Depends on `ledger` and is
+#                  only ever compiled to wasm, so its host functions resolve as
+#                  wasm imports and it never needs host-side link stubs.
+#
+# This split is what lets the tests stay light while the wasm stays real: see
+# each crate's Cargo.toml.
+[workspace]
+resolver = "2"
+members = ["ledger", "contract"]
+
+[profile.release]
+# A small, deterministic wasm. overflow-checks stays ON: a coin overflow must
+# panic and roll the transaction back, never wrap silently.
+codegen-units = 1
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+overflow-checks = true
+strip = "symbols"
