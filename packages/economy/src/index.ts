@@ -35,6 +35,7 @@ export {
   type SoloView,
   type WorkerView,
   type FeedLine,
+  type GmEventCard,
   type Holdings,
   type ResidentCard,
   type ResidentNeed,

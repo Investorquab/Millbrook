@@ -53,6 +53,19 @@ export interface FeedLine {
   text: string;
 }
 
+/** A Game Master event for the "Why did this happen?" card: what fired, the
+ *  data it read, the reasoning, the feed source, and whether it's still active. */
+export interface GmEventCard {
+  day: number;
+  id: string;
+  title: string;
+  effect: string;
+  reason: string;
+  data: Record<string, number | string>;
+  source: "feed" | "metrics";
+  active: boolean;
+}
+
 /** The town's coins, split by who holds them. Always sums to 10,000. */
 export interface Holdings {
   residents: number;
@@ -267,6 +280,9 @@ export class SoloSession {
     // the player always runs the bakery, with the AI owners on the rest.
     this.world = createWorld({
       openWorkshops: ["bakery", "weaver", "smithy", "brewery"],
+      // The solo game runs the Game Master (M4) by default; a caller can pass
+      // gameMaster: false to turn it off.
+      gameMaster: true,
       ...config,
     });
     this.totalDays = this.world.config.days;
@@ -575,6 +591,28 @@ export class SoloSession {
       .slice(0, limit)
       .sort((a, b) => a.event.day - b.event.day)
       .map(({ event }) => ({ day: event.day + 1, kind: event.kind, text: event.text }));
+  }
+
+  /**
+   * Game Master events this season, newest first, for the "Why did this happen?"
+   * card: the event, the data it read, its reasoning, the feed source, and
+   * whether it is still in effect.
+   */
+  gmEvents(limit = 6): GmEventCard[] {
+    const activeIds = new Set(this.world.gm.active.map((e) => e.id));
+    return [...this.world.gm.log]
+      .reverse()
+      .slice(0, limit)
+      .map((f) => ({
+        day: f.day + 1,
+        id: f.id,
+        title: f.title,
+        effect: f.effect,
+        reason: f.reason,
+        data: f.data,
+        source: f.source,
+        active: activeIds.has(f.id),
+      }));
   }
 
   // ── Season end: standings and summary ────────────────────────────────────────
