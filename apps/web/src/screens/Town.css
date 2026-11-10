@@ -1,0 +1,579 @@
+.town {
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 20%, #33506b 0%, #27384a 46%, #1e242b 100%);
+}
+
+/* The town is the hero — it fills the screen behind the HUD. */
+.town__scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.town__scene img {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  width: min(1500px, 108%);
+  height: auto;
+  filter: drop-shadow(0 30px 44px rgba(0, 0, 0, 0.4));
+}
+
+/* ── Top bar ───────────────────────────────────────────────── */
+.town__topbar {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 14px;
+  z-index: 5;
+  min-height: 60px;
+  box-sizing: border-box;
+  padding: 8px 10px 8px 20px;
+  border-radius: 14px;
+  background: rgba(47, 54, 64, 0.94);
+  border: 1px solid rgba(217, 164, 65, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.town__brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  text-decoration: none;
+  color: var(--linen);
+}
+.town__clock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-number);
+  font-weight: 600;
+  font-size: 18px;
+}
+.town__speed {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--inset);
+}
+.town__speed button,
+.town__speed a {
+  width: 36px;
+  height: 32px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.town__speed button[aria-pressed="true"] {
+  background: var(--linen);
+}
+.town__spacer {
+  flex: 1;
+  min-width: 8px;
+}
+.town__coins {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.town__coins-value {
+  font-family: var(--font-number);
+  font-weight: 700;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+.town__coins-delta {
+  font-size: 15px;
+  color: var(--meadow-text);
+}
+.town__divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(237, 230, 214, 0.18);
+}
+.town__stat {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.town__stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.town__stat-value {
+  font-family: var(--font-number);
+  font-weight: 700;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.town__pill {
+  padding: 9px 14px;
+  border-radius: 9px;
+  background: var(--inset);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  color: var(--linen);
+}
+.town__pill--proof {
+  color: var(--river-text);
+}
+
+/* ── Floating world overlays ───────────────────────────────── */
+.town__overlays {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.town__overlays a,
+.town__overlays button {
+  pointer-events: auto;
+}
+
+/* Ada's bubble — kept clear of the feed panel (design fix). */
+.town__bubble {
+  position: absolute;
+  left: 40%;
+  top: 38%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-decoration: none;
+  max-width: 260px;
+}
+.town__bubble-tail {
+  margin-left: 36px;
+}
+.town__bubble-body {
+  background: var(--linen);
+  color: var(--millstone);
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+.town__coinbadge {
+  position: absolute;
+  left: 52%;
+  top: 27%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--wheat);
+  color: var(--millstone);
+  font-family: var(--font-number);
+  font-weight: 700;
+  font-size: 17px;
+}
+.town__strike {
+  position: absolute;
+  left: 30%;
+  top: 31%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: var(--madder);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ── Bottom HUD row ────────────────────────────────────────── */
+.town__hud {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: 372px minmax(0, 1fr) 380px;
+  gap: 16px;
+  align-items: end;
+}
+
+/* Workshop panel */
+.town__workshop {
+  box-sizing: border-box;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: rgba(47, 54, 64, 0.95);
+  border: 1px solid rgba(217, 164, 65, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.town__workshop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.town__workshop-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 30px;
+}
+.town__crew {
+  display: flex;
+}
+.town__crew img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--millstone);
+}
+.town__crew img + img {
+  margin-left: -8px;
+}
+.town__control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.town__control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.town__control-row > span {
+  font-weight: 600;
+  font-size: 16px;
+}
+.town__stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.town__stepper button {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(237, 230, 214, 0.3);
+  background: var(--inset);
+  color: var(--linen);
+  font: 700 18px var(--font-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.town__stepper button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.town__stepper-value {
+  min-width: 76px;
+  text-align: center;
+  font-family: var(--font-number);
+  font-weight: 700;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.town__reason {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.town__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--inset);
+}
+.town__stats span {
+  display: flex;
+  flex-direction: column;
+}
+.town__stats-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.town__stats b {
+  font-family: var(--font-number);
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+}
+.town__workshop-actions {
+  display: flex;
+  gap: 10px;
+}
+.town__btn-solid {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  border: 0;
+  background: var(--linen);
+  color: var(--millstone);
+  font: 700 15px var(--font-body);
+}
+.town__btn-ghost {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid rgba(237, 230, 214, 0.35);
+  background: transparent;
+  color: var(--linen);
+  font: 600 15px var(--font-body);
+}
+
+/* Decision card */
+.town__decision {
+  box-sizing: border-box;
+  padding: 20px 22px;
+  border-radius: 20px;
+  background: rgba(36, 42, 50, 0.97);
+  border: 2px solid var(--wheat);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.town__decision-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.town__decision-source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--wheat-light);
+  font-weight: 600;
+}
+.town__decision-deadline {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.town__decision h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.05;
+}
+.town__decision p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+.town__decision-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.town__decide-primary {
+  height: 46px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 0;
+  background: var(--wheat);
+  color: var(--millstone);
+  font: 700 16px var(--font-body);
+  box-shadow: 0 3px 0 var(--wheat-shadow);
+}
+.town__decide-ghost {
+  height: 46px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(237, 230, 214, 0.35);
+  background: transparent;
+  color: var(--linen);
+  font: 600 16px var(--font-body);
+}
+.town__why {
+  margin-left: auto;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--river-text);
+  text-decoration: none;
+}
+
+/* Decision resolved → toast in the same slot */
+.town__toast {
+  box-sizing: border-box;
+  padding: 18px 22px;
+  border-radius: 20px;
+  background: rgba(36, 42, 50, 0.97);
+  border: 1px solid rgba(217, 164, 65, 0.5);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+.town__toast svg {
+  flex: none;
+}
+.town__toast a {
+  margin-left: auto;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--river-text);
+  text-decoration: none;
+}
+
+/* Feed + chat */
+.town__feed {
+  box-sizing: border-box;
+  height: 420px;
+  border-radius: 14px;
+  background: rgba(47, 54, 64, 0.95);
+  border: 1px solid rgba(237, 230, 214, 0.16);
+  display: flex;
+  flex-direction: column;
+}
+.town__tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 10px 0;
+}
+.town__tabs button {
+  height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: 600 15px var(--font-body);
+}
+.town__tabs button[aria-selected="true"] {
+  background: var(--inset);
+  color: var(--linen);
+  font-weight: 700;
+}
+.town__feed-list {
+  flex: 1;
+  margin: 0 10px 10px;
+  padding: 14px;
+  border-radius: 0 8px 8px 8px;
+  background: var(--inset);
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  overflow-y: auto;
+}
+.town__feed-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.town__feed-item img,
+.town__feed-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex: none;
+}
+.town__feed-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.town__feed-item span {
+  font-size: 15px;
+  line-height: 1.4;
+}
+.town__feed-time {
+  color: var(--text-secondary);
+}
+.town__feed-linkbtn {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--wheat-light);
+  font: 600 15px var(--font-body);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.town__chat-empty {
+  margin: auto;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 15px;
+  padding: 0 20px;
+  line-height: 1.5;
+}
+
+/* ── Responsive: tablet stacks the HUD, phone becomes a sheet ── */
+@media (max-width: 1180px) {
+  .town__hud {
+    grid-template-columns: 1fr 1fr;
+  }
+  .town__feed {
+    grid-column: 1 / -1;
+    height: 300px;
+  }
+}
+
+/* Phone: a clean flex column — top bar, a town band, then the stacked HUD.
+   No overlap, so panels stay fully legible (a bottom-sheet in spirit). */
+@media (max-width: 820px) {
+  .town {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .town__scene {
+    position: static;
+    order: 2;
+    flex: none;
+    height: 300px;
+    overflow: hidden;
+  }
+  .town__scene img {
+    position: static;
+    transform: none;
+    display: block;
+    margin: 0 auto;
+    width: auto;
+    height: 300px;
+    filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.35));
+  }
+  .town__overlays {
+    display: none;
+  }
+  .town__topbar {
+    position: static;
+    order: 1;
+    margin: 14px 12px 0;
+    border-radius: 12px;
+  }
+  .town__brand {
+    font-size: 24px;
+  }
+  .town__hud {
+    position: static;
+    order: 3;
+    margin: 16px 0 0;
+    padding: 0 12px 16px;
+    grid-template-columns: 1fr;
+  }
+  .town__decision h2 {
+    font-size: 26px;
+  }
+  .town__feed {
+    height: 340px;
+  }
+}
