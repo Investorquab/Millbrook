@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -8 160 248" width="160" height="248">
+<ellipse cx="80" cy="226" rx="40" ry="7" fill="#000" fill-opacity="0.22"/>
+<rect x="60" y="166" width="18" height="54" rx="6" fill="#4f5d6b"/>
+<rect x="82" y="166" width="18" height="54" rx="6" fill="#3b4550"/>
+<ellipse cx="67" cy="221" rx="13" ry="6" fill="#2a211c"/><ellipse cx="93" cy="221" rx="13" ry="6" fill="#1f1814"/>
+<polygon points="54,98 42,104 36,160 49,163 56,122" fill="#7b6f63"/>
+<polygon points="106,98 118,104 124,160 111,163 104,122" fill="#584f47"/>
+<polygon points="52,94 108,94 112,172 48,172" fill="#7b6f63"/>
+<polygon points="80,94 108,94 112,172 80,172" fill="#5f564d"/>
+<circle cx="43" cy="165" r="7" fill="#c58c5c"/><circle cx="117" cy="165" r="7" fill="#9d7049"/>
+<rect x="72" y="80" width="16" height="16" fill="#a7774e"/>
+<circle cx="52" cy="60" r="5" fill="#c58c5c"/><circle cx="108" cy="60" r="5" fill="#936945"/>
+<polygon points="69,31 91,31 107,47 105,70 91,85 69,85 55,70 53,47" fill="#c58c5c"/>
+<polygon points="80,31 91,31 107,47 105,70 91,85 80,85" fill="#a9784f"/>
+<ellipse cx="70" cy="60" rx="3" ry="3.6" fill="#1f1a18"/><ellipse cx="90" cy="60" rx="3" ry="3.6" fill="#1f1a18"/>
+<circle cx="71" cy="58.8" r="1" fill="#fff"/><circle cx="91" cy="58.8" r="1" fill="#fff"/>
+<path d="M65 52 q5 -3 10 0 M85 52 q5 -3 10 0" stroke="#483326" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+<circle cx="65" cy="69" r="4" fill="#d96c5a" fill-opacity="0.25"/><circle cx="95" cy="69" r="4" fill="#d96c5a" fill-opacity="0.25"/>
+<polygon points="60,66 100,66 94,84 80,90 66,84" fill="#5a4030"/>
+<path d="M74 74 q6 3 12 0" stroke="#3a2418" stroke-width="2" fill="none" stroke-linecap="round"/>
+<polygon points="53,50 60,34 80,28 100,34 107,50 96,42 80,40 64,42" fill="#5a4030"/>
+<polygon points="80,28 100,34 107,50 96,42 80,40" fill="#483326"/>
+<polygon points="54,44 60,30 100,30 108,42" fill="#4a5a68"/>
+<polygon points="54,44 108,42 114,46 52,48" fill="#3a4753"/>
+<rect x="108" y="142" width="24" height="30" rx="2" fill="#4f5d6b"/><rect x="112" y="146" width="16" height="22" fill="#e6e0d4"/><path d="M114 152 h12 M114 157 h12 M114 162 h8" stroke="#7b6f63" stroke-width="1.5"/>
+</svg>

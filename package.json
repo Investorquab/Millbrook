@@ -1,0 +1,25 @@
+{
+  "name": "millbrook",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Millbrook — a browser game with a closed economy settled on NEAR. A town of 30 residents who are both your workers and your only customers.",
+  "license": "MIT",
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "sim": "pnpm --filter @millbrook/economy sim",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "build": "pnpm -r --if-present build",
+    "dev": "echo \"dev (web + server) wiring lands in M2; run the sim with: pnpm sim --seed 42 --days 28\""
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "near-api-js": "^5.1.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

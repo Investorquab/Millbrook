@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -8 160 248" width="160" height="248">
+<ellipse cx="80" cy="226" rx="40" ry="7" fill="#000" fill-opacity="0.22"/>
+<polygon points="50,50 110,50 116,120 44,120" fill="#261a13"/>
+<rect x="60" y="166" width="18" height="54" rx="6" fill="#5a4030"/>
+<rect x="82" y="166" width="18" height="54" rx="6" fill="#433024"/>
+<ellipse cx="67" cy="221" rx="13" ry="6" fill="#2a211c"/><ellipse cx="93" cy="221" rx="13" ry="6" fill="#1f1814"/>
+<polygon points="54,98 42,104 36,160 49,163 56,122" fill="#c9a55a"/>
+<polygon points="106,98 118,104 124,160 111,163 104,122" fill="#907640"/>
+<polygon points="52,94 108,94 112,172 48,172" fill="#c9a55a"/>
+<polygon points="80,94 108,94 112,172 80,172" fill="#9c8046"/>
+<polygon points="66,100 94,100 96,120 64,120" fill="#7b6f63"/>
+<polygon points="58,120 102,120 106,182 54,182" fill="#7b6f63"/>
+<polygon points="80,120 102,120 106,182 80,182" fill="#685e54"/>
+<rect x="72" y="140" width="16" height="12" rx="2" fill="#5c534a"/>
+<circle cx="43" cy="165" r="7" fill="#a86b45"/><circle cx="117" cy="165" r="7" fill="#865537"/>
+<rect x="72" y="80" width="16" height="16" fill="#8e5a3a"/>
+<circle cx="52" cy="60" r="5" fill="#a86b45"/><circle cx="108" cy="60" r="5" fill="#7e5033"/>
+<polygon points="69,31 91,31 107,47 105,70 91,85 69,85 55,70 53,47" fill="#a86b45"/>
+<polygon points="80,31 91,31 107,47 105,70 91,85 80,85" fill="#905c3b"/>
+<ellipse cx="70" cy="60" rx="3" ry="3.6" fill="#1f1a18"/><ellipse cx="90" cy="60" rx="3" ry="3.6" fill="#1f1a18"/>
+<circle cx="71" cy="58.8" r="1" fill="#fff"/><circle cx="91" cy="58.8" r="1" fill="#fff"/>
+<path d="M65 52 q5 -3 10 0 M85 52 q5 -3 10 0" stroke="#221711" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+<circle cx="65" cy="69" r="4" fill="#d96c5a" fill-opacity="0.25"/><circle cx="95" cy="69" r="4" fill="#d96c5a" fill-opacity="0.25"/>
+<path d="M73 73 q7 5 14 0" stroke="#5a2a20" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<polygon points="53,50 60,34 80,28 100,34 107,50 96,42 80,40 64,42" fill="#2b1d16"/>
+<polygon points="80,28 100,34 107,50 96,42 80,40" fill="#221711"/>
+<rect x="110" y="146" width="20" height="24" rx="3" fill="#8a6a4c"/><path d="M130 151 h5 a5 5 0 0 1 0 12 h-5" stroke="#8a6a4c" stroke-width="3" fill="none"/><ellipse cx="120" cy="146" rx="11" ry="5" fill="#f4ecd9"/>
+</svg>

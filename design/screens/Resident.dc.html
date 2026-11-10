@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Resident card: Ada</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&amp;family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=Grenze:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#EDE6D6}
+a:hover{color:#F2C76B}
+a:focus-visible,button:focus-visible{outline:2px solid #F2C76B;outline-offset:3px}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; background: #1E242B; font-family: 'Barlow', sans-serif; color: #EDE6D6">
+<img src="../assets/town.svg" alt="" style="position: absolute; left: 0; top: 0; width: 1600px; height: 1000px; filter: brightness(0.4)">
+
+<section aria-label="Ada, baker" style="position: absolute; left: 180px; top: 90px; width: 1080px; height: 720px; box-sizing: border-box; border-radius: 22px; background: rgba(47,54,64,0.97); border: 1px solid rgba(217,164,65,0.55); display: flex; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.5)">
+<div style="width: 360px; flex: none; position: relative; background: #3c4652; display: flex; align-items: flex-end; justify-content: center">
+<svg width="360" height="720" viewBox="0 0 360 720" aria-hidden="true" style="position: absolute; left: 0; top: 0"><ellipse cx="180" cy="690" rx="230" ry="120" fill="#4a5664"/><circle cx="180" cy="330" r="150" fill="#D9A441" fill-opacity="0.12"/></svg>
+<img src="../assets/char-ada.svg" alt="Ada, a baker in a white hat and apron, holding a loaf" style="position: relative; width: 300px; height: 465px; margin-bottom: 70px">
+</div>
+<div style="flex: 1; padding: 28px 38px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: flex-start; justify-content: space-between">
+<div>
+<h1 style="margin: 0; font-family: 'Grenze', serif; font-weight: 700; font-size: 56px; line-height: 1">Ada</h1>
+<p style="margin: 6px 0 0; font-size: 18px; color: #CFC8B8">Baker at your bakery, 34, lives by the market square</p>
+</div>
+<a href="Town.dc.html" aria-label="Close" style="width: 40px; height: 40px; border-radius: 10px; background: #232a32; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="#EDE6D6" stroke-width="2"/></svg></a>
+</div>
+<div style="display: flex; gap: 10px">
+<span style="padding: 6px 12px; border-radius: 999px; background: #232a32; font-size: 15px; font-weight: 600">Thrifty</span>
+<span style="padding: 6px 12px; border-radius: 999px; background: #232a32; font-size: 15px; font-weight: 600">Loyal to fair bosses</span>
+<span style="padding: 6px 12px; border-radius: 999px; background: #232a32; font-size: 15px; font-weight: 600; color: #8FC07A">Content</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+<div style="padding: 14px 16px; border-radius: 12px; background: #232a32"><span style="display: block; font-size: 14px; color: #B9B2A4">Wage</span><b style="font-family: 'Barlow Semi Condensed', sans-serif; font-size: 26px; font-variant-numeric: tabular-nums">{{ wage }} a day</b></div>
+<div style="padding: 14px 16px; border-radius: 12px; background: #232a32"><span style="display: block; font-size: 14px; color: #B9B2A4">Savings</span><b style="font-family: 'Barlow Semi Condensed', sans-serif; font-size: 26px; font-variant-numeric: tabular-nums">46 coins</b></div>
+<div style="padding: 14px 16px; border-radius: 12px; background: #232a32"><span style="display: block; font-size: 14px; color: #B9B2A4">Worked for you</span><b style="font-family: 'Barlow Semi Condensed', sans-serif; font-size: 26px; font-variant-numeric: tabular-nums">9 days</b></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 700">This week's needs</h2>
+<div style="display: flex; flex-direction: column; gap: 8px; font-size: 16px">
+<span style="display: flex; align-items: center; gap: 10px"><svg width="18" height="18" viewBox="0 0 18 18" aria-label="done"><circle cx="9" cy="9" r="8" fill="#6E9B5A"/><path d="M5 9l3 3 5-6" stroke="#1E242B" stroke-width="2" fill="none"/></svg>Bread today, bought at your bakery for 3</span>
+<span style="display: flex; align-items: center; gap: 10px"><svg width="18" height="18" viewBox="0 0 18 18" aria-label="not yet"><circle cx="9" cy="9" r="7.5" fill="none" stroke="#F2C76B" stroke-width="1.6"/><path d="M9 5v4.5l3 2" stroke="#F2C76B" stroke-width="1.6" fill="none"/></svg>Cloth this week, saving up for it</span>
+<span style="display: flex; align-items: center; gap: 10px"><svg width="18" height="18" viewBox="0 0 18 18" aria-label="later"><circle cx="9" cy="9" r="7.5" fill="none" stroke="#B9B2A4" stroke-width="1.6"/></svg>Clothes in 6 days, once the tailor opens</span>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<h2 style="margin: 0; font-size: 18px; font-weight: 700">Why she did what she did</h2>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 12px; background: #232a32; font-size: 16px; line-height: 1.4">
+<span><b style="color: #F2C76B">Day 12, night.</b> Bought bread from you, not Gus: same price, and she works here.</span>
+<span><b style="color: #F2C76B">Day 11, night.</b> Skipped cloth: kept 10 coins back in case the strike spreads.</span>
+<span><b style="color: #F2C76B">Day 3, dawn.</b> Left Gus's bakery for yours: you paid 2 more a day.</span>
+</div>
+</div>
+<sc-if value="{{ replied }}" hint-placeholder-val="{{ false }}">
+<p role="status" style="margin: 0; padding: 12px 16px; border-radius: 12px; background: rgba(110,155,90,0.18); border: 1px solid #6E9B5A; font-size: 16px">Ada: "Thank you. I'll stay put, and I'll buy cloth this week after all."</p>
+</sc-if>
+<div style="margin-top: auto; display: flex; gap: 12px">
+<button type="button" onClick="{{ raise }}" style="height: 48px; padding: 0 20px; border-radius: 12px; border: 0; background: #D9A441; color: #2F3640; font: 700 17px 'Barlow', sans-serif">{{ raiseLabel }}</button>
+<a href="Proof.dc.html" style="display: flex; align-items: center; height: 48px; padding: 0 20px; border-radius: 12px; border: 1px solid #5E8C93; color: #8FB8C0; font-weight: 600; font-size: 17px; text-decoration: none">Follow one of Ada's coins</a>
+</div>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { raised: false };
+}
+renderVals() {
+const r = this.state.raised;
+return {
+wage: r ? 9 : 8,
+replied: r,
+raiseLabel: r ? 'Raised to 9 a day' : 'Offer Ada a raise to 9',
+raise: () => this.setState({ raised: true })
+};
+}
+}
+</script>
+</body>
+</html>

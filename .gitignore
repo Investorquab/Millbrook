@@ -1,0 +1,37 @@
+# Private companion repo (cloned into ./private, never published here)
+private/
+
+# Secrets: keep only the example file
+.env
+.env.*
+!.env.example
+.near-credentials/
+*.pem
+*.key
+*.p12
+
+# Database dumps and backups
+*.sql
+*.sql.gz
+*.dump
+backups/
+
+# Build output
+node_modules/
+dist/
+build/
+.vite/
+target/
+coverage/
+playwright-report/
+test-results/
+
+# Claude Code personal settings (project skills in .claude/skills are committed)
+.claude/settings.local.json
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.local.md

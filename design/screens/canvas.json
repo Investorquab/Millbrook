@@ -1,0 +1,27 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-11-08T15:40:00Z"},
+  "title": "Millbrook screens",
+  "launch": {"view": "focused", "file": "Main.dc.html"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "title": "Title screen", "is_interactive": true},
+    "SignIn.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 900, "title": "Sign in", "is_interactive": true},
+    "Hub.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 900, "title": "Home", "is_interactive": true},
+    "Lobby.dc.html": {"x": 4560, "y": 0, "w": 1440, "h": 900, "title": "Room lobby", "is_interactive": true},
+    "Town.dc.html": {"x": 0, "y": 1300, "w": 1440, "h": 900, "title": "In the town", "is_interactive": true},
+    "Resident.dc.html": {"x": 1520, "y": 1300, "w": 1440, "h": 900, "title": "Resident card", "is_interactive": true},
+    "Proof.dc.html": {"x": 3040, "y": 1300, "w": 1440, "h": 900, "title": "Proof and follow a coin", "is_interactive": true},
+    "FastForward.dc.html": {"x": 4560, "y": 1300, "w": 1440, "h": 900, "title": "Fast-forward", "is_interactive": true},
+    "Gazette.dc.html": {"x": 0, "y": 2600, "w": 1440, "h": 900, "title": "The Gazette", "is_interactive": true},
+    "Scoreboard.dc.html": {"x": 1520, "y": 2600, "w": 1440, "h": 900, "title": "Season end", "is_interactive": true},
+    "Cast.dc.html": {"x": 3040, "y": 2600, "w": 1440, "h": 900, "title": "Cast and style", "is_interactive": true}
+  },
+  "order": ["Main.dc.html", "SignIn.dc.html", "Hub.dc.html", "Lobby.dc.html", "Town.dc.html", "Resident.dc.html", "Proof.dc.html", "FastForward.dc.html", "Gazette.dc.html", "Scoreboard.dc.html", "Cast.dc.html"],
+  "notes": {
+    "rowGettingIn": {"x": 0, "y": -300, "text": "Getting in", "kind": "title1", "maxW": 6000},
+    "rowPlaying": {"x": 0, "y": 1000, "text": "Playing a season", "kind": "title1", "maxW": 6000},
+    "rowAfter": {"x": 0, "y": 2300, "text": "After the season, and the look", "kind": "title1", "maxW": 4480}
+  },
+  "designSystems": []
+}

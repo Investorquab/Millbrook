@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Room lobby</title>
+</head>
+<body>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&amp;family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=Grenze:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#EDE6D6}
+a:hover{color:#F2C76B}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #F2C76B;outline-offset:3px}
+button{cursor:pointer}
+</style>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; background: #1E242B; font-family: 'Barlow', sans-serif; color: #EDE6D6">
+<img src="../assets/town.svg" alt="" style="position: absolute; left: 0; top: 0; width: 1600px; height: 1000px; filter: blur(6px) brightness(0.35)">
+
+<div style="position: absolute; left: 48px; top: 36px; right: 48px; display: flex; align-items: center; justify-content: space-between">
+<a href="Hub.html" style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; text-decoration: none">
+<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M11 3L5 9l6 6" stroke="#EDE6D6" stroke-width="2" fill="none" stroke-linecap="round"/></svg>Leave room</a>
+<span style="font-size: 15px; color: #B9B2A4">You're the host</span>
+</div>
+
+<div style="position: absolute; left: 48px; top: 88px; width: 860px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div>
+<h1 style="margin: 0; font-family: 'Grenze', serif; font-weight: 700; font-size: 52px; line-height: 1">Friday night Millbrook</h1>
+<p style="margin: 6px 0 0; font-size: 17px; color: #CFC8B8">Share the code. Friends land here, and you let them in.</p>
+</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="padding: 10px 14px; border-radius: 10px; background: #232a32; border: 1px dashed #D9A441; font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: 2px">MILL-4821</span>
+<button type="button" style="height: 46px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(237,230,214,0.35); background: #2F3640; color: #EDE6D6; font: 600 16px 'Barlow', sans-serif">Copy invite link</button>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+<div style="padding: 16px; border-radius: 14px; background: rgba(47,54,64,0.96); border: 2px solid #D9A441; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; color: #B9B2A4">Bakery</span>
+<span style="width: 56px; height: 56px; border-radius: 50%; background: #5E8C93; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px; color: #1E242B">M</span>
+<span style="font-weight: 700; font-size: 18px">millhand</span>
+<span style="font-size: 14px; color: #8FC07A">Host, ready</span>
+</div>
+<div style="padding: 16px; border-radius: 14px; background: rgba(47,54,64,0.96); border: 1px solid rgba(237,230,214,0.18); display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; color: #B9B2A4">Smithy</span>
+<span style="width: 56px; height: 56px; border-radius: 50%; background: #B23A48; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px; color: #EDE6D6">K</span>
+<span style="font-weight: 700; font-size: 18px">kola_forge</span>
+<span style="font-size: 14px; color: #8FC07A">Joined, ready</span>
+</div>
+<div style="padding: 16px; border-radius: 14px; background: rgba(47,54,64,0.96); border: 1px solid rgba(237,230,214,0.18); display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; color: #B9B2A4">Weaver</span>
+<span style="width: 56px; height: 56px; border-radius: 50%; background: #6E9B5A; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px; color: #1E242B">Z</span>
+<span style="font-weight: 700; font-size: 18px">zainab.loom</span>
+<span style="font-size: 14px; color: #F2C76B">Waiting for you</span>
+<div style="display: flex; gap: 8px">
+<button type="button" style="flex: 1; height: 38px; border-radius: 8px; border: 0; background: #D9A441; color: #2F3640; font: 700 15px 'Barlow', sans-serif">Accept</button>
+<button type="button" style="flex: 1; height: 38px; border-radius: 8px; border: 1px solid rgba(237,230,214,0.35); background: transparent; color: #EDE6D6; font: 600 15px 'Barlow', sans-serif">Remove</button>
+</div>
+</div>
+<div style="padding: 16px; border-radius: 14px; background: rgba(47,54,64,0.8); border: 1px dashed rgba(237,230,214,0.3); display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 14px; color: #B9B2A4">Brewery</span>
+<img src="../assets/face-gus.svg" alt="Greedy Gus" style="width: 56px; height: 56px; border-radius: 50%">
+<span style="font-weight: 700; font-size: 18px">Greedy Gus</span>
+<span style="font-size: 14px; color: #B9B2A4">AI fills this shop until someone joins</span>
+</div>
+</div>
+
+<div style="padding: 22px 24px; border-radius: 14px; background: rgba(47,54,64,0.96); border: 1px solid rgba(237,230,214,0.16); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 32px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-weight: 700; font-size: 17px">Speed</span>
+<div role="group" aria-label="Speed" style="display: flex; padding: 4px; border-radius: 10px; background: #232a32">
+<button type="button" aria-pressed="true" style="flex: 1; height: 40px; border-radius: 8px; border: 0; background: #EDE6D6; color: #2F3640; font: 700 15px 'Barlow', sans-serif">Live, 20 minutes</button>
+<button type="button" aria-pressed="false" style="flex: 1; height: 40px; border-radius: 8px; border: 0; background: transparent; color: #EDE6D6; font: 600 15px 'Barlow', sans-serif">League, 7 days</button>
+</div>
+<span style="font-size: 14px; color: #B9B2A4">One game day every 40 seconds. Play together on a call.</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-weight: 700; font-size: 17px">Goal card</span>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 10px; background: #232a32; border-left: 0">
+<span style="display: flex; flex-direction: column"><b style="font-size: 17px">Town Hero</b><span style="font-size: 14px; color: #B9B2A4">Co-op. Keep unemployment under 10% all season</span></span>
+<button type="button" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(237,230,214,0.35); background: transparent; color: #EDE6D6; font: 600 14px 'Barlow', sans-serif">Change</button>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 700; font-size: 17px">AI owners</span>
+<span style="font-size: 15px; color: #CFC8B8">Normal difficulty. They react to undercutting after 3 days.</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 700; font-size: 17px">This town</span>
+<span style="font-size: 15px; color: #CFC8B8">30 residents, 4 workshops open, river and mine on the map.</span>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 18px">
+<a href="Town.html" style="display: flex; align-items: center; gap: 10px; padding: 16px 28px; background: #D9A441; color: #2F3640; border-radius: 12px; font-weight: 700; font-size: 19px; text-decoration: none; box-shadow: 0 3px 0 #a8761f">Start the season</a>
+<span style="font-size: 15px; color: #B9B2A4">Zainab is still waiting for you to let her in.</span>
+</div>
+</div>
+
+<aside aria-label="Room chat" style="position: absolute; right: 48px; top: 88px; bottom: 48px; width: 420px; box-sizing: border-box; border-radius: 16px; background: rgba(47,54,64,0.96); border: 1px solid rgba(217,164,65,0.45); display: flex; flex-direction: column">
+<div style="padding: 18px 20px; border-bottom: 1px solid rgba(237,230,214,0.12); display: flex; align-items: center; justify-content: space-between">
+<h2 style="margin: 0; font-size: 19px; font-weight: 700">Room chat</h2>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: #8FC07A"><svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="#8FC07A"/></svg>2 online</span>
+</div>
+<div style="flex: 1; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; overflow: hidden">
+<p style="margin: 0; font-size: 14px; color: #B9B2A4">kola_forge joined the room.</p>
+<div style="display: flex; flex-direction: column; gap: 4px"><b style="font-size: 15px; color: #E58A94">kola_forge</b><span style="font-size: 16px; line-height: 1.4">I'm taking the smithy. Nobody undercut my tools, I'm warning you now.</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><b style="font-size: 15px; color: #8FB8C0">millhand</b><span style="font-size: 16px; line-height: 1.4">Deal, if you buy bread for your workers' lunch from me.</span></div>
+<p style="margin: 0; font-size: 14px; color: #B9B2A4">zainab.loom is waiting to join.</p>
+<div style="display: flex; flex-direction: column; gap: 4px"><b style="font-size: 15px; color: #E58A94">kola_forge</b><span style="font-size: 16px; line-height: 1.4">Town Hero though? We have to keep Gus from wrecking everyone.</span></div>
+</div>
+<div style="padding: 14px 16px; border-top: 1px solid rgba(237,230,214,0.12); display: flex; gap: 10px">
+<label for="msg" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Message</label>
+<input id="msg" type="text" placeholder="Say something to the room" style="flex: 1; height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid #5c6672; background: #232a32; color: #EDE6D6; font: 500 16px 'Barlow', sans-serif">
+<button type="button" style="height: 44px; padding: 0 16px; border-radius: 10px; border: 0; background: #EDE6D6; color: #2F3640; font: 700 15px 'Barlow', sans-serif">Send</button>
+</div>
+</aside>
+</div>
+</body>
+</html>

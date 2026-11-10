@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Proof and follow a coin</title>
+</head>
+<body>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&amp;family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=Grenze:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#8FB8C0}
+a:hover{color:#F2C76B}
+a:focus-visible{outline:2px solid #F2C76B;outline-offset:3px}
+</style>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; background: #1E242B; font-family: 'Barlow', sans-serif; color: #EDE6D6">
+<img src="../assets/town.svg" alt="" style="position: absolute; left: 0; top: 0; width: 1600px; height: 1000px; filter: blur(6px) brightness(0.3)">
+
+<div style="position: absolute; left: 48px; right: 48px; top: 32px; display: flex; align-items: center; justify-content: space-between">
+<a href="Town.html" style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; text-decoration: none; color: #EDE6D6">
+<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M11 3L5 9l6 6" stroke="#EDE6D6" stroke-width="2" fill="none" stroke-linecap="round"/></svg>Back to town</a>
+<span style="font-size: 15px; color: #B9B2A4">Everything on this page can be checked on NEAR testnet</span>
+</div>
+
+<section aria-label="The town's money" style="position: absolute; left: 48px; top: 84px; width: 540px; bottom: 48px; box-sizing: border-box; padding: 28px 30px; border-radius: 18px; background: rgba(47,54,64,0.96); border: 1px solid #5E8C93; display: flex; flex-direction: column; gap: 20px">
+<h1 style="margin: 0; font-family: 'Grenze', serif; font-weight: 700; font-size: 40px; line-height: 1">The town's money</h1>
+<div style="display: flex; align-items: baseline; gap: 14px">
+<span style="font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 700; font-size: 84px; line-height: 1; color: #F2C76B; font-variant-numeric: tabular-nums">10,000</span>
+<span style="font-size: 20px; color: #CFC8B8">coins, always</span>
+</div>
+<p style="margin: 0; font-size: 17px; line-height: 1.45; color: #CFC8B8">The game contract refuses any settlement that changes the total. It has no admin key and no way to mint, so not even the developer can print money.</p>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div role="img" aria-label="Residents 3,412, workshops 4,190, Town Co-op 1,880, Town Hall 518" style="display: flex; height: 18px; border-radius: 6px; overflow: hidden">
+<span style="width: 34.12%; background: #6E9B5A"></span><span style="width: 41.9%; background: #D9A441"></span><span style="width: 18.8%; background: #5E8C93"></span><span style="width: 5.18%; background: #B9B2A4"></span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 20px; font-size: 16px">
+<span style="display: flex; align-items: center; justify-content: space-between"><span style="display: flex; align-items: center; gap: 8px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10" rx="2" fill="#6E9B5A"/></svg>Residents</span><b style="font-variant-numeric: tabular-nums">3,412</b></span>
+<span style="display: flex; align-items: center; justify-content: space-between"><span style="display: flex; align-items: center; gap: 8px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10" rx="2" fill="#D9A441"/></svg>Workshops</span><b style="font-variant-numeric: tabular-nums">4,190</b></span>
+<span style="display: flex; align-items: center; justify-content: space-between"><span style="display: flex; align-items: center; gap: 8px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10" rx="2" fill="#5E8C93"/></svg>Town Co-op</span><b style="font-variant-numeric: tabular-nums">1,880</b></span>
+<span style="display: flex; align-items: center; justify-content: space-between"><span style="display: flex; align-items: center; gap: 8px"><svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10" rx="2" fill="#B9B2A4"/></svg>Town Hall</span><b style="font-variant-numeric: tabular-nums">518</b></span>
+</div>
+</div>
+<div style="padding: 16px 18px; border-radius: 12px; background: #232a32; display: flex; flex-direction: column; gap: 8px; font-size: 16px">
+<span style="display: flex; justify-content: space-between"><span style="color: #B9B2A4">Latest settlement</span><span>Day 12, dusk: 61 transfers in one batch</span></span>
+<span style="display: flex; justify-content: space-between"><span style="color: #B9B2A4">Contract</span><span>Game contract on NEAR testnet</span></span>
+<span style="display: flex; gap: 18px; margin-top: 4px"><a href="#" style="font-weight: 600">View the settlement</a><a href="#" style="font-weight: 600">View the contract</a></span>
+</div>
+</section>
+
+<section aria-label="Follow a coin" style="position: absolute; left: 612px; right: 48px; top: 84px; height: 470px; box-sizing: border-box; padding: 26px 30px; border-radius: 18px; background: rgba(47,54,64,0.96); border: 1px solid rgba(217,164,65,0.55); display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<h2 style="margin: 0; font-family: 'Grenze', serif; font-weight: 700; font-size: 34px">Follow a coin</h2>
+<span style="font-size: 15px; color: #B9B2A4">One coin, around the town in two days</span>
+</div>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0">
+<li style="display: flex; gap: 16px; align-items: stretch">
+<span style="display: flex; flex-direction: column; align-items: center; width: 24px; flex: none"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#D9A441"/><circle cx="12" cy="12" r="6" fill="none" stroke="#a8761f" stroke-width="1.6"/></svg><span style="flex: 1; width: 2px; background: #D9A441; opacity: 0.5"></span></span>
+<span style="flex: 1; display: flex; align-items: center; gap: 12px; padding-bottom: 16px"><img src="../assets/face-ada.svg" alt="Ada" style="width: 40px; height: 40px; border-radius: 50%"><span style="flex: 1; font-size: 16px; line-height: 1.35"><b>Day 11, dusk.</b> Your bakery paid Ada her wage, 8 coins.</span><a href="#" style="font-size: 15px; font-weight: 600">Transaction</a></span>
+</li>
+<li style="display: flex; gap: 16px; align-items: stretch">
+<span style="display: flex; flex-direction: column; align-items: center; width: 24px; flex: none"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#D9A441"/><circle cx="12" cy="12" r="6" fill="none" stroke="#a8761f" stroke-width="1.6"/></svg><span style="flex: 1; width: 2px; background: #D9A441; opacity: 0.5"></span></span>
+<span style="flex: 1; display: flex; align-items: center; gap: 12px; padding-bottom: 16px"><span style="width: 40px; height: 40px; border-radius: 50%; background: #9e3b3b; display: flex; align-items: center; justify-content: center; flex: none"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><ellipse cx="11" cy="13" rx="8" ry="5" fill="#dca457"/><path d="M6 12l2-2M10 12l2-2M14 12l2-2" stroke="#9a6328" stroke-width="1.4"/></svg></span><span style="flex: 1; font-size: 16px; line-height: 1.35"><b>Day 11, night.</b> Ada spent it on bread at your bakery.</span><a href="#" style="font-size: 15px; font-weight: 600">Transaction</a></span>
+</li>
+<li style="display: flex; gap: 16px; align-items: stretch">
+<span style="display: flex; flex-direction: column; align-items: center; width: 24px; flex: none"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#D9A441"/><circle cx="12" cy="12" r="6" fill="none" stroke="#a8761f" stroke-width="1.6"/></svg><span style="flex: 1; width: 2px; background: #D9A441; opacity: 0.5"></span></span>
+<span style="flex: 1; display: flex; align-items: center; gap: 12px; padding-bottom: 16px"><span style="width: 40px; height: 40px; border-radius: 50%; background: #5E8C93; display: flex; align-items: center; justify-content: center; flex: none"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 3v16M11 7l-4-3M11 7l4-3M11 11l-4-3M11 11l4-3M11 15l-4-3M11 15l4-3" stroke="#F2C76B" stroke-width="1.6" fill="none"/></svg></span><span style="flex: 1; font-size: 16px; line-height: 1.35"><b>Day 12, dawn.</b> Your bakery paid it to the Town Co-op for wheat.</span><a href="#" style="font-size: 15px; font-weight: 600">Transaction</a></span>
+</li>
+<li style="display: flex; gap: 16px; align-items: stretch">
+<span style="display: flex; flex-direction: column; align-items: center; width: 24px; flex: none"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#D9A441"/><circle cx="12" cy="12" r="6" fill="none" stroke="#a8761f" stroke-width="1.6"/></svg><span style="flex: 1; width: 2px; background: #D9A441; opacity: 0.5"></span></span>
+<span style="flex: 1; display: flex; align-items: center; gap: 12px; padding-bottom: 16px"><img src="../assets/face-sam.svg" alt="Sam" style="width: 40px; height: 40px; border-radius: 50%"><span style="flex: 1; font-size: 16px; line-height: 1.35"><b>Day 12, dusk.</b> The Co-op paid it to Sam as part of his farm wage.</span><a href="#" style="font-size: 15px; font-weight: 600">Transaction</a></span>
+</li>
+<li style="display: flex; gap: 16px; align-items: stretch">
+<span style="display: flex; flex-direction: column; align-items: center; width: 24px; flex: none"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#D9A441"/><circle cx="12" cy="12" r="6" fill="none" stroke="#a8761f" stroke-width="1.6"/></svg></span>
+<span style="flex: 1; display: flex; align-items: center; gap: 12px"><img src="../assets/face-fern.svg" alt="Fern" style="width: 40px; height: 40px; border-radius: 50%"><span style="flex: 1; font-size: 16px; line-height: 1.35"><b>Day 12, night.</b> Sam spent it on cloth at Fern's weaver. It's still in town.</span><a href="#" style="font-size: 15px; font-weight: 600">Transaction</a></span>
+</li>
+</ol>
+</section>
+
+<section aria-label="Game Master receipt" style="position: absolute; left: 612px; right: 48px; top: 578px; bottom: 48px; box-sizing: border-box; padding: 22px 30px; border-radius: 14px; background: rgba(47,54,64,0.96); border: 1px solid rgba(237,230,214,0.16); display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<h2 style="margin: 0; font-size: 22px; font-weight: 700">Why the drought happened</h2>
+<span style="font-size: 15px; color: #B9B2A4">Game Master receipt, day 12</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+<div style="padding: 12px 14px; border-radius: 10px; background: #232a32; font-size: 15px; line-height: 1.4"><span style="display: block; color: #B9B2A4; margin-bottom: 4px">What it read</span>The weather feed for the host's city reported a heatwave. Unemployment in town was 14%.</div>
+<div style="padding: 12px 14px; border-radius: 10px; background: #232a32; font-size: 15px; line-height: 1.4"><span style="display: block; color: #B9B2A4; margin-bottom: 4px">What it decided</span>Drought: wheat costs 3 times as much for 5 days. That's the most the rules allow.</div>
+<div style="padding: 12px 14px; border-radius: 10px; background: #232a32; font-size: 15px; line-height: 1.4"><span style="display: block; color: #B9B2A4; margin-bottom: 4px">Where it ran</span>Inside an OutLayer enclave. The receipt ties this exact code to this data and this decision.</div>
+</div>
+<a href="#" style="font-weight: 600; font-size: 16px">Check the receipt on NEAR</a>
+</section>
+</div>
+</body>
+</html>

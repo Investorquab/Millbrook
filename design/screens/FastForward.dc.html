@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fast-forward dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&amp;family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=Grenze:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#EDE6D6}
+a:hover{color:#F2C76B}
+a:focus-visible,button:focus-visible{outline:2px solid #F2C76B;outline-offset:3px}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; background: #1E242B; font-family: 'Barlow', sans-serif; color: #EDE6D6">
+<img src="../assets/town.svg" alt="" style="position: absolute; left: 0; top: 0; width: 1600px; height: 1000px; filter: blur(8px) brightness(0.28)">
+
+<header style="position: absolute; left: 48px; right: 48px; top: 28px; display: flex; align-items: center; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-family: 'Grenze', serif; font-weight: 700; font-size: 40px; line-height: 1">Fast-forwarding a week</h1>
+<span style="font-size: 15px; color: #B9B2A4">Sample run, seed 42. The town keeps playing at full speed while you watch.</span>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 600; font-size: 17px"><span>Day 12</span><span style="color: #F2C76B">Day 16</span><span>Day 19</span></div>
+<div role="progressbar" aria-label="Fast-forward progress" aria-valuemin="12" aria-valuemax="19" aria-valuenow="16" style="height: 10px; border-radius: 6px; background: #2F3640; overflow: hidden"><div style="width: 57%; height: 10px; background: #D9A441"></div></div>
+</div>
+<div style="display: flex; gap: 10px">
+<a href="Town.dc.html" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(237,230,214,0.35); font-weight: 600; font-size: 16px; text-decoration: none">Stop and go to town</a>
+<a href="Scoreboard.dc.html" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 10px; background: #D9A441; color: #2F3640; font-weight: 700; font-size: 16px; text-decoration: none">Skip to season end</a>
+</div>
+</header>
+
+<section aria-label="Unemployment" style="position: absolute; left: 48px; top: 128px; width: 880px; height: 360px; box-sizing: border-box; padding: 20px 24px; border-radius: 16px; background: rgba(47,54,64,0.96); border: 1px solid rgba(217,164,65,0.5)">
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<h2 style="margin: 0; font-size: 20px; font-weight: 700">Unemployment rose to 22% after the wage cuts, then fell as benefits kicked in</h2>
+<span style="font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 700; font-size: 22px; color: #E58A94">22%</span>
+</div>
+<svg viewBox="0 0 640 230" width="832" height="290" role="img" aria-label="Unemployment by day, days 1 to 19: about 6% until day 10, rising to 22% on day 16, falling to 11% by day 19" style="display: block; margin-top: 6px">
+<g stroke="#46505c" stroke-width="1"><path d="M40 190H600"/><path d="M40 122H600" stroke-dasharray="3 4"/><path d="M40 54H600" stroke-dasharray="3 4"/></g>
+<g font-family="Barlow Semi Condensed, sans-serif" font-size="12" fill="#B9B2A4"><text x="32" y="194" text-anchor="end">0%</text><text x="32" y="126" text-anchor="end">10%</text><text x="32" y="58" text-anchor="end">20%</text><text x="40" y="210" text-anchor="middle">Day 1</text><text x="226.7" y="210" text-anchor="middle">Day 7</text><text x="413.3" y="210" text-anchor="middle">Day 13</text><text x="600" y="210" text-anchor="middle">Day 19</text></g>
+<g stroke="#B9B2A4" stroke-width="1" stroke-dasharray="3 3"><path d="M413.3 30V190"/><path d="M475.6 30V190"/><path d="M506.7 30V190"/></g>
+<polyline points="40.0,149.2 71.1,149.2 102.2,156.0 133.3,156.0 164.4,149.2 195.6,142.4 226.7,149.2 257.8,149.2 288.9,142.4 320.0,135.6 351.1,128.8 382.2,122.0 413.3,108.4 444.4,88.0 475.6,60.8 506.7,40.4 537.8,67.6 568.9,94.8 600.0,115.2" fill="none" stroke="#E58A94" stroke-width="3" stroke-linejoin="round"/>
+<circle cx="600" cy="115.2" r="5" fill="#E58A94"/>
+<g font-family="Barlow, sans-serif" font-size="12" font-weight="700" text-anchor="middle"><circle cx="413.3" cy="22" r="9" fill="#EDE6D6"/><text x="413.3" y="26" fill="#2F3640">1</text><circle cx="475.6" cy="22" r="9" fill="#EDE6D6"/><text x="475.6" y="26" fill="#2F3640">2</text><circle cx="506.7" cy="22" r="9" fill="#EDE6D6"/><text x="506.7" y="26" fill="#2F3640">3</text></g>
+</svg>
+</section>
+
+<section aria-label="Average wage" style="position: absolute; left: 48px; top: 508px; width: 430px; height: 344px; box-sizing: border-box; padding: 18px 20px; border-radius: 14px; background: rgba(47,54,64,0.96); border: 1px solid rgba(237,230,214,0.16)">
+<h2 style="margin: 0; font-size: 18px; font-weight: 700">Average wage dipped to 6.4, then recovered</h2>
+<svg viewBox="0 0 640 230" width="390" height="140" role="img" aria-label="Average wage by day: from 7.0 up to 7.5, down to 6.4 on day 15, back to 7.4 on day 19" style="display: block; margin-top: 10px">
+<g stroke="#46505c" stroke-width="1"><path d="M40 190H600"/><path d="M40 105H600" stroke-dasharray="3 4"/></g>
+<g font-family="Barlow Semi Condensed, sans-serif" font-size="20" fill="#B9B2A4"><text x="32" y="196" text-anchor="end">6</text><text x="32" y="111" text-anchor="end">7</text><text x="32" y="26" text-anchor="end">8</text></g>
+<polyline points="40.0,105.0 71.1,96.5 102.2,88.0 133.3,79.5 164.4,79.5 195.6,71.0 226.7,71.0 257.8,62.5 288.9,71.0 320.0,71.0 351.1,71.0 382.2,71.0 413.3,113.5 444.4,139.0 475.6,156.0 506.7,139.0 537.8,113.5 568.9,88.0 600.0,71.0" fill="none" stroke="#D9A441" stroke-width="4" stroke-linejoin="round"/>
+</svg>
+<p style="margin: 10px 0 0; font-size: 15px; line-height: 1.45; color: #CFC8B8">When Gus cut wages, the others followed for two days. Workers then left for better-paying shops and the average came back.</p>
+</section>
+
+<section aria-label="Residents' share of money" style="position: absolute; left: 498px; top: 508px; width: 430px; height: 344px; box-sizing: border-box; padding: 18px 20px; border-radius: 14px; background: rgba(47,54,64,0.96); border: 1px solid rgba(237,230,214,0.16)">
+<h2 style="margin: 0; font-size: 18px; font-weight: 700">Residents' share of the money fell from 35% to 27%</h2>
+<svg viewBox="0 0 640 230" width="390" height="140" role="img" aria-label="Residents' share of all coins by day: 30% rising to 35%, falling to 27% on day 16, back to 33% on day 19" style="display: block; margin-top: 10px">
+<g stroke="#46505c" stroke-width="1"><path d="M40 190H600"/><path d="M40 105H600" stroke-dasharray="3 4"/></g>
+<g font-family="Barlow Semi Condensed, sans-serif" font-size="20" fill="#B9B2A4"><text x="32" y="196" text-anchor="end">20%</text><text x="32" y="111" text-anchor="end">30%</text><text x="32" y="26" text-anchor="end">40%</text></g>
+<polyline points="40.0,105.0 71.1,96.5 102.2,88.0 133.3,79.5 164.4,71.0 195.6,71.0 226.7,62.5 257.8,62.5 288.9,62.5 320.0,71.0 351.1,71.0 382.2,71.0 413.3,88.0 444.4,105.0 475.6,122.0 506.7,130.5 537.8,113.5 568.9,96.5 600.0,79.5" fill="none" stroke="#6E9B5A" stroke-width="4" stroke-linejoin="round"/>
+</svg>
+<p style="margin: 10px 0 0; font-size: 15px; line-height: 1.45; color: #CFC8B8">Less money in residents' pockets meant fewer sales for every shop, yours included.</p>
+</section>
+
+<aside aria-label="What happened" style="position: absolute; right: 48px; top: 128px; width: 436px; bottom: 48px; box-sizing: border-box; padding: 22px 24px; border-radius: 16px; background: rgba(47,54,64,0.96); border: 1px solid rgba(237,230,214,0.16); display: flex; flex-direction: column; gap: 16px">
+<h2 style="margin: 0; font-family: 'Grenze', serif; font-weight: 700; font-size: 30px">What happened</h2>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px">
+<li style="display: flex; gap: 12px"><span style="width: 26px; height: 26px; flex: none; border-radius: 50%; background: #EDE6D6; color: #2F3640; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">1</span><span style="font-size: 16px; line-height: 1.4"><b>Day 13.</b> Gus cut smithy wages to 6. Sam and Rita matched him the next morning.</span></li>
+<li style="display: flex; gap: 12px"><span style="width: 26px; height: 26px; flex: none; border-radius: 50%; background: #EDE6D6; color: #2F3640; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">2</span><span style="font-size: 16px; line-height: 1.4"><b>Day 15.</b> Smithy workers went on strike for 2 days. No tools were made.</span></li>
+<li style="display: flex; gap: 12px"><span style="width: 26px; height: 26px; flex: none; border-radius: 50%; background: #EDE6D6; color: #2F3640; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">3</span><span style="font-size: 16px; line-height: 1.4"><b>Day 16.</b> The Town Hall started unemployment benefits and hired 4 residents to repair the road.</span></li>
+</ol>
+<div style="margin-top: auto; padding: 16px; border-radius: 12px; background: #232a32; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 15px; color: #B9B2A4">Your bakery this week</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<span style="display: flex; flex-direction: column"><span style="font-size: 14px; color: #B9B2A4">Profit</span><b style="font-family: 'Barlow Semi Condensed', sans-serif; font-size: 24px; color: #8FC07A; font-variant-numeric: tabular-nums">+212</b></span>
+<span style="display: flex; flex-direction: column"><span style="font-size: 14px; color: #B9B2A4">Workers kept</span><b style="font-family: 'Barlow Semi Condensed', sans-serif; font-size: 24px; font-variant-numeric: tabular-nums">4 of 4</b></span>
+</div>
+<span style="font-size: 15px; line-height: 1.4">You held wages at 8 through the cuts. Two of Gus's workers asked to join you.</span>
+</div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
