@@ -1,0 +1,16 @@
+# Caddy serves the built web app and reverse-proxies the real-time + API routes
+# to the Node game server. {$DOMAIN} is set by docker-compose (a real domain in
+# production — Caddy gets the HTTPS certificate automatically — or :80 locally).
+
+{$DOMAIN} {
+	encode gzip
+
+	# Socket.IO (WebSocket upgrade handled automatically) and the HTTP API.
+	@api path /socket.io/* /health /rooms /api/*
+	reverse_proxy @api server:8080
+
+	# Everything else is the static single-page app.
+	root * /srv
+	try_files {path} /index.html
+	file_server
+}

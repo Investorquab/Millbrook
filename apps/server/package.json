@@ -6,6 +6,8 @@
   "description": "Millbrook game server: runs seasons, settles each game day to the NEAR contract, and (M5) hosts rooms, chat and the Game Master.",
   "main": "./src/index.ts",
   "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
     "settle-season": "tsx src/settle-season.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -13,10 +15,12 @@
   "dependencies": {
     "@millbrook/economy": "workspace:*",
     "@millbrook/shared": "workspace:*",
-    "near-api-js": "^5.1.1"
+    "near-api-js": "^5.1.1",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "socket.io-client": "^4.8.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"

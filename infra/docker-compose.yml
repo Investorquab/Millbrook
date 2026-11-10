@@ -1,0 +1,63 @@
+# Millbrook on one VPS: the Node game server, Postgres, and Caddy for HTTPS.
+#
+#   cd infra && docker compose up -d
+#
+# Build the web first (its static files are served by Caddy):
+#   pnpm --filter @millbrook/web build
+#
+# Secrets come from ../.env (NEAR_*, DATABASE_URL, etc.) — never commit it.
+# Set DOMAIN in the environment (or .env) so Caddy gets a certificate for it;
+# leave it as :80 for local testing.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: millbrook
+      POSTGRES_PASSWORD: millbrook
+      POSTGRES_DB: millbrook
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U millbrook"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgres://millbrook:millbrook@db:5432/millbrook
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../apps/web/dist:/srv:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - server
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:
