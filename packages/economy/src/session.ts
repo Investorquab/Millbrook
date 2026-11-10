@@ -10,11 +10,17 @@
  * the solo game through this class.
  */
 
-import type { Good, Phase, RawGood, WorkshopType } from "@millbrook/shared";
+import { COOP_ID, TOWN_HALL_ID, type Good, type Phase, type RawGood, type WorkshopType } from "@millbrook/shared";
 import { createWorld } from "./state.js";
 import { pushFeed, stepDay } from "./engine.js";
-import { WORKSHOP_DEFS, aliveResidents, townAverageWage, unemploymentRate } from "./rules.js";
-import type { SeasonConfig, Workshop, World } from "./types.js";
+import {
+  TOWN_HALL_PUBLIC_WORKS_EMPLOYER,
+  WORKSHOP_DEFS,
+  aliveResidents,
+  townAverageWage,
+  unemploymentRate,
+} from "./rules.js";
+import type { SeasonConfig, Trait, Workshop, World } from "./types.js";
 
 /** Player stepper bounds — the single source of truth the HUD imports too. */
 export const PRICE_MIN = 1;
@@ -36,6 +42,57 @@ export interface FeedLine {
   kind: string;
   text: string;
 }
+
+/** The town's coins, split by who holds them. Always sums to 10,000. */
+export interface Holdings {
+  residents: number;
+  workshops: number;
+  coop: number;
+  townHall: number;
+  total: number;
+}
+
+export interface ResidentNeed {
+  label: string;
+  status: "done" | "pending" | "later";
+}
+
+export interface ResidentCard {
+  id: string;
+  name: string;
+  trait: Trait;
+  traitLabel: string;
+  age: number;
+  /** "Baker at your bakery", "Weaver at Fair Fern's weaver", "Looking for work"… */
+  employerLabel: string;
+  worksForPlayer: boolean;
+  wage: number;
+  savings: number;
+  daysUnemployed: number;
+  mood: string;
+  needs: ResidentNeed[];
+  /** The resident's most recent choice, in their own words (from the rules). */
+  currentReason: string;
+  /** Timestamped events about this resident, newest first (from the feed). */
+  history: { day: number; text: string }[];
+}
+
+const TRAIT_LABEL: Record<Trait, string> = {
+  thrifty: "Thrifty",
+  loyal: "Loyal to fair bosses",
+  ambitious: "Ambitious",
+};
+
+const ROLE_BY_TYPE: Record<WorkshopType, string> = {
+  bakery: "Baker",
+  weaver: "Weaver",
+  smithy: "Smith",
+  brewery: "Brewer",
+  tailor: "Tailor",
+  tavern: "Taverner",
+  carpenter: "Carpenter",
+  apothecary: "Apothecary",
+};
 
 export interface SoloView {
   /** 1-indexed current game day, capped at the season length. */
@@ -243,6 +300,97 @@ export class SoloSession {
       bankrupt: w.bankrupt,
 
       feed,
+    };
+  }
+
+  // ── Proof: the town's coins, split by holder (always sums to 10,000) ────────
+
+  holdings(): Holdings {
+    const ledger = this.world.ledger;
+    let residents = 0;
+    for (const r of this.world.residents.values()) if (r.alive) residents += ledger.get(r.id);
+    // Departed residents' coins went to the Town Hall, but their ledger rows may
+    // linger; count every non-alive resident's balance with the Town Hall so the
+    // split still totals the full supply.
+    let strays = 0;
+    for (const r of this.world.residents.values()) if (!r.alive) strays += ledger.get(r.id);
+    let workshops = 0;
+    for (const w of this.world.workshops.values()) workshops += ledger.get(w.id);
+    const coop = ledger.get(COOP_ID);
+    const townHall = ledger.get(TOWN_HALL_ID) + strays;
+    const total = residents + workshops + coop + townHall;
+    return { residents, workshops, coop, townHall, total };
+  }
+
+  // ── Resident card ───────────────────────────────────────────────────────────
+
+  /** Ids of living residents, for a picker. */
+  residentIds(): string[] {
+    return aliveResidents(this.world).map((r) => r.id);
+  }
+
+  /** A default resident to show: the first baker at the player's shop, else
+   *  the first resident in town. */
+  private defaultResidentId(): string {
+    const first = this.workshop.workers[0];
+    if (first) return first;
+    const anyone = aliveResidents(this.world)[0];
+    return anyone ? anyone.id : "";
+  }
+
+  private employerLabel(employerId: string | null): { label: string; worksForPlayer: boolean } {
+    if (employerId === null) return { label: "Looking for work", worksForPlayer: false };
+    if (employerId === TOWN_HALL_PUBLIC_WORKS_EMPLOYER)
+      return { label: "On the town's public works", worksForPlayer: false };
+    if (employerId === COOP_ID) return { label: "Works the land for the Town Co-op", worksForPlayer: false };
+    const w = this.world.workshops.get(employerId);
+    if (!w) return { label: "Working in town", worksForPlayer: false };
+    const role = ROLE_BY_TYPE[w.type];
+    if (w.id === this.playerWorkshopId) return { label: `${role} at your bakery`, worksForPlayer: true };
+    const owner = this.world.owners.get(w.ownerId);
+    return { label: `${role} at ${owner?.name ?? "a rival"}'s ${w.type}`, worksForPlayer: false };
+  }
+
+  residentCard(id?: string): ResidentCard | null {
+    const rid = id ?? this.defaultResidentId();
+    const r = this.world.residents.get(rid);
+    if (!r) return null;
+    const { label, worksForPlayer } = this.employerLabel(r.employerId);
+    const savings = this.world.ledger.get(r.id);
+
+    const mood = r.hungryDays >= 3 ? "Struggling" : r.hungryDays >= 1 ? "Hungry" : savings < 20 ? "Getting by" : "Content";
+
+    const needs: ResidentNeed[] = [
+      r.ateToday
+        ? { label: "Bread today — bought it", status: "done" }
+        : { label: "Bread today — not yet", status: "pending" },
+      this.world.day - r.clothLastDay >= 7
+        ? { label: "Cloth this week — saving up for it", status: "pending" }
+        : { label: "Cloth this week — already has some", status: "done" },
+      { label: "Clothes once the tailor opens", status: "later" },
+    ];
+
+    const history = this.world.feed
+      .filter((e) => e.data?.resident === r.id)
+      .slice(-4)
+      .reverse()
+      .map((e) => ({ day: e.day + 1, text: e.text }));
+
+    return {
+      id: r.id,
+      name: r.name,
+      trait: r.trait,
+      traitLabel: TRAIT_LABEL[r.trait],
+      age: r.age,
+      employerLabel: label,
+      worksForPlayer,
+      wage: r.lastWage,
+      savings,
+      daysUnemployed: r.daysUnemployed,
+      mood,
+      needs,
+      currentReason: r.lastReason,
+      history,
     };
   }
 }

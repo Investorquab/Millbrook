@@ -1,0 +1,246 @@
+.proof {
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--deep);
+  box-sizing: border-box;
+  padding: 32px 48px 48px;
+}
+.proof__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.proof__backdrop img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1600px, 140%);
+  height: auto;
+  filter: blur(6px) brightness(0.3);
+}
+
+.proof__topbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.proof__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  color: var(--linen);
+}
+.proof__note {
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+.proof__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 540px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.proof__panel {
+  box-sizing: border-box;
+  border-radius: 18px;
+  background: rgba(47, 54, 64, 0.96);
+  padding: 28px 30px;
+}
+.proof__money {
+  border: 1px solid var(--river);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.proof__money h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1;
+}
+.proof__total {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.proof__total b {
+  font-family: var(--font-number);
+  font-weight: 700;
+  font-size: 84px;
+  line-height: 1;
+  color: var(--wheat-light);
+  font-variant-numeric: tabular-nums;
+}
+.proof__total span {
+  font-size: 20px;
+  color: var(--text-soft);
+}
+.proof__lede {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+.proof__bar {
+  display: flex;
+  height: 18px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.proof__legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 20px;
+  font-size: 16px;
+  margin-top: 10px;
+}
+.proof__legend span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.proof__legend-key {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.proof__legend b {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-number);
+}
+.proof__chip {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.proof__well {
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--inset);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 16px;
+}
+.proof__well-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.proof__well-row span:first-child {
+  color: var(--text-secondary);
+}
+
+.proof__side {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.proof__panel--soon {
+  border: 1px solid rgba(217, 164, 65, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.proof__panel--receipt {
+  border: 1px solid rgba(237, 230, 214, 0.16);
+}
+.proof__panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.proof__panel-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 30px;
+}
+.proof__panel-head.sm h2 {
+  font-size: 22px;
+  font-family: var(--font-body);
+}
+.proof__badge {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(94, 140, 147, 0.22);
+  color: var(--river-text);
+  white-space: nowrap;
+}
+.proof__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.proof__step {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.proof__step-dot {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--inset);
+  border: 2px solid var(--river);
+}
+.proof__step p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--text-soft);
+}
+.proof__receipt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.proof__receipt-card {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--inset);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.proof__receipt-card span {
+  display: block;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+@media (max-width: 1000px) {
+  .proof {
+    padding: 20px 20px 40px;
+  }
+  .proof__grid {
+    grid-template-columns: 1fr;
+  }
+  .proof__total b {
+    font-size: 64px;
+  }
+  .proof__receipt-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -10,6 +10,8 @@ const screens = [
   { name: "signin", path: "/signin" },
   { name: "hub", path: "/hub" },
   { name: "town", path: "/play" },
+  { name: "resident", path: "/resident" },
+  { name: "proof", path: "/proof" },
 ];
 
 for (const screen of screens) {

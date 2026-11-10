@@ -23,4 +23,7 @@ export {
   type SoloView,
   type WorkerView,
   type FeedLine,
+  type Holdings,
+  type ResidentCard,
+  type ResidentNeed,
 } from "./session.js";

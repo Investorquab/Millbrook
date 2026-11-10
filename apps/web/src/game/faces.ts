@@ -13,6 +13,12 @@ export interface FaceInfo {
   color: string;
 }
 
+/** Full-body character art src if we have it for this resident, else null. */
+export function charFor(name: string): string | null {
+  const key = name.trim().toLowerCase();
+  return KNOWN_FACES.has(key) ? `/art/char-${key}.svg` : null;
+}
+
 export function faceFor(name: string): FaceInfo {
   const key = name.trim().toLowerCase();
   const initial = name.trim().charAt(0).toUpperCase() || "?";

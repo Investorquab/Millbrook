@@ -86,6 +86,28 @@ describe("SoloSession", () => {
     expect(run()).toEqual(run());
   });
 
+  it("holdings always split the full 10,000-coin supply", () => {
+    const s = createSoloSession(42);
+    for (let d = 0; d < 10; d++) {
+      const h = s.holdings();
+      expect(h.residents + h.workshops + h.coop + h.townHall).toBe(TOTAL_COINS);
+      expect(h.total).toBe(TOTAL_COINS);
+      s.step();
+    }
+  });
+
+  it("builds a resident card with a real reason and employer", () => {
+    const s = createSoloSession(42);
+    s.hire();
+    s.step();
+    const card = s.residentCard();
+    expect(card).not.toBeNull();
+    expect(card!.name.length).toBeGreaterThan(0);
+    expect(card!.traitLabel.length).toBeGreaterThan(0);
+    expect(card!.currentReason.length).toBeGreaterThan(0);
+    expect(card!.needs.length).toBe(3);
+  });
+
   it("stops stepping once the season has ended", () => {
     const s = new SoloSession({ seed: 2, days: 3 });
     for (let d = 0; d < 10; d++) s.step();

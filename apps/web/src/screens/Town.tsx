@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN, type FeedLine } from "@millbrook/economy";
-import { useSoloSession } from "../game/useSoloSession";
+import { useSolo } from "../game/SoloProvider";
 import { faceFor } from "../game/faces";
 import "./Town.css";
 
@@ -72,7 +72,7 @@ function FeedIcon({ kind }: { kind: string }) {
 }
 
 export function Town() {
-  const { view, running, play, pause, setPrice, setWage, hire } = useSoloSession();
+  const { view, running, play, pause, setPrice, setWage, hire } = useSolo();
   const [decided, setDecided] = useState<Decided>(null);
   const [tab, setTab] = useState<"town" | "chat">("town");
 
