@@ -17,6 +17,15 @@ import {
 } from "@millbrook/shared";
 import { strategyById, type DemandSignal } from "./owners/index.js";
 import {
+  runGameMaster,
+  rawPriceFactor,
+  outputFactor,
+  workshopOutputFactor,
+  demandFactor,
+  breadPriceCeiling,
+} from "./gamemaster.js";
+import type { WeatherReading } from "./types.js";
+import {
   ALE_MAX_PER_DAY,
   COOP_MAX_WORKERS,
   COOP_MIN_WORKERS,
@@ -262,7 +271,10 @@ function noon(world: World): void {
   for (const w of world.workshops.values()) {
     if (!w.open || w.bankrupt || w.strikeDays > 0 || w.workers.length === 0) continue;
     const def = WORKSHOP_DEFS[w.type];
-    const desired = outputPerWorker(w, def);
+    // Game Master effects: a heatwave cuts every worker's output; a new machine
+    // lifts one workshop's. Both default to ×1 when no event is active.
+    const desired =
+      outputPerWorker(w, def) * outputFactor(world) * workshopOutputFactor(world, w.type);
     if (desired <= 0) continue;
     // Don't throw good money after bad: if two days of output already sit
     // unsold, skip production (and the raw-material spend) today.
@@ -278,7 +290,11 @@ function noon(world: World): void {
         const toBuy = rawNeeded - have;
         const isRaw = def.input in world.coop.rawPrices;
         if (isRaw) {
-          const price = world.coop.rawPrices[def.input as RawGood];
+          // Game Master events (drought, bumper harvest, blight, shortage) move
+          // a raw good's price; the factor is 1 when none is active.
+          const price =
+            world.coop.rawPrices[def.input as RawGood] *
+            rawPriceFactor(world, def.input as RawGood);
           const cost = Math.round(toBuy * price);
           const paid = world.ledger.payUpTo(w.id, world.coop.id, cost);
           world.coop.revenueToday += paid;
@@ -417,7 +433,9 @@ function buyGood(world: World, r: Resident, good: Good, ceiling: number): { resu
     world.unmetDemand[good] = (world.unmetDemand[good] ?? 0) + 1;
     return { result: "no_stock", price: 0 };
   }
-  const price = seller.price;
+  // A railway event caps the bread price an outside baker will undercut to; the
+  // resident pays the lower price and keeps the difference, so coins stay in town.
+  const price = good === "bread" ? Math.min(seller.price, breadPriceCeiling(world)) : seller.price;
   if (price > ceiling || price > world.ledger.get(r.id)) {
     return { result: "cant_afford", price };
   }
@@ -443,7 +461,11 @@ function night(world: World): { totalSales: number } {
     // cushion, residents spend nothing discretionary.
     const SUBSISTENCE = 20;
     const baseFromWage = r.trait === "thrifty" ? 0 : Math.floor(r.lastWage * 0.4);
-    let discretionary = savings < SUBSISTENCE ? 0 : Math.max(0, savings - target) + baseFromWage;
+    // A festival event lifts everyone's appetite to spend (demandFactor is 1 otherwise).
+    let discretionary =
+      savings < SUBSISTENCE
+        ? 0
+        : Math.floor((Math.max(0, savings - target) + baseFromWage) * demandFactor(world));
 
     // 1) Bread — the daily need. A need may dip into savings below the target.
     const bread = buyGood(world, r, "bread", savings);
@@ -596,8 +618,17 @@ function recordMetrics(world: World, totalSales: number): void {
 
 // ── Public API ──────────────────────────────────────────────────────────────
 
-/** Run one whole game day in place. */
-export function stepDay(world: World): void {
+/** Run one whole game day in place. Pass a `weather` reading to let the Game
+ *  Master act on a live feed; it falls back to a derived reading otherwise. The
+ *  Game Master is inert unless `config.gameMaster` is on. */
+export function stepDay(world: World, weather?: WeatherReading): void {
+  const fired = runGameMaster(world, weather);
+  if (fired) {
+    pushFeed(world, "gm_event", `Game Master: ${fired.title} — ${fired.effect}`, {
+      id: fired.id,
+      source: fired.source,
+    });
+  }
   dawn(world);
   noon(world);
   dusk(world);

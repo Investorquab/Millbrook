@@ -134,6 +134,74 @@ export interface SeasonConfig {
   startUnemployment?: number;
   /** Turn the Town Hall safety net (benefits + public works) on/off. */
   safetyNet?: boolean;
+  /**
+   * Run the Game Master (M4): weather/metrics-driven events from the catalog,
+   * within hard caps. Off by default so headless sims and determinism tests are
+   * unaffected; the solo game turns it on.
+   */
+  gameMaster?: boolean;
+}
+
+/**
+ * A weather reading the Game Master may act on. The OutLayer enclave supplies a
+ * real one from the feed; the pure sim derives a deterministic one from the rng
+ * so seasons stay reproducible. `source` records which, for the proof card.
+ */
+export interface WeatherReading {
+  tempC: number;
+  condition: "heat" | "storm" | "calm";
+  source: "feed" | "metrics";
+  /** Human-readable origin, e.g. "Open-Meteo, Lagos" or "derived from town metrics". */
+  label: string;
+}
+
+/** An in-flight Game Master effect and its capped parameters. */
+export interface ActiveGmEvent {
+  id: string;
+  title: string;
+  effect: string;
+  startDay: number;
+  /** Game days of effect left; expires at 0. */
+  remainingDays: number;
+  params: {
+    /** Multiplier on one raw good's price (drought, bumper, blight, shortage). */
+    rawPriceMultiplier?: number;
+    rawGood?: RawGood;
+    /** Global multiplier on worker output (heatwave). */
+    outputMultiplier?: number;
+    /** Multiplier on discretionary demand (festival). */
+    demandMultiplier?: number;
+    /** A ceiling on the bread price residents pay (railway competition). */
+    breadPriceCeiling?: number;
+    /** Multiplier on one workshop type's output (new machine). */
+    workshopOutputMultiplier?: number;
+    workshopType?: WorkshopType;
+  };
+}
+
+/** A fired Game Master event, kept for the feed and the "Why?" proof card. */
+export interface FiredGmEvent {
+  day: number;
+  id: string;
+  title: string;
+  effect: string;
+  /** One paragraph: the data read and why this event fired. */
+  reason: string;
+  /** The structured data the Game Master read (shown on the proof card). */
+  data: Record<string, number | string>;
+  /** "feed" when a real-world feed drove it, "metrics" on the fallback. */
+  source: "feed" | "metrics";
+}
+
+/** The Game Master's runtime state on the world. */
+export interface GameMasterRuntime {
+  enabled: boolean;
+  active: ActiveGmEvent[];
+  /** Day the last event fired (−Infinity = none yet); enforces ≤1 per week. */
+  lastEventDay: number;
+  /** Whether the one-off Phase-3 shock has already fired. */
+  phase3ShockDone: boolean;
+  log: FiredGmEvent[];
 }
 
 export interface World {
@@ -152,6 +220,8 @@ export interface World {
     openWorkshops: WorkshopType[];
     forceAllOwners: AiStrategyId | null;
   };
+  /** Game Master runtime (M4). Inert unless `config.gameMaster` is on. */
+  gm: GameMasterRuntime;
   feed: FeedEvent[];
   metrics: DayMetrics[];
   /** Customers turned away for want of stock last night, per good. Feeds the

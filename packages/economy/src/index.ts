@@ -9,6 +9,18 @@ export { Rng } from "./rng.js";
 export { Ledger } from "./ledger.js";
 export { createWorld } from "./state.js";
 export { stepDay, runSeason, pushFeed } from "./engine.js";
+export {
+  runGameMaster,
+  readGmMetrics,
+  deriveWeather,
+  activeGmEventIds,
+  rawPriceFactor,
+  outputFactor,
+  workshopOutputFactor,
+  demandFactor,
+  breadPriceCeiling,
+  type GmMetrics,
+} from "./gamemaster.js";
 export * as rules from "./rules.js";
 export { OWNER_STRATEGIES, strategyById } from "./owners/index.js";
 export { GOAL_CARDS, standings, type GoalCard, type OwnerScore } from "./scoring.js";
