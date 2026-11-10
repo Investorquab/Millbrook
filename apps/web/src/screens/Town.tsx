@@ -1,18 +1,21 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN, type FeedLine } from "@millbrook/economy";
+import { useSoloSession } from "../game/useSoloSession";
+import { faceFor } from "../game/faces";
 import "./Town.css";
 
 /**
- * In the town — the main HUD, ported from `design/screenshots/Town.png` with
- * the stepper and decision-card logic from `design/screens/Town.dc.html`.
+ * In the town — the main HUD, ported from `design/screenshots/Town.png` and
+ * now driven by a live solo season from `@millbrook/economy` (via
+ * {@link useSoloSession}). The steppers, stats, coins, unemployment, mood and
+ * feed all reflect the real simulation; press play to advance the days.
  *
- * The town is the hero (SVG stand-in until the R3F scene lands in M2). The
- * numbers here follow the design's placeholder formulas; M2 wires them to the
- * `@millbrook/economy` engine. Design fix applied: Ada's speech bubble is kept
- * clear of the feed panel.
+ * The town is still the SVG stand-in (the R3F scene lands next in M2). The
+ * Game Master decision card is a scripted placeholder until M4 wires the real
+ * Game Master. Design fix applied: Ada's bubble is kept clear of the feed.
  */
 
-type FeedTab = "town" | "chat";
 type Decided = null | "lock" | "wait";
 
 const CoinIcon = () => (
@@ -22,44 +25,64 @@ const CoinIcon = () => (
   </svg>
 );
 
-export function Town() {
-  const [price, setPrice] = useState(3);
-  const [wage, setWage] = useState(8);
-  const [decided, setDecided] = useState<Decided>(null);
-  const [tab, setTab] = useState<FeedTab>("town");
+const moodColor: Record<string, string> = {
+  Content: "var(--meadow-text)",
+  Uneasy: "var(--wheat-light)",
+  Strained: "var(--madder-text)",
+};
 
-  // Design placeholder model (Town.dc.html) — replaced by the economy engine
-  // when the HUD is wired to the simulation.
-  const { priceReason, wageReason, sold, profit, profitColor } = useMemo(() => {
-    const priceReason =
-      price <= 2
-        ? "Cheapest in town, but you lose a coin on every loaf."
-        : price === 3
-          ? "Same as Gus. Most residents can afford it."
-          : price === 4
-            ? "Above Gus. Thrifty residents will shop there instead."
-            : "Only well-paid residents will buy at this price.";
-    const wageReason =
-      wage < 7
-        ? "Below the town average of 7.4. Your workers may strike in 5 days."
-        : wage <= 8
-          ? "Around the town average of 7.4."
-          : "Above average. Better applicants, thinner margins.";
-    const sold = Math.max(0, 40 - (price - 3) * 9 + (wage - 8) * 2);
-    const profit = sold * price - 3 * wage - sold;
-    return {
-      priceReason,
-      wageReason,
-      sold,
-      profit,
-      profitColor: profit >= 0 ? "var(--meadow-text)" : "var(--madder-text)",
-    };
-  }, [price, wage]);
+/** A small icon for a feed line, chosen by event kind. */
+function FeedIcon({ kind }: { kind: string }) {
+  if (kind === "strike_start" || kind === "bankruptcy" || kind === "layoff") {
+    return (
+      <span className="town__feed-icon" style={{ background: "var(--madder)" }}>
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1l6 11H1z" fill="#fff" />
+        </svg>
+      </span>
+    );
+  }
+  if (kind === "phase_change" || kind === "gm_event") {
+    return (
+      <span
+        className="town__feed-icon"
+        style={{ background: "#E8E1D0", fontFamily: "var(--font-display)", fontWeight: 700, color: "#2F3640" }}
+      >
+        G
+      </span>
+    );
+  }
+  if (kind === "hire" || kind === "job_change" || kind === "migration_in") {
+    return (
+      <span className="town__feed-icon" style={{ background: "var(--river)" }}>
+        <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+          <circle cx="8" cy="5" r="3" fill="#1E242B" />
+          <path d="M2.5 14a5.5 5.5 0 0 1 11 0z" fill="#1E242B" />
+        </svg>
+      </span>
+    );
+  }
+  return (
+    <span className="town__feed-icon" style={{ background: "var(--inset)" }}>
+      <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true">
+        <circle cx="4" cy="4" r="3" fill="#B9B2A4" />
+      </svg>
+    </span>
+  );
+}
+
+export function Town() {
+  const { view, running, play, pause, setPrice, setWage, hire } = useSoloSession();
+  const [decided, setDecided] = useState<Decided>(null);
+  const [tab, setTab] = useState<"town" | "chat">("town");
 
   const toast =
     decided === "lock"
       ? "Wheat locked in at today's price for 5 days."
       : "You'll buy wheat at drought prices. Watch your margins.";
+
+  const deltaLabel =
+    view.coinsDelta === 0 ? "even today" : `${view.coinsDelta > 0 ? "+" : "−"}${Math.abs(view.coinsDelta)} today`;
 
   return (
     <div className="town">
@@ -80,17 +103,23 @@ export function Town() {
             <path d="M2 15h18" stroke="#B9B2A4" strokeWidth="1.6" />
             <path d="M5 15a6 6 0 0 1 12 0" fill="#E0703A" />
           </svg>
-          Day 12 of 28, dusk
+          Day {view.day} of {view.totalDays} · {view.phaseLabel}
         </span>
         <div className="town__speed" role="group" aria-label="Game speed">
-          <button type="button" aria-label="Pause">
+          <button type="button" aria-label="Pause" aria-pressed={!running} onClick={pause}>
             <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-              <path d="M3 2h3v10H3zM8 2h3v10H8z" fill="#EDE6D6" />
+              <path d="M3 2h3v10H3zM8 2h3v10H8z" fill={!running ? "#2F3640" : "#EDE6D6"} />
             </svg>
           </button>
-          <button type="button" aria-label="Normal speed" aria-pressed="true">
+          <button
+            type="button"
+            aria-label="Play"
+            aria-pressed={running}
+            onClick={play}
+            disabled={view.ended}
+          >
             <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-              <path d="M3 2l9 5-9 5z" fill="#2F3640" />
+              <path d="M3 2l9 5-9 5z" fill={running ? "#2F3640" : "#EDE6D6"} />
             </svg>
           </button>
           <Link to="/fast-forward" aria-label="Fast-forward a week">
@@ -104,23 +133,33 @@ export function Town() {
 
         <span className="town__coins">
           <CoinIcon />
-          <span className="town__coins-value">1,240</span>
-          <span className="town__coins-delta">+46 today</span>
+          <span className="town__coins-value">{view.coins.toLocaleString()}</span>
+          <span
+            className="town__coins-delta"
+            style={{ color: view.coinsDelta >= 0 ? "var(--meadow-text)" : "var(--madder-text)" }}
+          >
+            {deltaLabel}
+          </span>
         </span>
         <span className="town__divider" />
         <span className="town__stat">
           <span className="town__stat-label">Unemployment</span>
-          <span className="town__stat-value" style={{ color: "var(--madder-text)" }}>
-            14%
-            <svg width="10" height="10" viewBox="0 0 10 10" aria-label="rising">
-              <path d="M5 1l4 7H1z" fill="#E58A94" />
-            </svg>
+          <span
+            className="town__stat-value"
+            style={{ color: view.unemploymentPct >= 15 ? "var(--madder-text)" : "var(--text-soft)" }}
+          >
+            {view.unemploymentPct}%
+            {view.unemploymentRising && (
+              <svg width="10" height="10" viewBox="0 0 10 10" aria-label="rising">
+                <path d="M5 1l4 7H1z" fill="#E58A94" />
+              </svg>
+            )}
           </span>
         </span>
         <span className="town__stat">
           <span className="town__stat-label">Town mood</span>
-          <span className="town__stat-value" style={{ color: "var(--wheat-light)" }}>
-            Uneasy
+          <span className="town__stat-value" style={{ color: moodColor[view.mood] ?? "var(--linen)" }}>
+            {view.mood}
           </span>
         </span>
         <span className="town__divider" />
@@ -138,16 +177,17 @@ export function Town() {
           <svg className="town__bubble-tail" width="18" height="11" viewBox="0 0 18 11" aria-hidden="true">
             <path d="M0 11h18L9 0z" fill="#EDE6D6" />
           </svg>
-          <span className="town__bubble-body">Ada: bought bread with yesterday's wage</span>
+          <span className="town__bubble-body">Tap a resident to see why they chose as they did</span>
         </Link>
-        <span className="town__coinbadge">+3 coins</span>
-        <span className="town__strike">
-          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-            <path d="M7 1l6 11H1z" fill="none" stroke="#fff" strokeWidth="1.6" />
-            <path d="M7 5v3.5M7 10v.5" stroke="#fff" strokeWidth="1.6" />
-          </svg>
-          Smithy strike likely tomorrow
-        </span>
+        {view.onStrike && (
+          <span className="town__strike">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M7 1l6 11H1z" fill="none" stroke="#fff" strokeWidth="1.6" />
+              <path d="M7 5v3.5M7 10v.5" stroke="#fff" strokeWidth="1.6" />
+            </svg>
+            Your bakery is on strike
+          </span>
+        )}
       </div>
 
       {/* ── Bottom HUD ── */}
@@ -157,9 +197,39 @@ export function Town() {
           <div className="town__workshop-head">
             <h2>Your bakery</h2>
             <div className="town__crew">
-              <img src="/art/face-ada.svg" alt="Ada" />
-              <img src="/art/face-tom.svg" alt="Tom" />
-              <img src="/art/face-mara.svg" alt="Mara" />
+              {view.workers.length === 0 ? (
+                <span className="town__reason" style={{ alignSelf: "center" }}>
+                  No bakers yet
+                </span>
+              ) : (
+                view.workers.slice(0, 5).map((worker) => {
+                  const face = faceFor(worker.name);
+                  return face.src ? (
+                    <img key={worker.id} src={face.src} alt={worker.name} title={worker.name} />
+                  ) : (
+                    <span
+                      key={worker.id}
+                      title={worker.name}
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: "50%",
+                        border: "2px solid var(--millstone)",
+                        background: face.color,
+                        color: "#1E242B",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                        fontSize: 15,
+                        marginLeft: -8,
+                      }}
+                    >
+                      {face.initial}
+                    </span>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -170,23 +240,23 @@ export function Town() {
                 <button
                   type="button"
                   aria-label="Lower the bread price"
-                  onClick={() => setPrice((p) => Math.max(1, p - 1))}
-                  disabled={price <= 1}
+                  onClick={() => setPrice(view.price - 1)}
+                  disabled={view.price <= PRICE_MIN}
                 >
                   −
                 </button>
-                <span className="town__stepper-value">{price} coins</span>
+                <span className="town__stepper-value">{view.price} coins</span>
                 <button
                   type="button"
                   aria-label="Raise the bread price"
-                  onClick={() => setPrice((p) => Math.min(6, p + 1))}
-                  disabled={price >= 6}
+                  onClick={() => setPrice(view.price + 1)}
+                  disabled={view.price >= PRICE_MAX}
                 >
                   +
                 </button>
               </div>
             </div>
-            <span className="town__reason">{priceReason}</span>
+            <span className="town__reason">{view.priceReason}</span>
           </div>
 
           <div className="town__control">
@@ -196,46 +266,46 @@ export function Town() {
                 <button
                   type="button"
                   aria-label="Lower the wage"
-                  onClick={() => setWage((w) => Math.max(5, w - 1))}
-                  disabled={wage <= 5}
+                  onClick={() => setWage(view.wage - 1)}
+                  disabled={view.wage <= WAGE_MIN}
                 >
                   −
                 </button>
-                <span className="town__stepper-value">{wage} a day</span>
+                <span className="town__stepper-value">{view.wage} a day</span>
                 <button
                   type="button"
                   aria-label="Raise the wage"
-                  onClick={() => setWage((w) => Math.min(12, w + 1))}
-                  disabled={wage >= 12}
+                  onClick={() => setWage(view.wage + 1)}
+                  disabled={view.wage >= WAGE_MAX}
                 >
                   +
                 </button>
               </div>
             </div>
-            <span className="town__reason">{wageReason}</span>
+            <span className="town__reason">{view.wageReason}</span>
           </div>
 
           <div className="town__stats">
             <span>
               <span className="town__stats-label">Stock</span>
-              <b>42 loaves</b>
+              <b>{view.stock} loaves</b>
             </span>
             <span>
               <span className="town__stats-label">Sold today</span>
-              <b>{sold} loaves</b>
+              <b>{view.soldToday} loaves</b>
             </span>
             <span>
               <span className="town__stats-label">Profit today</span>
-              <b style={{ color: profitColor }}>
-                {profit >= 0 ? "+" : ""}
-                {profit}
+              <b style={{ color: view.profitToday >= 0 ? "var(--meadow-text)" : "var(--madder-text)" }}>
+                {view.profitToday >= 0 ? "+" : "−"}
+                {Math.abs(view.profitToday)}
               </b>
             </span>
           </div>
 
           <div className="town__workshop-actions">
-            <button type="button" className="town__btn-solid">
-              Hire a baker
+            <button type="button" className="town__btn-solid" onClick={hire} disabled={!view.canHire}>
+              {view.canHire ? "Hire a baker" : "Bakery is full"}
             </button>
             <button type="button" className="town__btn-ghost">
               Foreman's orders
@@ -243,7 +313,7 @@ export function Town() {
           </div>
         </section>
 
-        {/* Decision card → toast once resolved */}
+        {/* Decision card → toast once resolved (Game Master lands in M4) */}
         {decided === null ? (
           <section className="town__decision" aria-label="Decision">
             <div className="town__decision-head">
@@ -291,78 +361,30 @@ export function Town() {
         {/* Feed + chat */}
         <aside className="town__feed" aria-label="Town feed and chat">
           <div className="town__tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === "town"}
-              onClick={() => setTab("town")}
-            >
+            <button type="button" role="tab" aria-selected={tab === "town"} onClick={() => setTab("town")}>
               Town
             </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === "chat"}
-              onClick={() => setTab("chat")}
-            >
-              Chat (2)
+            <button type="button" role="tab" aria-selected={tab === "chat"} onClick={() => setTab("chat")}>
+              Chat
             </button>
           </div>
 
           {tab === "town" ? (
             <div className="town__feed-list">
-              <div className="town__feed-item">
-                <img src="/art/face-gus.svg" alt="Gus" />
-                <span>
-                  <b>Gus</b> cut smithy wages to 6. <span className="town__feed-time">Day 12, noon</span>
-                </span>
-              </div>
-              <div className="town__feed-item">
-                <img src="/art/face-tom.svg" alt="Tom" />
-                <span>
-                  <b>Tom</b> left the weaver for your bakery: 2 coins more a day.{" "}
-                  <span className="town__feed-time">Day 12, dawn</span>
-                </span>
-              </div>
-              <div className="town__feed-item">
-                <span className="town__feed-icon" style={{ background: "var(--madder)" }}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-                    <path d="M7 1l6 11H1z" fill="#fff" />
-                  </svg>
-                </span>
-                <span>
-                  Smithy workers underpaid for 4 days. They strike tomorrow unless Gus pays the town average.{" "}
-                  <span className="town__feed-time">Day 11, dusk</span>
-                </span>
-              </div>
-              <div className="town__feed-item">
-                <span
-                  className="town__feed-icon"
-                  style={{
-                    background: "#E8E1D0",
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 700,
-                    color: "#2F3640",
-                  }}
-                >
-                  G
-                </span>
-                <span>
-                  The Gazette is out: "Wage war at the smithy."{" "}
-                  <Link to="/gazette" style={{ fontWeight: 600 }}>
-                    Read it
-                  </Link>
-                </span>
-              </div>
-              <div className="town__feed-item">
-                <img src="/art/face-fern.svg" alt="Fern" />
-                <span>
-                  <b>Fern</b> offers 30 cloth for 75 coins.{" "}
-                  <button type="button" className="town__feed-linkbtn">
-                    See offer
-                  </button>
-                </span>
-              </div>
+              {view.feed.length === 0 ? (
+                <p className="town__chat-empty">
+                  The town is waking up. Press play to run the season and watch the news roll in.
+                </p>
+              ) : (
+                view.feed.map((line: FeedLine, i: number) => (
+                  <div className="town__feed-item" key={`${line.day}-${i}`}>
+                    <FeedIcon kind={line.kind} />
+                    <span>
+                      {line.text} <span className="town__feed-time">Day {line.day}</span>
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           ) : (
             <div className="town__feed-list">

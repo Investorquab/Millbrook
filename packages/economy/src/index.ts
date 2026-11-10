@@ -13,3 +13,14 @@ export * as rules from "./rules.js";
 export { OWNER_STRATEGIES, strategyById } from "./owners/index.js";
 export { GOAL_CARDS, standings, type GoalCard, type OwnerScore } from "./scoring.js";
 export { runSeasonReport, formatReport, type SeasonReport } from "./sim.js";
+export {
+  SoloSession,
+  createSoloSession,
+  PRICE_MIN,
+  PRICE_MAX,
+  WAGE_MIN,
+  WAGE_MAX,
+  type SoloView,
+  type WorkerView,
+  type FeedLine,
+} from "./session.js";

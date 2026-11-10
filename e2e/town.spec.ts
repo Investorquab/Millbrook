@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Town HUD interaction — the price/wage steppers and the Game Master decision
- * card behave as designed (logic ported from `design/screens/Town.dc.html`).
- * This runs on the desktop project; the phone project repeats it responsively.
+ * Town HUD interaction — the steppers, the hire action and the decision card,
+ * now driven by the live solo season from `@millbrook/economy`. Reasons are
+ * data-driven, so these assert behaviour (values, bounds, the reason changing)
+ * rather than exact rival names. Runs on both the desktop and phone projects.
  */
 test.describe("Town HUD", () => {
   test.beforeEach(async ({ page }) => {
@@ -13,14 +14,17 @@ test.describe("Town HUD", () => {
   test("raising the bread price updates the value and its reason", async ({ page }) => {
     const bakery = page.getByRole("region", { name: "Your bakery" });
     await expect(bakery.getByText("3 coins")).toBeVisible();
-    await expect(bakery.getByText("Same as Gus. Most residents can afford it.")).toBeVisible();
 
     await bakery.getByRole("button", { name: "Raise the bread price" }).click();
-
     await expect(bakery.getByText("4 coins")).toBeVisible();
-    await expect(bakery.getByText("Above Gus. Thrifty residents will shop there instead.")).toBeVisible();
-    // Sold falls as the price rises (40 - (4-3)*9 = 31).
-    await expect(bakery.getByText("31 loaves")).toBeVisible();
+
+    // Push to the ceiling: the reason turns to the "steep" tier and + disables.
+    const raise = bakery.getByRole("button", { name: "Raise the bread price" });
+    await raise.click();
+    await raise.click();
+    await expect(bakery.getByText("6 coins")).toBeVisible();
+    await expect(raise).toBeDisabled();
+    await expect(bakery.getByText(/Steep/)).toBeVisible();
   });
 
   test("the wage stepper clamps at its lower bound", async ({ page }) => {
@@ -30,6 +34,12 @@ test.describe("Town HUD", () => {
     for (let i = 0; i < 3; i++) await lower.click();
     await expect(bakery.getByText("5 a day")).toBeVisible();
     await expect(lower).toBeDisabled();
+  });
+
+  test("hiring a baker records it in the town feed", async ({ page }) => {
+    const bakery = page.getByRole("region", { name: "Your bakery" });
+    await bakery.getByRole("button", { name: /Hire a baker/ }).click();
+    await expect(page.getByText(/You hired/)).toBeVisible();
   });
 
   test("deciding on the drought swaps the card for a confirmation", async ({ page }) => {
