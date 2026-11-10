@@ -13,9 +13,11 @@
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
     "build": "pnpm -r --if-present build",
-    "dev": "echo \"dev (web + server) wiring lands in M2; run the sim with: pnpm sim --seed 42 --days 28\""
+    "dev": "pnpm --filter @millbrook/web dev",
+    "e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@types/node": "^22.10.2",
     "near-api-js": "^5.1.1",
     "tsx": "^4.19.2",

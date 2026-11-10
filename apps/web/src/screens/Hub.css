@@ -1,0 +1,360 @@
+.hub {
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--deep);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Deeply blurred town — a backdrop, not the hero, on this menu screen. */
+.hub__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.hub__backdrop img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1600px, 140%);
+  height: auto;
+  filter: blur(6px) brightness(0.35);
+}
+
+.hub__header {
+  position: relative;
+  z-index: 2;
+  height: 84px;
+  box-sizing: border-box;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.hub__wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 38px;
+  text-decoration: none;
+  color: var(--linen);
+}
+.hub__account {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 16px 8px 8px;
+  background: rgba(47, 54, 64, 0.92);
+  border: 1px solid rgba(237, 230, 214, 0.18);
+  border-radius: 999px;
+}
+.hub__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--river);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--deep);
+}
+.hub__account-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.hub__account-name {
+  font-weight: 700;
+  font-size: 16px;
+}
+.hub__account-rep {
+  font-size: 14px;
+  color: var(--meadow-text);
+}
+
+.hub__main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  box-sizing: border-box;
+  padding: 20px 48px 48px;
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 24px;
+  min-height: 0;
+}
+
+/* Solo hero card */
+.hub__solo {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 2px solid var(--wheat);
+  background: var(--millstone);
+  display: flex;
+  flex-direction: column;
+}
+.hub__solo-scene {
+  position: relative;
+  flex: 1;
+  min-height: 300px;
+  overflow: hidden;
+}
+.hub__solo-scene img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -46%);
+  width: 150%;
+  height: auto;
+}
+.hub__solo-tag {
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(30, 36, 43, 0.85);
+  font-size: 15px;
+  font-weight: 600;
+}
+.hub__solo-foot {
+  padding: 26px 30px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+.hub__solo-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hub__solo-copy h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1;
+}
+.hub__solo-copy p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--text-soft);
+  max-width: 440px;
+}
+
+.hub__side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+}
+.hub__panel {
+  background: rgba(47, 54, 64, 0.95);
+  border: 1px solid rgba(237, 230, 214, 0.16);
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+.hub__panel--league {
+  padding: 24px 26px;
+  border: 1px solid rgba(217, 164, 65, 0.5);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hub__panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.hub__panel-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 30px;
+}
+.hub__season {
+  font-family: var(--font-number);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+.hub__report {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--inset);
+  border-radius: 10px;
+}
+.hub__report img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.hub__report p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.hub__row {
+  padding: 22px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.hub__row h2 {
+  margin: 0 0 4px;
+  font-size: 21px;
+  font-weight: 700;
+  font-family: var(--font-body);
+}
+.hub__row p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-soft);
+}
+
+.hub__join {
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hub__join label {
+  font-size: 21px;
+  font-weight: 700;
+}
+.hub__join-row {
+  display: flex;
+  gap: 10px;
+}
+.hub__join-row input {
+  flex: 1;
+  height: 46px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #5c6672;
+  background: var(--inset);
+  color: var(--linen);
+  font: 600 18px var(--font-number);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.hub__trophies {
+  flex: 1;
+  padding: 20px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hub__trophies h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-body);
+}
+.hub__trophy-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.hub__trophy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 10px;
+  background: var(--inset);
+}
+.hub__trophy span {
+  font-size: 15px;
+  line-height: 1.2;
+}
+.hub__trophy span small {
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+/* Buttons shared by the hub */
+.hub__cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 24px;
+  background: var(--wheat);
+  color: var(--millstone);
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 19px;
+  text-decoration: none;
+  box-shadow: 0 3px 0 var(--wheat-shadow);
+}
+.hub__btn-outline {
+  align-self: flex-start;
+  padding: 11px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--wheat);
+  background: transparent;
+  color: var(--linen);
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+}
+.hub__btn-linen {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 18px;
+  border-radius: 10px;
+  background: var(--linen);
+  color: var(--millstone);
+  font-weight: 700;
+  font-size: 16px;
+  text-decoration: none;
+  border: none;
+}
+
+@media (max-width: 1000px) {
+  .hub__main {
+    grid-template-columns: 1fr;
+    padding: 16px 24px 40px;
+  }
+  .hub__solo-scene {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 560px) {
+  .hub__header {
+    padding: 0 20px;
+    height: 72px;
+  }
+  .hub__wordmark {
+    font-size: 30px;
+  }
+  .hub__account-text {
+    display: none;
+  }
+  .hub__solo-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hub__cta {
+    justify-content: center;
+  }
+}

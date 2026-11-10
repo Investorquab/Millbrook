@@ -1,0 +1,144 @@
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { color } from "../theme/tokens";
+import "./Hub.css";
+
+/**
+ * Home hub — ported from `design/screenshots/Hub.png`. The player's base: start
+ * a solo season, read the league report, host or join a room, and see trophies.
+ *
+ * League status, the report and trophies are sample data here; in M3/M5 they
+ * come from the server (league) and the contract (trophies). Copy and tokens
+ * are verbatim from the design.
+ */
+export function Hub() {
+  const navigate = useNavigate();
+  const [code, setCode] = useState("");
+
+  function onJoin(e: FormEvent) {
+    e.preventDefault();
+    if (code.trim().length === 0) return;
+    // TODO(M5): resolve the room code with the server before entering the lobby.
+    navigate("/lobby");
+  }
+
+  return (
+    <div className="hub">
+      <div className="hub__backdrop" aria-hidden="true">
+        <img src="/art/town.svg" alt="" />
+      </div>
+
+      <header className="hub__header">
+        <Link to="/" className="hub__wordmark">
+          Millbrook
+        </Link>
+        <div className="hub__account">
+          <span className="hub__avatar">M</span>
+          <span className="hub__account-text">
+            <span className="hub__account-name">millhand</span>
+            <span className="hub__account-rep">Fair employer, +42</span>
+          </span>
+        </div>
+      </header>
+
+      <main className="hub__main">
+        <section className="hub__solo">
+          <div className="hub__solo-scene">
+            <img src="/art/town.svg" alt="Millbrook seen from above" />
+            <div className="hub__solo-tag">You plus 3 AI owners</div>
+          </div>
+          <div className="hub__solo-foot">
+            <div className="hub__solo-copy">
+              <h2>Play solo</h2>
+              <p>
+                One season, about 20 minutes. Run a bakery against Gus, Fern and Rita, and fast-forward whenever you
+                like.
+              </p>
+            </div>
+            <Link to="/play" className="hub__cta">
+              Start a season
+              <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M6 4l9 6-9 6z" fill={color.millstone} />
+              </svg>
+            </Link>
+          </div>
+        </section>
+
+        <div className="hub__side">
+          <section className="hub__panel hub__panel--league">
+            <div className="hub__panel-head">
+              <h2>Your league</h2>
+              <span className="hub__season">Season 3, day 4 of 7</span>
+            </div>
+            <div className="hub__report">
+              <img src="/art/face-gus.svg" alt="Greedy Gus" />
+              <p>Your morning report is ready. Gus poached your best baker overnight.</p>
+            </div>
+            <Link to="/play" className="hub__btn-outline">
+              Read the report
+            </Link>
+          </section>
+
+          <section className="hub__panel hub__row">
+            <div>
+              <h2>Host a room</h2>
+              <p>Invite up to 3 friends. AI fills the empty shops.</p>
+            </div>
+            <Link to="/lobby" className="hub__btn-linen">
+              Create room
+            </Link>
+          </section>
+
+          <section className="hub__panel hub__join">
+            <form onSubmit={onJoin} style={{ display: "contents" }}>
+              <label htmlFor="code">Join with a code</label>
+              <div className="hub__join-row">
+                <input
+                  id="code"
+                  type="text"
+                  placeholder="MILL-4821"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                />
+                <button type="submit" className="hub__btn-linen">
+                  Join
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section className="hub__panel hub__trophies">
+            <h2>Trophies</h2>
+            <div className="hub__trophy-row">
+              <div className="hub__trophy">
+                <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+                  <path
+                    d="M16 3l3.6 7.4 8.1 1.2-5.9 5.7 1.4 8.1L16 21.6l-7.2 3.8 1.4-8.1-5.9-5.7 8.1-1.2z"
+                    fill={color.wheat}
+                  />
+                </svg>
+                <span>
+                  <b>Fair Boss</b>
+                  <br />
+                  <small>Season 2</small>
+                </span>
+              </div>
+              <div className="hub__trophy">
+                <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+                  <circle cx="16" cy="16" r="12" fill={color.meadow} />
+                  <path d="M10 16l4 4 8-8" stroke={color.deep} strokeWidth="3" fill="none" />
+                </svg>
+                <span>
+                  <b>Town Hero</b>
+                  <br />
+                  <small>Season 1</small>
+                </span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  );
+}

@@ -1,0 +1,168 @@
+.signin {
+  position: relative;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: hidden;
+  background: var(--sky);
+}
+
+/* Blurred, dimmed town behind the card — the world is still present. */
+.signin__scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 10%, #33506b 0%, #27384a 42%, #1e242b 100%);
+}
+.signin__scene img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1200px, 130%);
+  height: auto;
+  filter: blur(3px) brightness(0.55);
+}
+
+.signin__back {
+  position: absolute;
+  left: 40px;
+  top: 32px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  color: var(--linen);
+}
+
+.signin__card {
+  position: relative;
+  z-index: 2;
+  width: 500px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 40px 44px;
+  background: rgba(47, 54, 64, 0.96);
+  border: 1px solid rgba(217, 164, 65, 0.55);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.signin__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.signin__face {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--wheat);
+  flex-shrink: 0;
+}
+.signin__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1;
+  color: var(--linen);
+}
+
+.signin__lede {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+
+.signin__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.signin__field label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--linen);
+}
+.signin__field input {
+  height: 48px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #5c6672;
+  background: var(--inset);
+  color: var(--linen);
+  font: 500 17px var(--font-body);
+}
+.signin__field input::placeholder {
+  color: var(--text-secondary);
+}
+.signin__hint {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.signin__submit {
+  display: flex;
+  justify-content: center;
+  padding: 15px 20px;
+  background: var(--wheat);
+  color: var(--millstone);
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 18px;
+  text-decoration: none;
+  box-shadow: 0 3px 0 var(--wheat-shadow);
+  transition: transform 0.08s ease;
+}
+.signin__submit:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--wheat-shadow);
+}
+.signin__submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.signin__guest {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.signin__guest a {
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .signin {
+    place-items: start center;
+    padding: 0;
+  }
+  .signin__back {
+    left: 20px;
+    top: 20px;
+  }
+  .signin__card {
+    width: 100%;
+    min-height: 100dvh;
+    border: none;
+    border-radius: 0;
+    padding: 96px 24px 40px;
+    justify-content: center;
+    box-shadow: none;
+  }
+  .signin__title {
+    font-size: 36px;
+  }
+}
