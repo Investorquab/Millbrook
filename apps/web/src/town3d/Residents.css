@@ -1,0 +1,53 @@
+/* Speech bubbles over the 3D residents. Rendered via drei <Html>, so they are
+   plain DOM floating at a projected 3D point. Matches the linen 2D bubble in
+   the HUD. Never interactive — clicks must reach the HUD beneath the scene. */
+.town3d-bubble {
+  pointer-events: none;
+  user-select: none;
+  position: relative;
+  /* Size to the text (one line) but wrap once it would exceed this, instead of
+     collapsing to min-content — drei <Html> otherwise shrinks to the widest
+     word. */
+  width: max-content;
+  max-width: 150px;
+  padding: 5px 9px 6px;
+  border-radius: 9px;
+  background: var(--linen, #ede6d6);
+  color: #2f3640;
+  font-family: var(--font-body, system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.38);
+  transform: translateY(-14px);
+  animation: town3d-bubble-in 260ms ease-out;
+}
+/* little tail pointing down to the resident */
+.town3d-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid var(--linen, #ede6d6);
+}
+@keyframes town3d-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-14px) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .town3d-bubble {
+    animation: none;
+  }
+}

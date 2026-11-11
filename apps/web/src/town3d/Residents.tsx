@@ -11,17 +11,32 @@
  * live from the simulation. Capped well under the ~40-character budget, and the
  * whole layer goes still under prefers-reduced-motion (frameloop "demand").
  */
-import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { Html } from "@react-three/drei";
 import type { Group } from "three";
 import { COOP_ID, type WorkshopType } from "@millbrook/shared";
 import { rules } from "@millbrook/economy";
 import { useSolo } from "../game/SoloProvider";
 import { diorama, tradeColor } from "./palette";
 import { COOP, HOUSES, MINE, TOWN_HALL, WELL, WORKSHOPS, type Vec2 } from "./layout";
+import "./Residents.css";
 
 const SKIN = ["#e4b58e", "#c88e63", "#a56a40", "#8a5635"];
 const MAX_FIGURES = 16;
+
+/** How many residents murmur a reason at once, and how long each one dwells. */
+const BUBBLES_AT_ONCE = 2;
+const BUBBLE_DWELL_MS = 3800;
+
+const reducedMotion =
+  typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+/** Trim a reason to one tidy line for the bubble. */
+function shortReason(text: string): string {
+  const t = text.trim();
+  return t.length > 52 ? `${t.slice(0, 51).trimEnd()}…` : t;
+}
 
 type OwnerKey = "gus" | "fern" | "sam" | "rita";
 
@@ -45,9 +60,11 @@ interface FigureProps {
   seed: string;
   outfit: string;
   owner?: OwnerKey;
+  /** When set, a speech bubble floats above this figure with their reason. */
+  bubble?: string;
 }
 
-function Person({ waypoints, seed, outfit, owner }: FigureProps) {
+function Person({ waypoints, seed, outfit, owner, bubble }: FigureProps) {
   const ref = useRef<Group>(null);
   const legL = useRef<Group>(null);
   const legR = useRef<Group>(null);
@@ -161,6 +178,11 @@ function Person({ waypoints, seed, outfit, owner }: FigureProps) {
           <meshStandardMaterial color={hatColor} flatShading />
         </mesh>
       )}
+      {bubble && (
+        <Html position={[0, 2.35, 0]} center zIndexRange={[60, 0]} pointerEvents="none">
+          <div className="town3d-bubble">{bubble}</div>
+        </Html>
+      )}
     </group>
   );
 }
@@ -211,16 +233,55 @@ export function Residents() {
       // well and a home. A touch of jitter so paths don't overlap exactly.
       const work = jitter(a.pos, r.id, 11, 1.0);
       const rest = jitter(home, r.id, 13, 0.7);
-      return { id: r.id, waypoints: [work, rest] as [Vec2, Vec2], outfit: a.outfit };
+      return {
+        id: r.id,
+        waypoints: [work, rest] as [Vec2, Vec2],
+        outfit: a.outfit,
+        reason: shortReason(r.lastReason),
+      };
     });
 
     return { owners, folk };
   }, [session, view.day]);
 
+  // A couple of residents murmur their reason at a time, cycling slowly so the
+  // whole town gets a turn. Reasons come straight from the rules (`lastReason`).
+  const [cycle, setCycle] = useState(0);
+  useEffect(() => {
+    if (reducedMotion) return; // keep a static pair under reduced motion
+    const id = setInterval(() => setCycle((c) => c + 1), BUBBLE_DWELL_MS);
+    return () => clearInterval(id);
+  }, []);
+  // Repaint when the pair changes, so bubbles reposition under the "demand"
+  // frameloop that reduced-motion uses.
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    invalidate();
+  }, [cycle, invalidate]);
+
+  const speaking = useMemo(() => {
+    const idx = new Set<number>();
+    const n = folk.length;
+    if (n > 0) {
+      const base = ((cycle % n) + n) % n;
+      idx.add(base);
+      for (let k = 1; k < Math.min(BUBBLES_AT_ONCE, n); k++) {
+        idx.add((base + Math.floor((k * n) / BUBBLES_AT_ONCE)) % n);
+      }
+    }
+    return idx;
+  }, [cycle, folk.length]);
+
   return (
     <group>
-      {folk.map((f) => (
-        <Person key={f.id} waypoints={f.waypoints} seed={f.id} outfit={f.outfit} />
+      {folk.map((f, i) => (
+        <Person
+          key={f.id}
+          waypoints={f.waypoints}
+          seed={f.id}
+          outfit={f.outfit}
+          bubble={speaking.has(i) ? f.reason : undefined}
+        />
       ))}
       {owners.map((o) => (
         <Person key={`owner-${o.key}`} waypoints={o.waypoints} seed={`owner-${o.key}`} outfit={o.outfit} owner={o.key} />

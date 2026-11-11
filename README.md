@@ -32,9 +32,11 @@ Hall. Residents work, get paid, shop, change jobs, strike and migrate; AI owners
 
 ### The game (`apps/web`)
 A React + React Three Fiber solo game: a low-poly mill town at dusk whose shops react
-to the simulation, walking residents, and a gold coin-flow on sales. Nine screens
-ported from the approved designs — Title, Sign-in, Hub, Town (3D HUD), Resident, Proof,
-Fast-forward, Scoreboard, Gazette. Rule tooltips explain every number.
+to the simulation, walking residents who float speech bubbles with their real reason
+(straight from the rules — "Bought today's bread", "Left the weaver for the smithy"),
+and a gold coin-flow on sales. Nine screens ported from the approved designs — Title,
+Sign-in, Hub, Town (3D HUD), Resident, Proof, Fast-forward, Scoreboard, Gazette. Rule
+tooltips explain every number.
 
 - Acceptance test passes: a new player signs in, hires a worker, sets a price and
   sees a sale within 60 seconds.
