@@ -88,6 +88,7 @@ export function createWorld(config: SeasonConfig): World {
       // is unchanged.
       age: rng.int(18, 70),
       retired: false,
+      childUntilDay: 0,
       employerId: null,
       lastWage: 0,
       daysUnemployed: 0,

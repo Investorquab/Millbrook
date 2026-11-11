@@ -318,6 +318,7 @@ function migrationWave(world: World, n: number): number {
       trait: world.rng.pick(["thrifty", "loyal", "ambitious"]),
       age: world.rng.int(18, 50),
       retired: false,
+      childUntilDay: 0,
       employerId: null,
       lastWage: stipend,
       daysUnemployed: 0,

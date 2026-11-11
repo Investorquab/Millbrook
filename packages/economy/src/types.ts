@@ -24,6 +24,12 @@ export interface Resident {
   age: number;
   /** Retired from work (age ≥ 65): out of the labour force, living on savings. */
   retired: boolean;
+  /**
+   * A dependent child until this game day (0 for everyone born an adult). Before
+   * it, the resident is out of the labour force but still a mouth to feed; on or
+   * after it they start looking for work.
+   */
+  childUntilDay: number;
   /** Workshop id or the Co-op id, or null when unemployed. */
   employerId: string | null;
   /** Coins earned at the most recent dusk. */

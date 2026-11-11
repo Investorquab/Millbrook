@@ -3,7 +3,7 @@ import { TOTAL_COINS, TOWN_HALL_ID } from "@millbrook/shared";
 import { createWorld } from "./state.js";
 import { stepDay } from "./engine.js";
 import { runAgeing, RETIRE_AGE, DEATH_AGE, ESTATE_TAX_RATE } from "./ageing.js";
-import { unemploymentRate, aliveResidents } from "./rules.js";
+import { unemploymentRate, aliveResidents, isDependentChild, labourForce } from "./rules.js";
 
 function newWorld(ageing: boolean, seed = 42) {
   return createWorld({ seed, days: 28, ageing });
@@ -48,8 +48,10 @@ describe("ageing, retirement, death and inheritance", () => {
       expect(r.age).toBeGreaterThanOrEqual(RETIRE_AGE);
       expect(r.employerId).toBeNull(); // not working
     }
-    // A retiree is out of the labour force: not counted as unemployed.
-    const labour = aliveResidents(world).filter((r) => !r.retired);
+    // A retiree is out of the labour force: not counted as unemployed. (Dependent
+    // children are out of it too, so match the engine's definition.)
+    const isChild = (r: (typeof retired)[number]) => r.childUntilDay > 0 && world.day < r.childUntilDay;
+    const labour = aliveResidents(world).filter((r) => !r.retired && !isChild(r));
     const unemployed = labour.filter((r) => r.employerId === null).length;
     expect(unemploymentRate(world)).toBeCloseTo(labour.length ? unemployed / labour.length : 0, 9);
   });
@@ -90,6 +92,29 @@ describe("ageing, retirement, death and inheritance", () => {
     expect(victim!.alive).toBe(false);
     expect(world.ledger.get(TOWN_HALL_ID)).toBe(hallBefore + estate);
     world.ledger.assertInvariant(TOTAL_COINS);
+  });
+
+  it("a thriving town has children, who are dependents then join the workforce", () => {
+    const world = newWorld(true);
+    let sawChild = false;
+    for (let i = 0; i < 28; i++) {
+      stepDay(world);
+      world.ledger.assertInvariant(TOTAL_COINS);
+      if (aliveResidents(world).some((r) => isDependentChild(r, world.day))) sawChild = true;
+    }
+    // At least one birth happened over a healthy season.
+    expect(world.feed.some((e) => e.kind === "birth")).toBe(true);
+    expect(sawChild).toBe(true);
+    // Dependent children are out of the labour force (not counted as unemployed).
+    for (const r of labourForce(world)) {
+      expect(isDependentChild(r, world.day)).toBe(false);
+    }
+  });
+
+  it("has no births when ageing is off", () => {
+    const world = newWorld(false);
+    for (let i = 0; i < 28; i++) stepDay(world);
+    expect(world.feed.some((e) => e.kind === "birth")).toBe(false);
   });
 
   it("is deterministic under the same seed", () => {

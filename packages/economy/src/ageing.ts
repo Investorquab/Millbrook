@@ -11,7 +11,7 @@
 
 import { TOWN_HALL_ID } from "@millbrook/shared";
 import type { Resident, World } from "./types.js";
-import { aliveResidents } from "./rules.js";
+import { aliveResidents, unemploymentRate, isDependentChild } from "./rules.js";
 import { pushFeed } from "./engine.js";
 
 /** A game week is seven days; residents age a year each week. */
@@ -22,6 +22,16 @@ export const RETIRE_AGE = 65;
 export const DEATH_AGE = 72;
 /** Share of an estate taken by the Town Hall when there is an heir. */
 export const ESTATE_TAX_RATE = 0.1;
+/** A child born today starts looking for work after two game weeks. */
+export const CHILD_GROWS_IN_DAYS = 14;
+/** A parent needs at least this much saved to start a family. */
+const BIRTH_SAVINGS_MIN = 60;
+/** Coins a parent sets aside for a newborn (capped by their savings). */
+const BIRTH_ENDOWMENT = 12;
+/** Births pause above this town size, so a season can't run away. */
+const MAX_POPULATION = 45;
+/** Names for the town's children. */
+const CHILD_NAMES = ["Pip", "Nell", "Bo", "Tam", "Lux", "Fen", "Ivy", "Rue"];
 
 /**
  * Run the weekly demographic step. A no-op unless ageing is on and today closes a
@@ -45,9 +55,62 @@ export function runAgeing(world: World): void {
     if (r.age >= DEATH_AGE) passAway(world, r);
   }
 
-  // 4) Once a season, an AI owner retires and their shop goes up for auction —
+  // 4) A comfortable, thriving town has children — more mouths now, more hands
+  //    in two weeks.
+  maybeHaveChild(world);
+
+  // 5) Once a season, an AI owner retires and their shop goes up for auction —
   //    the moment that puts the bankruptcy-auction system in front of the player.
   maybeRetireAnOwner(world);
+}
+
+/**
+ * A comfortable, employed resident in a thriving town may have a child, who is a
+ * dependent (a mouth to feed, out of the labour force) until they grow up two
+ * game weeks later. The parent sets aside a small endowment — only coins move,
+ * so the 10,000 total holds. Conservative by design (a healthy town only, one a
+ * week, capped) so population can't run away and destabilise the season.
+ */
+function maybeHaveChild(world: World): void {
+  const alive = aliveResidents(world);
+  if (alive.length >= MAX_POPULATION) return;
+  if (unemploymentRate(world) >= 0.1) return; // only a thriving town grows
+
+  const parents = alive.filter(
+    (r) =>
+      !r.retired &&
+      !isDependentChild(r, world.day) &&
+      r.employerId !== null &&
+      world.ledger.get(r.id) >= BIRTH_SAVINGS_MIN,
+  );
+  if (parents.length === 0) return;
+
+  const parent = world.rng.pick(parents);
+  const id = `r${world.nextResidentNumber++}`;
+  world.ledger.ensure(id);
+  world.ledger.payUpTo(parent.id, id, BIRTH_ENDOWMENT);
+  const name = CHILD_NAMES[world.rng.int(0, CHILD_NAMES.length - 1)]!;
+  world.residents.set(id, {
+    id,
+    name,
+    trait: world.rng.pick(["thrifty", "loyal", "ambitious"]),
+    age: 0,
+    retired: false,
+    childUntilDay: world.day + CHILD_GROWS_IN_DAYS,
+    employerId: null,
+    lastWage: 0,
+    daysUnemployed: 0,
+    clothLastDay: world.day,
+    clothesLastDay: world.day,
+    ateToday: false,
+    hungryDays: 0,
+    alive: true,
+    lastReason: "Born in Millbrook.",
+  });
+  pushFeed(world, "birth", `A child, ${name}, was born to ${parent.name}; they'll start work in two weeks.`, {
+    resident: id,
+    parent: parent.id,
+  });
 }
 
 /** The game-day window in which the one owner-retirement beat may fire. */

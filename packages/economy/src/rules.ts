@@ -204,14 +204,24 @@ export function aliveResidents(world: World): Resident[] {
   return [...world.residents.values()].filter((r) => r.alive);
 }
 
+/** A child too young to work yet (still a mouth to feed, not in the labour force). */
+export function isDependentChild(resident: Resident, day: number): boolean {
+  return resident.childUntilDay > 0 && day < resident.childUntilDay;
+}
+
+/** Residents in the labour force: alive, not retired, not a dependent child. */
+export function labourForce(world: World): Resident[] {
+  return aliveResidents(world).filter((r) => !r.retired && !isDependentChild(r, world.day));
+}
+
 export function employedCount(world: World): number {
   return aliveResidents(world).filter((r) => r.employerId !== null).length;
 }
 
 export function unemploymentRate(world: World): number {
-  // Retirees are out of the labour force, so they count toward neither the
-  // numerator nor the denominator.
-  const labour = aliveResidents(world).filter((r) => !r.retired);
+  // Retirees and dependent children are out of the labour force, so they count
+  // toward neither the numerator nor the denominator.
+  const labour = labourForce(world);
   if (labour.length === 0) return 0;
   const unemployed = labour.filter((r) => r.employerId === null).length;
   return unemployed / labour.length;
@@ -330,9 +340,10 @@ export function updateStrike(w: Workshop, world: World): Reasoned<boolean> {
 }
 
 /** Would this resident leave town today? */
-export function shouldMigrateOut(resident: Resident, savings: number): Reasoned<boolean> {
-  // Retirees live on their savings; they don't leave town for lack of work.
+export function shouldMigrateOut(resident: Resident, savings: number, day: number): Reasoned<boolean> {
+  // Retirees and dependent children don't leave town for lack of work.
   if (resident.retired) return { value: false, reason: "Retired in Millbrook, living on savings." };
+  if (isDependentChild(resident, day)) return { value: false, reason: "A child, growing up in Millbrook." };
   if (
     resident.employerId === null &&
     resident.daysUnemployed >= MIGRATION_OUT_UNEMPLOYED_DAYS &&

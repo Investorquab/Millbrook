@@ -27,6 +27,7 @@ import {
   TOWN_HALL_PUBLIC_WORKS_EMPLOYER,
   WORKSHOP_DEFS,
   aliveResidents,
+  isDependentChild,
   townAverageWage,
   unemploymentRate,
 } from "./rules.js";
@@ -946,7 +947,11 @@ export class SoloSession {
     const r = this.world.residents.get(rid);
     if (!r) return null;
     const emp = this.employerLabel(r.employerId);
-    const label = r.retired ? "Retired — living on savings" : emp.label;
+    const label = r.retired
+      ? "Retired — living on savings"
+      : isDependentChild(r, this.world.day)
+        ? `A child — starts work on day ${r.childUntilDay + 1}`
+        : emp.label;
     const worksForPlayer = emp.worksForPlayer;
     const savings = this.world.ledger.get(r.id);
 
@@ -1031,6 +1036,7 @@ export class SoloSession {
       phase_change: 4,
       retire: 3,
       wage_change: 3,
+      birth: 2,
       migration_in: 2,
       migration_out: 2,
       strike_end: 2,
@@ -1273,6 +1279,8 @@ export class SoloSession {
     const departures = pick(["migration_out"]);
     const deaths = pick(["death"]);
     const retirements = pick(["retire"]);
+    const births = pick(["birth"]);
+    if (births.length) comingsAndGoings.push(births[0]!.text);
     if (deaths.length) comingsAndGoings.push(deaths[0]!.text);
     if (retirements.length) comingsAndGoings.push(retirements[0]!.text);
     if (arrivals.length) comingsAndGoings.push(arrivals[0]!.text);

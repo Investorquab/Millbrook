@@ -58,7 +58,7 @@ function FeedIcon({ kind }: { kind: string }) {
       </span>
     );
   }
-  if (kind === "hire" || kind === "job_change" || kind === "migration_in" || kind === "auction") {
+  if (kind === "hire" || kind === "job_change" || kind === "migration_in" || kind === "auction" || kind === "birth") {
     return (
       <span className="town__feed-icon" style={{ background: "var(--river)" }}>
         <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">

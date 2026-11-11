@@ -37,6 +37,7 @@ import {
   UNEMPLOYMENT_BENEFIT,
   WORKSHOP_DEFS,
   aliveResidents,
+  isDependentChild,
   chooseSeller,
   migrationInCount,
   needsCloth,
@@ -77,7 +78,7 @@ function tailorOpen(world: World): boolean {
 
 function unemployedIds(world: World): string[] {
   return aliveResidents(world)
-    .filter((r) => r.employerId === null && !r.retired)
+    .filter((r) => r.employerId === null && !r.retired && !isDependentChild(r, world.day))
     .map((r) => r.id);
 }
 
@@ -547,7 +548,7 @@ function endOfDay(world: World, totalSales: number): void {
   // Migration out — coins stay in town (to the Town Hall) so the total holds.
   for (const r of aliveResidents(world)) {
     const savings = world.ledger.get(r.id);
-    if (shouldMigrateOut(r, savings).value) {
+    if (shouldMigrateOut(r, savings, world.day).value) {
       r.alive = false;
       if (r.employerId) {
         const w = world.workshops.get(r.employerId);
@@ -572,6 +573,7 @@ function endOfDay(world: World, totalSales: number): void {
       trait: world.rng.pick(["thrifty", "loyal", "ambitious"]),
       age: world.rng.int(18, 50),
       retired: false,
+      childUntilDay: 0,
       employerId: null,
       lastWage: stipend,
       daysUnemployed: 0,

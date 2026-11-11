@@ -63,6 +63,11 @@ tooltips explain every number.
   passing to an heir in town minus a 10% estate tax to the Town Hall (all to the
   Town Hall with no heir). Every coin stays in town, so the total never leaves
   10,000; retirements and deaths show up in the feed and the Gazette.
+- And the town **grows**: in a thriving, low-unemployment week a comfortable
+  resident has a child — a dependent (a mouth to feed, out of the labour force)
+  who starts looking for work two game weeks later. Births are conservative and
+  capped so a season can't run away, and the parent's small endowment only moves
+  coins, so the total stays 10,000.
 - A workshop that **can't pay wages for three days goes bankrupt** — and its
   premises don't sit empty: they go to **auction**. Around mid-season an AI owner
   also retires and puts their shop up, so you reliably get the chance to **bid**:
@@ -191,7 +196,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- Births and families; Tailor and Tavern; goal cards for the new systems
+- Tailor and Tavern; goal cards for the new systems; elections and minimum wage
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---
