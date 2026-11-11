@@ -5,12 +5,17 @@ import "./Proof.css";
 
 /**
  * Proof — ported from `design/screenshots/Proof.png`. The left panel is live and
- * true right now: the town's coins and how they're split always sum to 10,000,
- * read straight from the simulation's ledger. The per-coin trace, the settlement
- * links and the Game Master receipt depend on the on-chain settlement (M3) and
- * the Game Master (M4), so they're shown here as what's coming, clearly marked —
- * the README keeps those under Roadmap until they run.
+ * true: the town's coins and how they're split always sum to 10,000, read
+ * straight from the simulation's ledger. The contract that enforces that total
+ * is live on NEAR testnet (`millbrook.testnet`): it is seeded to 10,000, audited
+ * on-chain after every settlement, emits a NEP-297 event per move, and anchors a
+ * Game Master receipt — all demonstrated on testnet (see the explorer links and
+ * the README). The in-browser season is the deterministic sim; the server posts
+ * its net daily transfers to that contract.
  */
+
+const CONTRACT_ID = "millbrook.testnet";
+const EXPLORER = `https://testnet.nearblocks.io/address/${CONTRACT_ID}`;
 
 const SLICES = [
   { key: "residents", label: "Residents", color: color.meadow },
@@ -38,7 +43,12 @@ export function Proof() {
           </svg>
           Back to town
         </Link>
-        <span className="proof__note">The coin total is enforced by the game contract on NEAR testnet</span>
+        <span className="proof__note">
+          The coin total is enforced by the{" "}
+          <a className="proof__link" href={EXPLORER} target="_blank" rel="noreferrer">
+            game contract live on NEAR testnet ↗
+          </a>
+        </span>
       </div>
 
       <div className="proof__grid">
@@ -80,11 +90,17 @@ export function Proof() {
           <div className="proof__well">
             <div className="proof__well-row">
               <span>Settlement</span>
-              <span>Batched each game day at dusk — on testnet in M3</span>
+              <span>Batched each game day; posted to the contract on NEAR testnet</span>
             </div>
             <div className="proof__well-row">
               <span>Contract</span>
-              <span>NEP-245 items + coins, no admin key</span>
+              <a className="proof__link" href={EXPLORER} target="_blank" rel="noreferrer">
+                {CONTRACT_ID} ↗
+              </a>
+            </div>
+            <div className="proof__well-row">
+              <span>Guarantee</span>
+              <span>No admin key — no mint, no burn</span>
             </div>
           </div>
         </section>
@@ -94,12 +110,16 @@ export function Proof() {
           <section className="proof__panel proof__panel--soon" aria-label="Follow a coin">
             <div className="proof__panel-head">
               <h2>Follow a coin</h2>
-              <span className="proof__badge">With settlement · M3</span>
+              <span className="proof__badge proof__badge--live">NEP-297 · no indexer</span>
             </div>
             <p className="proof__lede" style={{ fontSize: 16 }}>
-              Every wage, sale and purchase already moves coins between the same accounts the contract will settle. Once
-              the daily batch posts to NEAR testnet, this traces one coin's path — wage to bread to wheat to farm wage —
-              each hop a real transaction you can open on the explorer.
+              Every wage, sale and purchase moves coins between the accounts the contract settles, and each move emits a
+              NEP-297 event — so one coin's path (wage → bread → wheat → farm wage) reads straight off the chain with no
+              indexer, each hop a real transaction on the{" "}
+              <a className="proof__link" href={EXPLORER} target="_blank" rel="noreferrer">
+                explorer ↗
+              </a>
+              .
             </p>
             <div className="proof__steps" aria-hidden="true">
               <div className="proof__step">
@@ -121,7 +141,7 @@ export function Proof() {
           <section className="proof__panel proof__panel--receipt" aria-label="Game Master receipt">
             <div className="proof__panel-head sm">
               <h2>Game Master receipt</h2>
-              <span className="proof__badge proof__badge--live">Live · M4</span>
+              <span className="proof__badge proof__badge--live">Live · testnet</span>
             </div>
             <p className="proof__lede" style={{ fontSize: 15 }}>
               Each event reads a real-world feed (the weather) plus the town's own metrics, picks one event within the

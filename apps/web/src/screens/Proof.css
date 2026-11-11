@@ -45,6 +45,18 @@
   color: var(--text-secondary);
 }
 
+/* Explorer / contract links — the river accent, since the chain is the Proof. */
+.proof__link {
+  color: var(--river-text);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.proof__link:hover {
+  color: var(--wheat-light);
+  text-decoration: underline;
+}
+
 .proof__grid {
   position: relative;
   z-index: 1;
