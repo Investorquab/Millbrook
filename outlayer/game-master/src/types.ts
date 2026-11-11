@@ -65,11 +65,14 @@ export interface GmDecision {
   model: string | null;
 }
 
-/** The receipt the enclave returns. In a real OutLayer TEE the attestation is a
- *  hardware quote; the local fallback marks itself unattested. The hashes let
- *  anyone recompute and verify the decision against the inputs. */
+/** The receipt the job returns, labelled by where the decision was actually
+ *  made: "outlayer-tee" only when the job ran inside an OutLayer enclave (a real
+ *  hardware quote — not wired yet); "near-ai-cloud" when NEAR AI Cloud chose the
+ *  event on the game server; "local-fallback" when the deterministic template
+ *  picked it. The hashes let anyone recompute and verify the decision against the
+ *  inputs regardless. We never claim a TEE attestation we didn't get. */
 export interface GmReceipt {
-  enclave: "outlayer-tee" | "local-fallback";
+  enclave: "outlayer-tee" | "near-ai-cloud" | "local-fallback";
   attestation: string;
   model: string | null;
   feedSource: "feed" | "fallback";

@@ -107,8 +107,11 @@ export async function runGameMasterJob(town: TownSnapshot, deps: JobDeps = {}): 
       reasoningSource: "near-ai",
       model: choice.model,
     };
-    enclave = "outlayer-tee";
-    attestation = "TEE attestation attached by the OutLayer enclave at run time";
+    // Honest labelling: the pick was made by NEAR AI Cloud on the game server,
+    // not inside an OutLayer TEE. "outlayer-tee" is reserved for a real enclave
+    // run (not wired yet). The decision is still reproducible from the hashes.
+    enclave = "near-ai-cloud";
+    attestation = `Chosen by NEAR AI Cloud (model ${choice.model}) on the game server — not an OutLayer TEE. Verify the decision by recomputing the hashes below.`;
     model = choice.model;
   } catch (e) {
     notes.push(`NEAR AI unavailable (${(e as Error).message}) — deterministic pick + template reasoning.`);

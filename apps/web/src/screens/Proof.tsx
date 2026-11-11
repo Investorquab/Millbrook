@@ -125,7 +125,7 @@ export function Proof() {
             </div>
             <p className="proof__lede" style={{ fontSize: 15 }}>
               Each event reads a real-world feed (the weather) plus the town's own metrics, picks one event within the
-              caps the contract enforces, and the decision is anchored on NEAR testnet by the enclave's{" "}
+              caps the contract enforces, and the decision is anchored on NEAR testnet via the contract's{" "}
               <code>record_receipt</code>.
             </p>
             {gmEvents.length === 0 ? (

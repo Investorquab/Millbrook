@@ -86,7 +86,9 @@ describe("OutLayer Game Master job", () => {
     // The params came from the capped candidate, not the model's 9999.
     const caps = capsById.get(r.decision!.eventId)!;
     expect(r.decision!.params.durationDays).toBeLessThanOrEqual(caps.maxDays);
-    expect(r.receipt.enclave).toBe("outlayer-tee");
+    // Honest: NEAR AI chose it on the server — we don't claim a TEE we didn't use.
+    expect(r.receipt.enclave).toBe("near-ai-cloud");
+    expect(r.receipt.attestation).not.toMatch(/TEE attestation/i);
   });
 
   it("falls back if the model picks an out-of-range event", async () => {
