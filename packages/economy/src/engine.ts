@@ -51,6 +51,7 @@ import {
   reputationStep,
   REPUTATION_MIN,
   REPUTATION_MAX,
+  perceivedWage,
 } from "./rules.js";
 import type { DayMetrics, Resident, Workshop, World } from "./types.js";
 
@@ -189,10 +190,11 @@ function runLabourMarket(world: World, targets: Map<string, number>): void {
     }
   }
 
-  // 2) Hire the unemployed into openings (highest wage first).
+  // 2) Hire the unemployed into openings. Applicants favour the best offer, and
+  //    a fair owner's standing sweetens it (ruthless shops fill last).
   const openings = [...world.workshops.values()]
     .filter((w) => w.open && !w.bankrupt && w.workers.length < (targets.get(w.id) ?? 0))
-    .sort((a, b) => b.wage - a.wage);
+    .sort((a, b) => perceivedWage(world, b) - perceivedWage(world, a));
   for (const w of openings) {
     const target = targets.get(w.id) ?? w.workers.length;
     while (w.workers.length < target) {
@@ -209,16 +211,23 @@ function runLabourMarket(world: World, targets: Map<string, number>): void {
   }
 
   // 3) Poaching: a worker switches for at least +1 coin a day where there's room.
+  //    Workers judge the offer by its perceived wage, so a fair shop holds its
+  //    people and a ruthless one bleeds them (GAME_DESIGN reputation).
   for (const r of aliveResidents(world)) {
     if (r.employerId === null) continue;
     const current = world.workshops.get(r.employerId);
-    const currentWage = current ? current.wage : world.coop.wage;
+    const currentWage = current ? perceivedWage(world, current) : world.coop.wage;
     let best: Workshop | null = null;
+    let bestWage = currentWage;
     for (const w of world.workshops.values()) {
       if (!w.open || w.bankrupt || w.strikeDays > 0) continue;
       if (w.id === r.employerId) continue;
       if (w.workers.length >= w.maxWorkers) continue;
-      if (w.wage >= currentWage + 1 && (!best || w.wage > best.wage)) best = w;
+      const pw = perceivedWage(world, w);
+      if (pw >= currentWage + 1 && pw > bestWage) {
+        best = w;
+        bestWage = pw;
+      }
     }
     if (best) {
       // Leave the old employer.
@@ -226,8 +235,9 @@ function runLabourMarket(world: World, targets: Map<string, number>): void {
       else world.coop.workers = world.coop.workers.filter((id) => id !== r.id);
       best.workers.push(r.id);
       const from = current ? current.type : "Co-op";
+      const fromWage = current ? current.wage : world.coop.wage;
       r.employerId = best.id;
-      r.lastReason = `Left the ${from} for the ${best.type}: ${best.wage} beats ${currentWage}.`;
+      r.lastReason = `Left the ${from} for the ${best.type}: ${best.wage} beats ${fromWage}.`;
       pushFeed(world, "job_change", `${r.name} left the ${from} for ${ownerName(world, best)}'s ${best.type}.`, { resident: r.id, workshop: best.id });
     }
   }

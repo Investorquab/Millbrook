@@ -40,7 +40,9 @@ Fast-forward, Scoreboard, Gazette. Rule tooltips explain every number.
   sees a sale within 60 seconds.
 - The season-end Scoreboard ranks owners by the goal card and shows each owner's
   **reputation** (−100 Ruthless … +100 Fair), which moves with wages against the
-  town average, layoffs and strikes.
+  town average, layoffs and strikes — and feeds back into the game: fair owners
+  draw and keep workers, ruthless ones lose them faster (pay is unchanged, so the
+  10,000-coin invariant holds).
 
 ### The chain (`contracts/millbrook`) — **live on testnet**
 A Rust (near-sdk) economy ledger. A pure `millbrook-ledger` core holds the invariant
@@ -151,8 +153,6 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture and
 - Trade offers between players, and deeper moderation tools
 - Postgres persistence so a server restart loses nothing
 - Foreman standing orders and decision cards
-- Reputation that changes who applies to your shop (the score is live; its effect on
-  hiring is still to come)
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
 - Ageing, death and inheritance; Tailor and Tavern; bankruptcy and auctions
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join

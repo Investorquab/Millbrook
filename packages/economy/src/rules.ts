@@ -181,6 +181,25 @@ export function reputationStep(
   return { value: delta, reason: `Standing ${verb}: ${reasons.join(", ")}.` };
 }
 
+/**
+ * How much a worker values a shop's standing, as an effective-wage premium: a
+ * fully Fair shop feels worth +1 a day, a fully Ruthless one −1 (GAME_DESIGN:
+ * fair owners draw more and better applicants; ruthless ones keep workers who
+ * quit faster). Actual pay is unchanged, so the ledger and the 10,000-coin
+ * invariant are untouched — this only sways who takes and keeps a job.
+ */
+export const REP_WAGE_PREMIUM = 1;
+
+export function reputationWagePremium(reputation: number): number {
+  return (reputation / REPUTATION_MAX) * REP_WAGE_PREMIUM;
+}
+
+/** A shop's wage as a worker perceives it, nudged by the owner's reputation. */
+export function perceivedWage(world: World, workshop: Workshop): number {
+  const owner = world.owners.get(workshop.ownerId);
+  return workshop.wage + reputationWagePremium(owner?.reputation ?? 0);
+}
+
 export function aliveResidents(world: World): Resident[] {
   return [...world.residents.values()].filter((r) => r.alive);
 }

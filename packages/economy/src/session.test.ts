@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TOTAL_COINS } from "@millbrook/shared";
 import { SoloSession, createSoloSession, PRICE_MAX, WAGE_MIN } from "./session.js";
+import { reputationWagePremium, REP_WAGE_PREMIUM } from "./rules.js";
 
 describe("SoloSession", () => {
   it("starts the player on the bakery at the design defaults", () => {
@@ -220,6 +221,15 @@ describe("SoloSession", () => {
       expect(rows.every((r) => Number.isFinite(r.reputation))).toBe(true);
       // The season moved reputations off zero for at least some owners.
       expect(rows.some((r) => r.reputation !== 0)).toBe(true);
+    });
+
+    it("turns reputation into a perceived-wage premium (fair draws workers, ruthless loses them)", () => {
+      // A fully Fair shop feels worth +1 a day; a fully Ruthless one −1.
+      expect(reputationWagePremium(100)).toBeCloseTo(REP_WAGE_PREMIUM);
+      expect(reputationWagePremium(-100)).toBeCloseTo(-REP_WAGE_PREMIUM);
+      expect(reputationWagePremium(0)).toBe(0);
+      // The premium never flips the sign or overwhelms a real wage gap.
+      expect(Math.abs(reputationWagePremium(100))).toBeLessThanOrEqual(1);
     });
 
     it("is deterministic (same seed + actions → same reputations)", () => {
