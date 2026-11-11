@@ -57,6 +57,11 @@ tooltips explain every number.
 - A **Market** screen shows the whole town at a glance — all four workshops (yours
   and the three AI rivals) with price, wage, crew, stock, sales, profit and standing,
   the public purse, and a town-wide ledger — all live from the same season.
+- The town **ages**: residents grow a year older each game week, retire at 65 to
+  live on their savings, and the very old pass away peacefully — their savings
+  passing to an heir in town minus a 10% estate tax to the Town Hall (all to the
+  Town Hall with no heir). Every coin stays in town, so the total never leaves
+  10,000; retirements and deaths show up in the feed and the Gazette.
 - **Follow a coin** (on the Proof screen) traces one coin hand to hand through the
   town — a wage becomes bread, bread becomes wheat, wheat becomes a farmer's wage —
   reading real moves from the season's ledger; "trace another coin" picks a new path.
@@ -178,7 +183,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- Ageing, death and inheritance; Tailor and Tavern; bankruptcy and auctions
+- Births and families; Tailor and Tavern; bankruptcy and auctions
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---
