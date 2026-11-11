@@ -75,6 +75,10 @@ export interface Workshop {
   /** Days of strike remaining (0 = working). */
   strikeDays: number;
   bankrupt: boolean;
+  /** Days spent bankrupt, counting up to the auction that re-lets the premises. */
+  daysBankrupt: number;
+  /** How many times the premises have been re-let at auction (for the name). */
+  auctions: number;
   /** Days in a row the workshop could not pay full wages. */
   daysShortOnWages: number;
   /** Units sold / produced / coins taken today (reset each day). */
@@ -150,6 +154,14 @@ export interface SeasonConfig {
    * solo game and rooms turn it on. The 10,000-coin total always holds.
    */
   ageing?: boolean;
+  /**
+   * Auction bankrupt workshops: after a short cooldown the Town Hall re-lets the
+   * premises to a new owner, who reopens the shop with a stake from the Town
+   * Hall's treasury, so the town's trade keeps churning instead of shrinking.
+   * Off by default (headless sims/determinism untouched); the solo game turns it
+   * on. All coin moves conserve, so the 10,000-coin total holds.
+   */
+  auctions?: boolean;
 }
 
 /**

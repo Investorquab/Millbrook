@@ -62,6 +62,12 @@ tooltips explain every number.
   passing to an heir in town minus a 10% estate tax to the Town Hall (all to the
   Town Hall with no heir). Every coin stays in town, so the total never leaves
   10,000; retirements and deaths show up in the feed and the Gazette.
+- A workshop that **can't pay wages for three days goes bankrupt** — and its
+  premises don't sit empty: after a short cooldown the Town Hall re-lets them at
+  **auction** to a new owner, who reopens the shop with a stake from the Town
+  Hall. The failed shop's estate is swept to the Town Hall first, so the town's
+  10,000 coins stay in town while its trade keeps churning. (A shop you run is
+  never auctioned out from under you.)
 - **Follow a coin** (on the Proof screen) traces one coin hand to hand through the
   town — a wage becomes bread, bread becomes wheat, wheat becomes a farmer's wage —
   reading real moves from the season's ledger; "trace another coin" picks a new path.
@@ -183,7 +189,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- Births and families; Tailor and Tavern; bankruptcy and auctions
+- Births and families; Tailor and Tavern; player bidding at auction
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---

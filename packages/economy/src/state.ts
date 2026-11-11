@@ -126,6 +126,8 @@ export function createWorld(config: SeasonConfig): World {
       daysUnderpaid: 0,
       strikeDays: 0,
       bankrupt: false,
+      daysBankrupt: 0,
+      auctions: 0,
       daysShortOnWages: 0,
       soldToday: 0,
       producedToday: 0,
@@ -176,6 +178,7 @@ export function createWorld(config: SeasonConfig): World {
       forceAllOwners: config.forceAllOwners ?? null,
       gameMaster: config.gameMaster ?? false,
       ageing: config.ageing ?? false,
+      auctions: config.auctions ?? false,
     },
     gm: {
       enabled: config.gameMaster ?? false,

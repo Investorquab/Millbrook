@@ -54,6 +54,7 @@ import {
   perceivedWage,
 } from "./rules.js";
 import { runAgeing } from "./ageing.js";
+import { runAuctions } from "./auction.js";
 import type { DayMetrics, Resident, Workshop, World } from "./types.js";
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -425,6 +426,7 @@ function dusk(world: World): void {
 
 function bankrupt(world: World, w: Workshop): void {
   w.bankrupt = true;
+  w.daysBankrupt = 0;
   for (const rid of w.workers) {
     const r = world.residents.get(rid);
     if (r) {
@@ -606,6 +608,11 @@ function endOfDay(world: World, totalSales: number): void {
   // unless ageing is on and today closes a game week; its transfers conserve, so
   // the invariant check below still holds at exactly 10,000.
   runAgeing(world);
+
+  // Re-let the premises of any shop that has stayed bankrupt past the cooldown,
+  // so the town's trade churns instead of shrinking. Conserving, so the check
+  // below still holds at exactly 10,000.
+  runAuctions(world);
 
   world.ledger.assertInvariant(TOTAL_COINS);
 }

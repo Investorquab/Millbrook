@@ -16,6 +16,7 @@ export {
   DEATH_AGE,
   ESTATE_TAX_RATE,
 } from "./ageing.js";
+export { runAuctions, AUCTION_COOLDOWN_DAYS, AUCTION_STAKE } from "./auction.js";
 export {
   runGameMaster,
   readGmMetrics,

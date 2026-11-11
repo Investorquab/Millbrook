@@ -367,6 +367,8 @@ export class SoloSession {
       gameMaster: true,
       // …and ages the town (retirements, estates) — the living-town layer.
       ageing: true,
+      // …and re-lets bankrupt premises at auction, so trade keeps churning.
+      auctions: true,
       ...config,
     });
     this.totalDays = this.world.config.days;
@@ -934,6 +936,7 @@ export class SoloSession {
       strike_start: 6,
       bankruptcy: 6,
       death: 6,
+      auction: 5,
       public_works: 5,
       benefit_paid: 5,
       phase_change: 4,
@@ -1117,17 +1120,26 @@ export class SoloSession {
       };
     }
 
-    // Secondary: the Town Hall's safety net, if it acted.
+    // Secondary: a shop changing hands is the bigger story; else the safety net.
+    const shopNews = pick(["bankruptcy", "auction"]);
     const hall = pick(["public_works", "benefit_paid"]);
-    const secondary: GazetteStory | null = hall.length
+    const secondary: GazetteStory | null = shopNews.length
       ? {
-          heading: "Town Hall steadies the town",
+          heading: "A shop changes hands",
           paragraphs: [
-            hall[0]!.text,
-            "The money comes from this week's taxes, so the town's 10,000 coins stay in town.",
+            ...shopNews.slice(0, 2).map((e) => e.text),
+            "A failed shop's premises don't sit empty for long — the Town Hall re-lets them, and the town's 10,000 coins stay in town.",
           ],
         }
-      : null;
+      : hall.length
+        ? {
+            heading: "Town Hall steadies the town",
+            paragraphs: [
+              hall[0]!.text,
+              "The money comes from this week's taxes, so the town's 10,000 coins stay in town.",
+            ],
+          }
+        : null;
 
     // Prices now vs a week ago, from the snapshots.
     const nowSnap = this.priceHistory.at(-1)!;

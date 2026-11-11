@@ -21,6 +21,7 @@ export const FEED_EVENT_KINDS = [
   "retire",
   "death",
   "bankruptcy",
+  "auction",
   "benefit_paid",
   "public_works",
   "phase_change",
