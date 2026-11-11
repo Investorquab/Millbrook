@@ -74,4 +74,41 @@ test.describe("Rooms", () => {
 
     await guestContext.close();
   });
+
+  test("players chat and see each other's messages, plus join/claim notices", async ({ page, browser }) => {
+    await page.goto("/hub");
+    await page.getByRole("button", { name: "Create room" }).click();
+    await expect(page.getByText("You're the host")).toBeVisible({ timeout: 15000 });
+    const code = ((await page.locator(".room__code-value").textContent()) ?? "").trim();
+
+    const guestContext = await browser.newContext();
+    const guest = await guestContext.newPage();
+    await guest.goto(`/join?code=${code}`);
+    await guest.getByLabel("Your name").fill("baker-jo");
+    await guest.getByLabel("Room code").fill(code);
+    await guest.getByRole("button", { name: "Join the room" }).click();
+
+    const hostChat = page.getByLabel("Room chat");
+    const guestChat = guest.getByLabel("Room chat");
+
+    // The host sees a system notice that the guest arrived.
+    await expect(hostChat).toContainText("baker-jo joined the room.", { timeout: 15000 });
+
+    // The host sends a line; the guest sees it attributed to the host.
+    await hostChat.getByLabel("Chat message").fill("welcome aboard");
+    await hostChat.getByRole("button", { name: "Send" }).click();
+    await expect(guestChat).toContainText("welcome aboard");
+
+    // The guest replies; the host sees it from baker-jo.
+    await guestChat.getByLabel("Chat message").fill("glad to be here");
+    await guestChat.getByRole("button", { name: "Send" }).click();
+    await expect(hostChat).toContainText("glad to be here");
+    await expect(hostChat.locator(".room__chat-line b", { hasText: "baker-jo" })).toBeVisible();
+
+    // A claim posts a system notice both see.
+    await guest.locator(".room__slot", { hasText: "Smithy" }).getByRole("button", { name: "Claim this shop" }).click();
+    await expect(hostChat).toContainText("running the smithy");
+
+    await guestContext.close();
+  });
 });

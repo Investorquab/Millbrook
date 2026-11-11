@@ -13,6 +13,16 @@
 import { randomUUID } from "node:crypto";
 import { createSoloSession, type SoloSession, type SoloView, type WorkshopSlot } from "@millbrook/economy";
 import type { WorkshopType } from "@millbrook/shared";
+import { CHAT_MAX_LEN, type ChatMessage } from "./protocol.js";
+
+/** Keep the chat bounded so a long-lived room doesn't grow without end. */
+const CHAT_HISTORY = 100;
+
+/** Trim, cap length and strip control characters from a chat line (baseline moderation). */
+function cleanChatText(raw: string): string {
+  // eslint-disable-next-line no-control-regex
+  return raw.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, CHAT_MAX_LEN);
+}
 
 export type RoomStatus = "lobby" | "live" | "ended";
 
@@ -55,6 +65,7 @@ export class Room {
   status: RoomStatus = "lobby";
   hostId: string;
   private readonly players = new Map<string, Player>();
+  private readonly chatLog: ChatMessage[] = [];
 
   constructor(id: string, code: string, hostId: string, hostName: string, seed: number) {
     this.id = id;
@@ -159,6 +170,51 @@ export class Room {
   /** The live view of one shop — a player's own, or the bakery for a spectator. */
   viewFor(workshopId?: string): SoloView {
     return this.session.view(workshopId);
+  }
+
+  // ── Chat ────────────────────────────────────────────────────────────────────
+
+  private currentDay(): number {
+    return this.session.view().day;
+  }
+
+  private record(msg: ChatMessage): ChatMessage {
+    this.chatLog.push(msg);
+    if (this.chatLog.length > CHAT_HISTORY) this.chatLog.splice(0, this.chatLog.length - CHAT_HISTORY);
+    return msg;
+  }
+
+  /** A person's chat line. Returns null if the sender isn't here or it's empty. */
+  postChat(playerId: string, text: string): ChatMessage | null {
+    const player = this.players.get(playerId);
+    if (!player) return null;
+    const clean = cleanChatText(text);
+    if (!clean) return null;
+    return this.record({
+      id: randomUUID(),
+      playerId,
+      name: player.name,
+      text: clean,
+      day: this.currentDay(),
+      ts: Date.now(),
+    });
+  }
+
+  /** A system notice (someone joined, claimed a shop, left…). */
+  note(text: string): ChatMessage {
+    return this.record({
+      id: randomUUID(),
+      playerId: "system",
+      name: "Millbrook",
+      text,
+      day: this.currentDay(),
+      ts: Date.now(),
+      system: true,
+    });
+  }
+
+  chatHistory(): ChatMessage[] {
+    return [...this.chatLog];
   }
 
   state(): RoomState {

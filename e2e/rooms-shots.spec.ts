@@ -18,6 +18,11 @@ test("capture room screens", async ({ page, browser }, testInfo) => {
   await guest.getByRole("button", { name: "Join the room" }).click();
   await guest.locator(".room__slot", { hasText: "Weaver" }).getByRole("button", { name: "Claim this shop" }).click();
   await guest.locator(".room__slot--mine").waitFor();
+  // A couple of chat lines so the panel shows in the capture.
+  const guestChat = guest.getByLabel("Room chat");
+  await guestChat.getByLabel("Chat message").fill("taking the weaver — good luck all");
+  await guestChat.getByRole("button", { name: "Send" }).click();
+  await page.getByLabel("Room chat").getByText(/weaver/).first().waitFor();
   await guest.screenshot({ path: `e2e/__screens__/room-claim-${tag}.png`, fullPage: true });
 
   await page.getByRole("button", { name: "Start the season" }).click();

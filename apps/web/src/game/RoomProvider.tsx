@@ -5,6 +5,17 @@ import type { SoloView, WorkshopSlot } from "@millbrook/economy";
 
 export type WorkshopType = WorkshopSlot["type"];
 
+/** One line of room chat (mirrors apps/server/src/protocol.ts). */
+export interface ChatMessage {
+  id: string;
+  playerId: string;
+  name: string;
+  text: string;
+  day: number;
+  ts: number;
+  system?: boolean;
+}
+
 /**
  * The client side of the rooms server. Connects to the game server over
  * Socket.IO on demand (only when you host or join — solo play never opens a
@@ -49,9 +60,11 @@ export interface RoomController {
   isHost: boolean;
   /** The shop I run this room, if I've claimed one (host always runs the bakery). */
   myWorkshop: WorkshopType | null;
+  messages: ChatMessage[];
   createRoom: (name: string, seed?: number) => void;
   joinRoom: (code: string, name: string) => void;
   claimWorkshop: (type: WorkshopType) => void;
+  sendChat: (text: string) => void;
   leaveRoom: () => void;
   startRoom: () => void;
   play: () => void;
@@ -70,6 +83,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [view, setView] = useState<SoloView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [myId, setMyId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const ensureSocket = useCallback((): Socket => {
     if (socketRef.current) return socketRef.current;
@@ -83,6 +97,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socket.on("connect_error", () => setError(`Can't reach the game server at ${SERVER_URL}.`));
     socket.on("room:state", (state: RoomState) => setRoom(state));
     socket.on("game:view", (v: SoloView) => setView(v));
+    socket.on("chat:history", (msgs: ChatMessage[]) => setMessages(msgs));
+    socket.on("chat:message", (msg: ChatMessage) => setMessages((prev) => [...prev, msg]));
     socket.on("error", (payload: { message: string }) => setError(payload.message));
     socketRef.current = socket;
     return socket;
@@ -110,6 +126,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socketRef.current = null;
     setRoom(null);
     setView(null);
+    setMessages([]);
     setStatus("idle");
   }, []);
 
@@ -127,9 +144,14 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     myId,
     isHost: !!room && !!myId && room.hostId === myId,
     myWorkshop: me?.workshopType ?? null,
+    messages,
     createRoom,
     joinRoom,
     claimWorkshop: (type) => emit("room:claim", { type }),
+    sendChat: (text) => {
+      const t = text.trim();
+      if (t) emit("chat:send", { text: t });
+    },
     leaveRoom,
     startRoom: () => emit("room:start"),
     play: () => emit("game:play"),

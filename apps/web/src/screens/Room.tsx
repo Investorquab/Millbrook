@@ -1,7 +1,12 @@
+import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN } from "@millbrook/economy";
 import { useRoom, type WorkshopType } from "../game/RoomProvider";
 import "./Room.css";
+
+/** Keep in step with CHAT_MAX_LEN in apps/server/src/protocol.ts. */
+const CHAT_MAX_LEN = 240;
 
 /**
  * A networked room — the lobby and the live town over Socket.IO, driven by
@@ -275,6 +280,70 @@ export function Room() {
           </div>
         </div>
       )}
+
+      <ChatPanel />
     </div>
+  );
+}
+
+/** Room chat + who's here, driven by {@link useRoom}. Shown in lobby and live. */
+function ChatPanel() {
+  const room = useRoom();
+  const [draft, setDraft] = useState("");
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Keep the newest message in view as chat grows.
+  useEffect(() => {
+    const el = listRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [room.messages.length]);
+
+  function send(e: FormEvent) {
+    e.preventDefault();
+    if (!draft.trim()) return;
+    room.sendChat(draft);
+    setDraft("");
+  }
+
+  const here = room.room?.players ?? [];
+
+  return (
+    <section className="room__chat" aria-label="Room chat">
+      <div className="room__chat-head">
+        <h2>Room chat</h2>
+        <span className="room__chat-here">
+          {here.length} here: {here.map((p) => (p.id === room.myId ? "you" : p.name)).join(", ")}
+        </span>
+      </div>
+      <div className="room__chat-log" ref={listRef}>
+        {room.messages.length === 0 && <p className="room__chat-empty">Say hello to the room.</p>}
+        {room.messages.map((m) =>
+          m.system ? (
+            <p key={m.id} className="room__chat-sys">
+              {m.text}
+            </p>
+          ) : (
+            <p key={m.id} className="room__chat-line">
+              <b className={m.playerId === room.myId ? "room__chat-me" : undefined}>
+                {m.playerId === room.myId ? "You" : m.name}
+              </b>
+              <span>{m.text}</span>
+            </p>
+          ),
+        )}
+      </div>
+      <form className="room__chat-form" onSubmit={send}>
+        <input
+          aria-label="Chat message"
+          placeholder="Message the room…"
+          maxLength={CHAT_MAX_LEN}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+        <button type="submit" className="room__btn-linen" disabled={!draft.trim()}>
+          Send
+        </button>
+      </form>
+    </section>
   );
 }

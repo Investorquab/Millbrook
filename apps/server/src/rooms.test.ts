@@ -106,6 +106,26 @@ describe("RoomManager", () => {
     expect(room.state().slots.find((s) => s.type === "smithy")?.claimed).toBe(false);
   });
 
+  it("keeps a bounded chat log, trims lines, and refuses empty ones", () => {
+    const rm = new RoomManager();
+    const room = rm.create("host1", "Ada", 42);
+    const msg = room.postChat("host1", "  hello town  ");
+    expect(msg?.text).toBe("hello town");
+    expect(msg?.name).toBe("Ada");
+    expect(msg?.system).toBeUndefined();
+    // Whitespace-only and control-char-only lines are refused.
+    expect(room.postChat("host1", "   ")).toBeNull();
+    // A stranger can't post.
+    expect(room.postChat("ghost", "hi")).toBeNull();
+    // A very long line is capped.
+    const long = room.postChat("host1", "x".repeat(500));
+    expect(long?.text.length).toBe(240);
+    // System notes are marked and show in history.
+    room.note("The season has begun.");
+    const history = room.chatHistory();
+    expect(history.some((m) => m.system && m.text.includes("season"))).toBe(true);
+  });
+
   it("two rooms run independent seasons", () => {
     const rm = new RoomManager();
     const a = rm.create("h1", "A", 1);

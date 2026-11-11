@@ -131,4 +131,32 @@ describe("game server (socket.io)", () => {
     host.close();
     guest.close();
   });
+
+  it("relays chat to everyone in the room and hands a joiner the backlog", async () => {
+    const host = connect();
+    host.emit("room:create", { name: "Ada", seed: 42 });
+    const created = await once<RoomState>(host, "room:state");
+
+    host.emit("chat:send", { text: "welcome!" });
+    const relayed = await once<{ name: string; text: string }>(host, "chat:message");
+    expect(relayed).toMatchObject({ name: "Ada", text: "welcome!" });
+
+    // A joiner gets the recent backlog on arrival, then live messages.
+    const guest = connect();
+    const history = new Promise<Array<{ text: string }>>((resolve) => guest.once("chat:history", resolve));
+    guest.emit("room:join", { code: created.code, name: "Tom" });
+    expect((await history).some((m) => m.text === "welcome!")).toBe(true);
+
+    // The host hears the guest's line too.
+    const heard = new Promise<{ name: string; text: string }>((resolve) => {
+      host.on("chat:message", (m: { name: string; text: string }) => {
+        if (m.text === "hi all") resolve(m);
+      });
+    });
+    guest.emit("chat:send", { text: "hi all" });
+    expect(await heard).toMatchObject({ name: "Tom", text: "hi all" });
+
+    host.close();
+    guest.close();
+  });
 });

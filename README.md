@@ -74,8 +74,9 @@ A Socket.IO server with rooms: create, invite code, lobby, host start, and a liv
 tick that advances the season. The web client (Host/Join screens) is wired to it:
 friends join by code, **each claims one of the four shops and runs it** (the host
 runs the bakery), and everyone watches the same shared town. AI owners fill any
-shop no one claims. HTTP `/health` and `/rooms`. The `infra/` stack (Node server +
-Postgres 16 + Caddy) is ready for a VPS.
+shop no one claims. **Room chat** with who's-here and join/claim notices runs over
+the same socket (lines trimmed and length-capped). HTTP `/health` and `/rooms`.
+The `infra/` stack (Node server + Postgres 16 + Caddy) is ready for a VPS.
 
 ---
 
@@ -137,14 +138,14 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture and
   account, the Game Master runs on town metrics with template reasoning and an
   unattested (but still hash-verifiable) receipt, and the UI says so.
 - **Rooms are early.** Each player claims and runs one of the four shops in a shared
-  town; chat and trades are still in Roadmap, and rooms live in memory until Postgres
-  persistence lands.
+  town and can chat; trade offers are still in Roadmap, and rooms live in memory until
+  Postgres persistence lands.
 
 ---
 
 ## Roadmap
 
-- Room chat, trade offers, who's-online and moderation
+- Trade offers between players, and deeper moderation tools
 - Postgres persistence so a server restart loses nothing
 - Foreman standing orders and decision cards; reputation
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
