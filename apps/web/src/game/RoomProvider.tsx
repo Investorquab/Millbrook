@@ -121,7 +121,11 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       setStatus("connected");
     });
     socket.on("disconnect", () => setStatus("idle"));
-    socket.on("connect_error", () => setError(`Can't reach the game server at ${SERVER_URL}.`));
+    socket.on("connect_error", () =>
+      setError(
+        "Can't reach the game server — multiplayer rooms need it running. The solo game works on its own; see the README to host a room.",
+      ),
+    );
     socket.on("room:state", (state: RoomState) => setRoom(state));
     socket.on("game:view", (v: SoloView) => setView(v));
     socket.on("chat:history", (msgs: ChatMessage[]) => setMessages(msgs));
