@@ -38,6 +38,9 @@ Fast-forward, Scoreboard, Gazette. Rule tooltips explain every number.
 
 - Acceptance test passes: a new player signs in, hires a worker, sets a price and
   sees a sale within 60 seconds.
+- A **guided first session** walks a new player through that exact loop — hire → set
+  price → play → first sale — with a coach card and a highlight that follows the live
+  control, advancing as you act. It shows once and can be skipped.
 - A **Foreman** runs standing orders for your shop in plain code each dawn — match
   rival wages (up to a cap) to keep your workers, and hire when bread demand goes
   unmet — and tells you what it did in plain words. (The on-chain Foreman key and

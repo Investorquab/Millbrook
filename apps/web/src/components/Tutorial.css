@@ -1,0 +1,179 @@
+/* Guided first session — a coach card floating over the scene band.
+   It sits above the HUD and topbar in stacking order but is placed in the
+   empty middle, so it never covers a control. The wrapper lets clicks fall
+   through; only the card itself is interactive. */
+.tour {
+  position: fixed;
+  top: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.tour__card {
+  pointer-events: auto;
+  box-sizing: border-box;
+  padding: 16px 18px 14px;
+  border-radius: 16px;
+  background: rgba(36, 42, 50, 0.97);
+  border: 2px solid var(--wheat);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  animation: tour-in 320ms ease-out;
+}
+@keyframes tour-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tour__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.tour__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-number);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wheat-light);
+}
+.tour__badge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--wheat);
+  box-shadow: 0 0 0 3px rgba(217, 164, 65, 0.25);
+}
+.tour__skip {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  padding: 2px 4px;
+}
+.tour__skip:hover {
+  color: var(--linen);
+}
+
+.tour__title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.15;
+  color: var(--linen);
+  margin: 0 0 6px;
+}
+.tour__body {
+  margin: 0 0 14px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+.tour__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tour__dots {
+  display: inline-flex;
+  gap: 6px;
+}
+.tour__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(237, 230, 214, 0.22);
+  transition: background 200ms ease, transform 200ms ease;
+}
+.tour__dot.is-done {
+  background: rgba(217, 164, 65, 0.5);
+}
+.tour__dot.is-on {
+  background: var(--wheat);
+  transform: scale(1.25);
+}
+.tour__hint {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+.tour__next {
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--millstone);
+  background: var(--wheat);
+  box-shadow: 0 3px 0 var(--wheat-shadow);
+}
+.tour__next:hover {
+  background: var(--wheat-light);
+}
+.tour__next:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--wheat-shadow);
+}
+
+/* ── The ring on the highlighted control ───────────────────────────────────
+   The Town root carries data-tour="hire|price|play"; the matching element
+   carries data-tour-target. Box-shadow (not outline) so it never clips. */
+.town[data-tour="hire"] [data-tour-target="hire"],
+.town[data-tour="price"] [data-tour-target="price"],
+.town[data-tour="play"] [data-tour-target="play"] {
+  animation: tour-pulse 1.5s ease-in-out infinite;
+  border-radius: 10px;
+  position: relative;
+  z-index: 6;
+}
+@keyframes tour-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px var(--wheat), 0 0 0 4px rgba(217, 164, 65, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 2px var(--wheat), 0 0 0 7px rgba(242, 199, 107, 0.3);
+  }
+}
+
+/* Phone: the layout is a scrolling column (topbar · scene · HUD). A fixed
+   sheet would sit over the bakery controls and swallow taps, so the card flows
+   inline as a banner between the topbar and the scene — clear, and it never
+   covers a control. (order:2 ties with the scene; the card wins on source
+   order since it is the first child of .town.) */
+@media (max-width: 820px) {
+  .tour {
+    position: static;
+    order: 2;
+    width: auto;
+    margin: 14px 12px 0;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+
+/* Reduced motion: the ring freezes on its 2px wheat edge (still clearly
+   visible), and the card simply appears. Covered by the global rule, but we
+   keep a solid static ring here so the target never loses its outline. */
+@media (prefers-reduced-motion: reduce) {
+  .town[data-tour="hire"] [data-tour-target="hire"],
+  .town[data-tour="price"] [data-tour-target="price"],
+  .town[data-tour="play"] [data-tour-target="play"] {
+    box-shadow: 0 0 0 2px var(--wheat);
+  }
+}

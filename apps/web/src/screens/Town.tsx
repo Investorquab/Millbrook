@@ -2,6 +2,8 @@ import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN, type FeedLine } from "@millbrook/economy";
 import { useSolo } from "../game/SoloProvider";
+import { useTutorial } from "../game/useTutorial";
+import { TutorialCard } from "../components/Tutorial";
 import { faceFor } from "../game/faces";
 import "./Town.css";
 
@@ -98,6 +100,9 @@ export function Town() {
   const [foremanOpen, setForemanOpen] = useState(false);
   const [orders, setOrders] = useState(() => session.foremanOrders());
 
+  // Guided first session — points at the live control for each step.
+  const tour = useTutorial(view, running);
+
   // The Foreman runs these standing orders for you each dawn (plain code).
   const setOrder = (partial: Partial<typeof orders>) => {
     session.setForemanOrders(partial);
@@ -113,7 +118,8 @@ export function Town() {
     view.coinsDelta === 0 ? "even today" : `${view.coinsDelta > 0 ? "+" : "−"}${Math.abs(view.coinsDelta)} today`;
 
   return (
-    <div className="town">
+    <div className="town" data-tour={tour.target ?? undefined}>
+      <TutorialCard tour={tour} />
       <div className="town__scene" aria-hidden="true">
         <Suspense fallback={<div className="town__scene-loading" />}>
           <TownScene />
@@ -144,6 +150,7 @@ export function Town() {
             aria-pressed={running}
             onClick={play}
             disabled={view.ended}
+            data-tour-target="play"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
               <path d="M3 2l9 5-9 5z" fill={running ? "#2F3640" : "#EDE6D6"} />
@@ -263,7 +270,7 @@ export function Town() {
           <div className="town__control">
             <div className="town__control-row">
               <span>Bread price</span>
-              <div className="town__stepper">
+              <div className="town__stepper" data-tour-target="price">
                 <button
                   type="button"
                   aria-label="Lower the bread price"
@@ -331,7 +338,13 @@ export function Town() {
           </div>
 
           <div className="town__workshop-actions">
-            <button type="button" className="town__btn-solid" onClick={hire} disabled={!view.canHire}>
+            <button
+              type="button"
+              className="town__btn-solid"
+              onClick={hire}
+              disabled={!view.canHire}
+              data-tour-target="hire"
+            >
               {view.canHire ? "Hire a baker" : "Bakery is full"}
             </button>
             <button
