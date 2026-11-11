@@ -135,6 +135,21 @@
 .town__pill--proof {
   color: var(--river-text);
 }
+.town__mute {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 0;
+  color: var(--text-soft);
+  line-height: 0;
+}
+.town__mute[aria-pressed="true"] {
+  color: var(--text-secondary);
+}
+.town__mute:hover {
+  color: var(--wheat-light);
+}
 
 /* ── Floating world overlays ───────────────────────────────── */
 .town__overlays {

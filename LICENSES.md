@@ -11,6 +11,7 @@ and license named below.
 | The 3D town diorama — every building, character, tree, the ground and props | `apps/web/src/town3d/` | Original. Built entirely from three.js primitives in code; **no external model packs are used**. CC0 / public domain, by this project. |
 | 2D character art (full-body + portraits) | `apps/web/public/art/char-*.svg`, `face-*.svg` (sources in `design/assets/`) | Original to this project, drawn by the `design/art-generators/` scripts. CC0. |
 | 2D town stand-in | `design/assets/town.svg` | Original to this project (the 3D scene has replaced it in-game). CC0. |
+| Sound effects (coin chime, clicks, Game Master cue) | `apps/web/src/game/sound.ts` | Original. Synthesized in code with the Web Audio API (oscillators + envelopes); **no external audio files are used**. CC0, by this project. |
 
 No character, mascot, building or logo is copied, traced or closely imitated
 from any other game or brand.

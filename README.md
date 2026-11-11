@@ -35,7 +35,8 @@ A React + React Three Fiber solo game: a low-poly mill town on a slow day → ni
 cycle (golden dusk, then a lamp-lit night, then a bright day) whose shops react to
 the simulation, walking residents who float speech bubbles with their real reason
 (straight from the rules — "Bought today's bread", "Left the weaver for the smithy"),
-and a gold coin-flow on sales. Nine screens ported from the approved designs — Title,
+and a gold coin-flow on sales. Synthesized sound — a coin chime on sales, soft clicks
+and a Game Master cue (all made in code, no audio files) — with a mute toggle. Nine screens ported from the approved designs — Title,
 Sign-in, Hub, Town (3D HUD), Resident, Proof, Fast-forward, Scoreboard, Gazette. Rule
 tooltips explain every number.
 

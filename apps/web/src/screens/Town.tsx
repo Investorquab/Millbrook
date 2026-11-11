@@ -1,10 +1,11 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN, type FeedLine } from "@millbrook/economy";
 import { useSolo } from "../game/SoloProvider";
 import { useTutorial } from "../game/useTutorial";
 import { TutorialCard } from "../components/Tutorial";
 import { faceFor } from "../game/faces";
+import { isMuted, playClick, playCoin, playEvent, toggleMuted } from "../game/sound";
 import "./Town.css";
 
 // The 3D town pulls in three.js (~1 MB); load it only on this screen so the
@@ -99,6 +100,7 @@ export function Town() {
   const [dismissed, setDismissed] = useState<string | null>(null);
   const [foremanOpen, setForemanOpen] = useState(false);
   const [orders, setOrders] = useState(() => session.foremanOrders());
+  const [muted, setMutedState] = useState(isMuted);
 
   // Guided first session — points at the live control for each step.
   const tour = useTutorial(view, running);
@@ -113,6 +115,22 @@ export function Town() {
   const gm = session.gmEvents(1)[0];
   const gmKey = gm ? `${gm.day}-${gm.id}` : null;
   const showGm = gm && dismissed !== gmKey;
+
+  // ── Sound cues (synthesized; silent when muted) ──
+  // A coin chime on each day the bakery sells (deduped by day).
+  const lastChimeDay = useRef(0);
+  useEffect(() => {
+    if (view.soldToday > 0 && view.day !== lastChimeDay.current) {
+      lastChimeDay.current = view.day;
+      playCoin();
+    }
+  }, [view.day, view.soldToday]);
+  // A soft cue when a new Game Master event fires (not on first mount).
+  const prevGmKey = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (prevGmKey.current !== undefined && gmKey && gmKey !== prevGmKey.current) playEvent();
+    prevGmKey.current = gmKey;
+  }, [gmKey]);
 
   const deltaLabel =
     view.coinsDelta === 0 ? "even today" : `${view.coinsDelta > 0 ? "+" : "−"}${Math.abs(view.coinsDelta)} today`;
@@ -148,7 +166,10 @@ export function Town() {
             type="button"
             aria-label="Play"
             aria-pressed={running}
-            onClick={play}
+            onClick={() => {
+              playClick();
+              play();
+            }}
             disabled={view.ended}
             data-tour-target="play"
           >
@@ -197,6 +218,25 @@ export function Town() {
           </span>
         </span>
         <span className="town__divider" />
+        <button
+          type="button"
+          className="town__pill town__mute"
+          aria-label={muted ? "Unmute sound" : "Mute sound"}
+          aria-pressed={muted}
+          onClick={() => setMutedState(toggleMuted())}
+        >
+          {muted ? (
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+              <path d="M2 7h3l4-3v10l-4-3H2z" fill="currentColor" />
+              <path d="M12 6l4 6M16 6l-4 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+              <path d="M2 7h3l4-3v10l-4-3H2z" fill="currentColor" />
+              <path d="M12 6a4 4 0 0 1 0 6M14 4a7 7 0 0 1 0 10" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+            </svg>
+          )}
+        </button>
         <Link to="/gazette" className="town__pill">
           Gazette
         </Link>
@@ -341,7 +381,10 @@ export function Town() {
             <button
               type="button"
               className="town__btn-solid"
-              onClick={hire}
+              onClick={() => {
+                playClick();
+                hire();
+              }}
               disabled={!view.canHire}
               data-tour-target="hire"
             >
