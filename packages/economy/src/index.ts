@@ -6,7 +6,7 @@
 
 export * from "./types.js";
 export { Rng } from "./rng.js";
-export { Ledger } from "./ledger.js";
+export { Ledger, type TransferRecord } from "./ledger.js";
 export { createWorld } from "./state.js";
 export { stepDay, runSeason, pushFeed } from "./engine.js";
 export {
@@ -35,6 +35,8 @@ export {
   WAGE_MAX,
   type SoloView,
   type WorkshopSlot,
+  type CoinHop,
+  type CoinTrail,
   type ForemanOrders,
   type ForemanNote,
   type WorkerView,

@@ -9,8 +9,29 @@
  * coins count toward the 10,000 total.
  */
 
+/** One recorded coin move, for Follow-a-coin. */
+export interface TransferRecord {
+  /** The game day the move was tagged with (set via {@link Ledger.journalDay}). */
+  day: number;
+  from: string;
+  to: string;
+  amount: number;
+}
+
 export class Ledger {
   private readonly balances = new Map<string, number>();
+
+  /**
+   * When set to an array, every coin move is appended to it so a UI can trace a
+   * coin through the town (Follow-a-coin). Left `null` by default, so the
+   * headless simulation and the tests record nothing and stay byte-identical;
+   * the interactive {@link SoloSession} opts in.
+   */
+  journal: TransferRecord[] | null = null;
+  /** The game day moves are tagged with; the driver sets it before each day. */
+  journalDay = 0;
+  /** Bound on the journal so a long season can't grow it without limit. */
+  private static readonly JOURNAL_CAP = 4000;
 
   constructor(initial?: Record<string, number>) {
     if (initial) {
@@ -53,6 +74,15 @@ export class Ledger {
     }
     this.balances.set(from, fromBal - amount);
     this.balances.set(to, this.get(to) + amount);
+    this.record(from, to, amount);
+  }
+
+  /** Append a move to the journal when one is attached (never affects balances). */
+  private record(from: string, to: string, amount: number): void {
+    const j = this.journal;
+    if (!j || amount <= 0) return;
+    j.push({ day: this.journalDay, from, to, amount });
+    if (j.length > Ledger.JOURNAL_CAP) j.shift();
   }
 
   /**
@@ -68,6 +98,7 @@ export class Ledger {
     if (moved > 0) {
       this.balances.set(from, this.get(from) - moved);
       this.balances.set(to, this.get(to) + moved);
+      this.record(from, to, moved);
     }
     return moved;
   }

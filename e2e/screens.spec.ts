@@ -35,4 +35,17 @@ test("the resident card and Proof follow the same live season", async ({ page },
   await expect(money.getByText("10,000")).toBeVisible();
   await expect(money.getByText("Residents")).toBeVisible();
   await expect(money.getByText("Workshops")).toBeVisible();
+
+  // Follow a coin: a played season leaves real moves, so the trail renders with
+  // at least one hop, and "Trace another coin" swaps to a different path.
+  const coin = page.getByRole("region", { name: "Follow a coin" });
+  await expect(coin.locator(".proof__trail-hop").first()).toBeVisible();
+  const firstMove = () => coin.locator(".proof__trail-move").first().innerText();
+  const seen = new Set<string>([await firstMove()]);
+  // "Trace another coin" swaps to a different path; a few clicks find a distinct one.
+  for (let i = 0; i < 5 && seen.size < 2; i++) {
+    await coin.getByRole("button", { name: "Trace another coin" }).click();
+    seen.add(await firstMove());
+  }
+  expect(seen.size).toBeGreaterThan(1);
 });

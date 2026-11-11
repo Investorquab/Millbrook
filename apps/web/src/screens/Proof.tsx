@@ -34,6 +34,10 @@ export function Proof() {
   const pct = (n: number) => (h.total > 0 ? (n / h.total) * 100 : 0);
   const gmEvents = session.gmEvents(4);
 
+  // Follow a coin: trace one coin's path; "trace another" picks a different one.
+  const [seed, setSeed] = useState(0);
+  const trail = session.coinTrail(seed);
+
   // Read the real audited total from the live contract on testnet, once.
   const [chain, setChain] = useState<ChainState>({ status: "loading" });
   useEffect(() => {
@@ -145,35 +149,58 @@ export function Proof() {
         </section>
 
         <div className="proof__side">
-          {/* ── Follow a coin (lands with on-chain settlement, M3) ── */}
-          <section className="proof__panel proof__panel--soon" aria-label="Follow a coin">
+          {/* ── Follow a coin — live from the season's ledger ── */}
+          <section className="proof__panel proof__panel--coin" aria-label="Follow a coin">
             <div className="proof__panel-head">
               <h2>Follow a coin</h2>
-              <span className="proof__badge proof__badge--live">NEP-297 · no indexer</span>
+              <span className="proof__badge proof__badge--live">Live · from the ledger</span>
             </div>
-            <p className="proof__lede" style={{ fontSize: 16 }}>
-              Every wage, sale and purchase moves coins between the accounts the contract settles, and each move emits a
-              NEP-297 event — so one coin's path (wage → bread → wheat → farm wage) reads straight off the chain with no
-              indexer, each hop a real transaction on the{" "}
-              <a className="proof__link" href={EXPLORER} target="_blank" rel="noreferrer">
-                explorer ↗
-              </a>
-              .
-            </p>
-            <div className="proof__steps" aria-hidden="true">
-              <div className="proof__step">
-                <span className="proof__step-dot" />
-                <p>Your bakery pays a baker their wage.</p>
-              </div>
-              <div className="proof__step">
-                <span className="proof__step-dot" />
-                <p>They spend it on bread at your counter.</p>
-              </div>
-              <div className="proof__step">
-                <span className="proof__step-dot" />
-                <p>You pay it to the Co-op for wheat — still in town, still 10,000.</p>
-              </div>
-            </div>
+            {trail.hops.length === 0 ? (
+              <>
+                <p className="proof__lede" style={{ fontSize: 16 }}>
+                  Every wage, sale and purchase hands the same coins to the next person in town. Play the season from the
+                  town for a few days, then come back — you can trace one coin from hand to hand here.
+                </p>
+                <div className="proof__coin-empty">No coins have moved yet.</div>
+              </>
+            ) : (
+              <>
+                <p className="proof__lede" style={{ fontSize: 15 }}>
+                  One coin, handed on {trail.hops.length} time{trail.hops.length === 1 ? "" : "s"} across the town — a wage
+                  becomes bread, bread becomes wheat, wheat becomes a farmer's wage. It never leaves Millbrook, so the
+                  total never moves off 10,000.
+                </p>
+                <ol className="proof__trail">
+                  {trail.hops.map((hop, i) => (
+                    <li className="proof__trail-hop" key={`${hop.day}-${hop.from}-${hop.to}-${i}`}>
+                      <span className="proof__trail-dot" aria-hidden="true" />
+                      <div className="proof__trail-body">
+                        <p className="proof__trail-move">
+                          <b>{hop.fromLabel}</b> → <b>{hop.toLabel}</b>
+                        </p>
+                        <p className="proof__trail-meta">
+                          <span className="proof__trail-coins">{hop.amount} coins</span>
+                          <span className="proof__trail-reason">{hop.reason}</span>
+                          <span className="proof__trail-day">Day {hop.day}</span>
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                <div className="proof__coin-foot">
+                  <button type="button" className="proof__coin-btn" onClick={() => setSeed((n) => n + 1)}>
+                    Trace another coin
+                  </button>
+                  <span className="proof__coin-note">
+                    {trail.totalMoves.toLocaleString()} moves recorded this season. Each day's net transfers settle on the{" "}
+                    <a className="proof__link" href={EXPLORER} target="_blank" rel="noreferrer">
+                      contract ↗
+                    </a>
+                    .
+                  </span>
+                </div>
+              </>
+            )}
           </section>
 
           {/* ── Game Master receipts — live from the season (M4) ── */}

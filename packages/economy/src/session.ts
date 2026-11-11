@@ -302,6 +302,38 @@ export interface WorkshopSlot {
   claimed: boolean;
 }
 
+/** One hop in a coin's journey through the town, for Follow-a-coin. */
+export interface CoinHop {
+  /** 1-indexed game day the move happened. */
+  day: number;
+  from: string;
+  fromLabel: string;
+  to: string;
+  toLabel: string;
+  amount: number;
+  /** Plain-words reason read from who paid whom ("wages", "bought bread"…). */
+  reason: string;
+}
+
+/** A coin's traced path, each hop handing the same coins to the next holder. */
+export interface CoinTrail {
+  hops: CoinHop[];
+  /** How many coin moves the town has recorded so far (0 before any day runs). */
+  totalMoves: number;
+}
+
+/** A finished good's display noun for the "bought …" reason. */
+const GOOD_NOUN: Partial<Record<string, string>> = {
+  bread: "bread",
+  cloth: "cloth",
+  tool: "tools",
+  ale: "ale",
+  clothes: "clothes",
+  meal: "a meal",
+  housepart: "house parts",
+  remedy: "a remedy",
+};
+
 export class SoloSession {
   readonly world: World;
   readonly playerWorkshopId: string;
@@ -347,6 +379,11 @@ export class SoloSession {
     }
     bakery.price = DEFAULT_PRICE;
     bakery.wage = DEFAULT_WAGE;
+
+    // Record every coin move from here on so the Proof screen can trace a coin
+    // through the town (Follow-a-coin). The seed balances above are not moves,
+    // so the journal starts empty and fills only as the season is played.
+    this.world.ledger.journal = [];
 
     this.claimed.add(this.playerWorkshopId);
     this.prevCoins = this.world.ledger.get(this.playerWorkshopId);
@@ -575,6 +612,8 @@ export class SoloSession {
     for (const id of this.claimed) before.set(id, this.world.ledger.get(id));
     const beforeCoins = this.world.ledger.get(this.playerWorkshopId);
     const beforeUnemp = unemploymentRate(this.world);
+    // Tag this day's moves with the 1-indexed day the HUD shows.
+    this.world.ledger.journalDay = this.world.day + 1;
     stepDay(this.world);
     for (const id of this.claimed) {
       this.deltaByWs.set(id, this.world.ledger.get(id) - (before.get(id) ?? 0));
@@ -587,6 +626,95 @@ export class SoloSession {
     this.unemploymentRising = unemploymentRate(this.world) > beforeUnemp + 1e-9;
     this.prevUnemployment = beforeUnemp;
     this.snapshotPrices();
+  }
+
+  // ── Follow a coin ─────────────────────────────────────────────────────────
+
+  /**
+   * Trace a coin's path through the town. Starting from a wage the town paid, we
+   * thread forward hand to hand — the worker spends it, the shop restocks with
+   * it, the Co-op pays its own worker with it — following the same money for up
+   * to a week. Every hop is a real move the engine made (and that the server
+   * nets into the day's on-chain settlement), so the loop is honest: the coins
+   * only ever change hands, and the town's total never moves off 10,000.
+   *
+   * `seed` picks which coin to follow (deterministic), so a UI can offer "trace
+   * another coin" without any randomness of its own.
+   */
+  coinTrail(seed = 0, maxHops = 6): CoinTrail {
+    const j = this.world.ledger.journal ?? [];
+    if (j.length === 0) return { hops: [], totalMoves: 0 };
+
+    // Prefer to start on a wage (a workshop or the Co-op paying a resident); it
+    // reads best and matches the design's "wage → bread → wheat → farm wage".
+    const starts: number[] = [];
+    for (let i = 0; i < j.length; i++) {
+      const t = j[i]!;
+      if (this.world.residents.has(t.to) && !this.world.residents.has(t.from)) starts.push(i);
+    }
+    const pool = starts.length > 0 ? starts : j.map((_, i) => i);
+    let idx = pool[((seed % pool.length) + pool.length) % pool.length]!;
+
+    const hops: CoinHop[] = [];
+    const seen = new Set<number>();
+    const startDay = j[idx]!.day;
+    while (idx >= 0 && hops.length < maxHops && !seen.has(idx)) {
+      seen.add(idx);
+      const t = j[idx]!;
+      hops.push({
+        day: t.day,
+        from: t.from,
+        fromLabel: this.labelAccount(t.from),
+        to: t.to,
+        toLabel: this.labelAccount(t.to),
+        amount: t.amount,
+        reason: this.transferReason(t.from, t.to),
+      });
+      // The next hop is the earliest later move out of the account that just
+      // received the coin, within a week of where we started.
+      let next = -1;
+      for (let k = idx + 1; k < j.length; k++) {
+        const u = j[k]!;
+        if (u.from === t.to && u.day - startDay <= 7) {
+          next = k;
+          break;
+        }
+      }
+      idx = next;
+    }
+    return { hops, totalMoves: j.length };
+  }
+
+  /** A human label for a ledger account id, from the live world. */
+  private labelAccount(id: string): string {
+    if (id === COOP_ID) return "the Town Co-op";
+    if (id === TOWN_HALL_ID) return "the Town Hall";
+    const r = this.world.residents.get(id);
+    if (r) return r.name;
+    const w = this.world.workshops.get(id);
+    if (w) {
+      if (w.id === this.playerWorkshopId) return `your ${w.type}`;
+      const owner = this.world.owners.get(w.ownerId);
+      return owner ? `${owner.name}'s ${w.type}` : w.type;
+    }
+    return id;
+  }
+
+  /** Infer why coins moved from who paid whom — a short, plain phrase. */
+  private transferReason(from: string, to: string): string {
+    const fromW = this.world.workshops.get(from);
+    const toW = this.world.workshops.get(to);
+    const fromR = this.world.residents.has(from);
+    const toR = this.world.residents.has(to);
+    if (fromW && toR) return "wages";
+    if (from === COOP_ID && toR) return "farm wages";
+    if (from === TOWN_HALL_ID && toR) return "public-works pay";
+    if (fromR && toW) return `bought ${GOOD_NOUN[WORKSHOP_DEFS[toW.type].output] ?? "goods"}`;
+    if (fromW && to === COOP_ID) return "bought raw materials";
+    if ((fromR || fromW) && to === TOWN_HALL_ID) return "tax";
+    if (fromW && toW) return "a trade between shops";
+    if (from === TOWN_HALL_ID && to === COOP_ID) return "public spending";
+    return "a payment";
   }
 
   // ── Reasons (real data, short sentences for the tooltip) ────────────────────

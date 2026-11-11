@@ -409,4 +409,58 @@ describe("SoloSession", () => {
       expect(s.isClaimed(s.playerWorkshopId)).toBe(true);
     });
   });
+
+  describe("coinTrail (Follow a coin)", () => {
+    it("is empty before any day is played, then fills", () => {
+      const s = createSoloSession(42);
+      expect(s.coinTrail().hops).toHaveLength(0);
+      expect(s.coinTrail().totalMoves).toBe(0);
+      for (let i = 0; i < 6; i++) s.step();
+      const trail = s.coinTrail();
+      expect(trail.totalMoves).toBeGreaterThan(0);
+      expect(trail.hops.length).toBeGreaterThan(0);
+    });
+
+    it("threads real moves forward, each hop handing coins to the next holder", () => {
+      const s = createSoloSession(42);
+      for (let i = 0; i < 8; i++) s.step();
+      const { hops } = s.coinTrail(0, 6);
+      // A chain: the account that receives at hop i is the one that pays at i+1.
+      for (let i = 1; i < hops.length; i++) {
+        expect(hops[i]!.from).toBe(hops[i - 1]!.to);
+      }
+      // Every hop carries a positive amount, a day, a reason and two labels.
+      for (const h of hops) {
+        expect(h.amount).toBeGreaterThan(0);
+        expect(h.day).toBeGreaterThanOrEqual(1);
+        expect(h.reason.length).toBeGreaterThan(0);
+        expect(h.fromLabel.length).toBeGreaterThan(0);
+        expect(h.toLabel.length).toBeGreaterThan(0);
+      }
+      // It starts on a wage into a resident (the design's opening hop).
+      expect(s.world.residents.has(hops[0]!.to)).toBe(true);
+    });
+
+    it("is deterministic and recording never moves the 10,000 total", () => {
+      const a = createSoloSession(7);
+      const b = createSoloSession(7);
+      for (let i = 0; i < 10; i++) {
+        a.step();
+        b.step();
+      }
+      expect(a.coinTrail(3)).toEqual(b.coinTrail(3));
+      a.world.ledger.assertInvariant(TOTAL_COINS);
+    });
+
+    it("different seeds trace different coins", () => {
+      const s = createSoloSession(11);
+      for (let i = 0; i < 12; i++) s.step();
+      // The first hop's (payer→payee, day) identifies which coin we picked.
+      const sigs = Array.from({ length: 12 }, (_, n) => {
+        const h0 = s.coinTrail(n).hops[0]!;
+        return `${h0.from}->${h0.to}@${h0.day}`;
+      });
+      expect(new Set(sigs).size).toBeGreaterThan(1);
+    });
+  });
 });

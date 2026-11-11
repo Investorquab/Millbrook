@@ -54,6 +54,14 @@ tooltips explain every number.
   town average, layoffs and strikes — and feeds back into the game: fair owners
   draw and keep workers, ruthless ones lose them faster (pay is unchanged, so the
   10,000-coin invariant holds).
+- A **Market** screen shows the whole town at a glance — all four workshops (yours
+  and the three AI rivals) with price, wage, crew, stock, sales, profit and standing,
+  the public purse, and a town-wide ledger — all live from the same season.
+- **Follow a coin** (on the Proof screen) traces one coin hand to hand through the
+  town — a wage becomes bread, bread becomes wheat, wheat becomes a farmer's wage —
+  reading real moves from the season's ledger; "trace another coin" picks a new path.
+  (On the static demo these are the deterministic sim's moves, which the server nets
+  into the day's on-chain settlement; per-transaction explorer links are roadmap.)
 
 ### The chain (`contracts/millbrook`) — **live on testnet**
 A Rust (near-sdk) economy ledger. A pure `millbrook-ledger` core holds the invariant

@@ -271,6 +271,117 @@
   line-height: 1.4;
   color: var(--text-soft);
 }
+
+/* ── Follow a coin: the live trail ── */
+.proof__panel--coin {
+  border: 1px solid rgba(217, 164, 65, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.proof__coin-empty {
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--inset);
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.proof__trail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.proof__trail-hop {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.proof__trail-dot {
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--wheat);
+  border: 2px solid var(--inset);
+  box-shadow: 0 0 0 2px rgba(217, 164, 65, 0.35);
+  z-index: 1;
+}
+.proof__trail-hop:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 16px;
+  bottom: -14px;
+  width: 2px;
+  background: rgba(217, 164, 65, 0.35);
+}
+.proof__trail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.proof__trail-move {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--linen);
+}
+.proof__trail-move b {
+  font-weight: 700;
+}
+.proof__trail-meta {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 13px;
+}
+.proof__trail-coins {
+  font-family: var(--font-number);
+  font-weight: 700;
+  color: var(--wheat-light);
+}
+.proof__trail-reason {
+  color: var(--text-soft);
+}
+.proof__trail-day {
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+.proof__coin-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.proof__coin-btn {
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(217, 164, 65, 0.18);
+  color: var(--wheat-light);
+  border: 1px solid rgba(217, 164, 65, 0.5);
+}
+.proof__coin-btn:hover {
+  background: rgba(217, 164, 65, 0.28);
+}
+.proof__coin-note {
+  flex: 1;
+  min-width: 180px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
 .proof__receipt-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
