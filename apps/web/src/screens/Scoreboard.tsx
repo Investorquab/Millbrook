@@ -67,7 +67,18 @@ export function Scoreboard() {
                         ) : (
                           <span className="sb__face sb__face--you">Y</span>
                         )}
-                        <b>{r.isPlayer ? "You (your bakery)" : r.name}</b>
+                        <span className="sb__owner-text">
+                          <b>{r.isPlayer ? "You (your bakery)" : r.name}</b>
+                          {r.badges.length > 0 && (
+                            <span className="sb__badges">
+                              {r.badges.map((b) => (
+                                <span key={b.id} className="sb__badge" title={b.note}>
+                                  {b.label}
+                                </span>
+                              ))}
+                            </span>
+                          )}
+                        </span>
                       </span>
                     </td>
                     <td className="sb__num sb__profit">{sign(r.profit)}</td>

@@ -53,7 +53,8 @@ tooltips explain every number.
   **reputation** (−100 Ruthless … +100 Fair), which moves with wages against the
   town average, layoffs and strikes — and feeds back into the game: fair owners
   draw and keep workers, ruthless ones lose them faster (pay is unchanged, so the
-  10,000-coin invariant holds).
+  10,000-coin invariant holds). Each owner also earns **trophy badges** for the
+  dimension they lead — Top Earner, Biggest Employer, Fairest Boss, Best Payer.
 - A **Market** screen shows the whole town at a glance — all four workshops (yours
   and the three AI rivals) with price, wage, crew, stock, sales, profit and standing,
   the public purse, and a town-wide ledger — all live from the same season.

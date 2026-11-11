@@ -463,4 +463,30 @@ describe("SoloSession", () => {
       expect(new Set(sigs).size).toBeGreaterThan(1);
     });
   });
+
+  describe("trophy badges", () => {
+    it("awards each dimension's badge to its single leader", () => {
+      const s = createSoloSession(42);
+      for (let i = 0; i < 28; i++) s.step();
+      const rows = s.standings();
+
+      // Each category is awarded to at most one owner.
+      for (const id of ["top_earner", "biggest_employer", "fairest", "best_payer"]) {
+        const holders = rows.filter((r) => r.badges.some((b) => b.id === id));
+        expect(holders.length).toBeLessThanOrEqual(1);
+      }
+      // The "Best Payer" badge (always awarded — wage ≥ 1) goes to the top wage.
+      const payer = rows.find((r) => r.badges.some((b) => b.id === "best_payer"));
+      expect(payer).toBeTruthy();
+      expect(payer!.wage).toBe(Math.max(...rows.map((r) => r.wage)));
+      // The "Top Earner" badge, if awarded, goes to the highest profit.
+      const earner = rows.find((r) => r.badges.some((b) => b.id === "top_earner"));
+      if (earner) expect(earner.profit).toBe(Math.max(...rows.map((r) => r.profit)));
+      // Every badge carries a label and a note for the tooltip.
+      for (const r of rows) for (const b of r.badges) {
+        expect(b.label.length).toBeGreaterThan(0);
+        expect(b.note.length).toBeGreaterThan(0);
+      }
+    });
+  });
 });

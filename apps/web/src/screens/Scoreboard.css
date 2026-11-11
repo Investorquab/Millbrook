@@ -129,6 +129,28 @@
   font-weight: 700;
   color: var(--deep);
 }
+.sb__owner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.sb__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.sb__badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(217, 164, 65, 0.16);
+  color: var(--wheat-light);
+  border: 1px solid rgba(217, 164, 65, 0.4);
+  white-space: nowrap;
+}
 .sb__profit {
   font-weight: 700;
 }

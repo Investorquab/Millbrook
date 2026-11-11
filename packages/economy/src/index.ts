@@ -65,6 +65,7 @@ export {
   type SeasonEvent,
   type GoalCardInfo,
   type StandingRow,
+  type TrophyBadge,
   type SeasonSummary,
   type Gazette,
   type GazetteStory,

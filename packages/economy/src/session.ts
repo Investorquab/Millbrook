@@ -203,6 +203,13 @@ export interface GoalCardInfo {
   howToWin: string;
 }
 
+/** A badge an owner earned for leading the town in one dimension. */
+export interface TrophyBadge {
+  id: string;
+  label: string;
+  note: string;
+}
+
 /** One row of the season-end standings. */
 export interface StandingRow {
   ownerId: string;
@@ -215,6 +222,8 @@ export interface StandingRow {
   workers: number;
   wage: number;
   reputation: number;
+  /** Badges this owner leads the town in (top earner, biggest employer…). */
+  badges: TrophyBadge[];
   /** Score under the active goal card (higher is better). */
   score: number;
   detail: string;
@@ -1076,15 +1085,37 @@ export class SoloSession {
       workers: w.workers.length,
       wage: w.wage,
       reputation: Math.round(owner.reputation),
+      badges: [],
       score: scored.score,
       detail: scored.detail,
       rank: 0,
     };
   }
 
+  /** Award a badge to the single owner who leads the town in one dimension. */
+  private awardBadge(
+    rows: StandingRow[],
+    id: string,
+    label: string,
+    note: string,
+    metric: (r: StandingRow) => number,
+    min = 1,
+  ): void {
+    let best: StandingRow | null = null;
+    for (const r of rows) {
+      if (metric(r) >= min && (best === null || metric(r) > metric(best))) best = r;
+    }
+    if (best) best.badges.push({ id, label, note });
+  }
+
   /** Final standings, best first, ranked by the active goal card. */
   standings(): StandingRow[] {
     const rows = [...this.world.owners.keys()].map((id) => this.row(id));
+    // Each badge goes to the single owner who leads that dimension.
+    this.awardBadge(rows, "top_earner", "Top Earner", "The most profit this season.", (r) => r.profit);
+    this.awardBadge(rows, "biggest_employer", "Biggest Employer", "The most workers on the books.", (r) => r.workers);
+    this.awardBadge(rows, "fairest", "Fairest Boss", "The highest standing with the town.", (r) => r.reputation);
+    this.awardBadge(rows, "best_payer", "Best Payer", "Paid the highest daily wage.", (r) => r.wage);
     rows.sort((a, b) => b.score - a.score || b.profit - a.profit);
     rows.forEach((r, i) => (r.rank = i + 1));
     return rows;
