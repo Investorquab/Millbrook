@@ -237,6 +237,9 @@ export function Town() {
             </svg>
           )}
         </button>
+        <Link to="/market" className="town__pill">
+          Market
+        </Link>
         <Link to="/gazette" className="town__pill">
           Gazette
         </Link>

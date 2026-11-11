@@ -1,0 +1,309 @@
+.market {
+  min-height: 100dvh;
+  background: radial-gradient(120% 90% at 50% 0%, #2b3a4f 0%, #223041 46%, #1b2430 100%);
+  color: var(--linen);
+  padding-bottom: 32px;
+}
+
+/* ── Top bar ─────────────────────────────────────────────── */
+.market__topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+  background: rgba(30, 36, 43, 0.92);
+  border-bottom: 1px solid rgba(217, 164, 65, 0.25);
+  backdrop-filter: blur(6px);
+}
+.market__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--linen);
+  text-decoration: none;
+  font-weight: 600;
+}
+.market__back:hover {
+  color: var(--wheat-light);
+}
+.market__clock {
+  font-family: var(--font-number);
+  font-weight: 600;
+  color: var(--text-soft);
+}
+.market__speed {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--inset);
+}
+.market__speed button {
+  min-width: 34px;
+  height: 30px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 13px;
+}
+.market__speed button[aria-pressed="true"] {
+  background: var(--linen);
+  color: var(--millstone);
+}
+.market__spacer {
+  flex: 1;
+  min-width: 8px;
+}
+.market__town-stat {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.2;
+}
+.market__town-stat b {
+  font-family: var(--font-number);
+  font-size: 16px;
+  color: var(--linen);
+}
+.market__pill {
+  padding: 8px 14px;
+  border-radius: 9px;
+  background: var(--inset);
+  color: var(--linen);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+.market__pill--proof {
+  color: var(--river-text);
+}
+.market__pill:hover {
+  color: var(--wheat-light);
+}
+
+/* ── Body ────────────────────────────────────────────────── */
+.market__body {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 20px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
+}
+.market__h1 {
+  font-family: var(--font-display);
+  font-size: 34px;
+  margin: 0 0 4px;
+}
+.market__lede {
+  margin: 0 0 18px;
+  color: var(--text-soft);
+  max-width: 62ch;
+  line-height: 1.5;
+}
+
+/* Shop grid */
+.market__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.market__shop {
+  box-sizing: border-box;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(47, 54, 64, 0.9);
+  border: 1px solid rgba(237, 230, 214, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.market__shop.is-you {
+  border-color: var(--wheat);
+  box-shadow: 0 0 0 1px var(--wheat), 0 10px 28px rgba(0, 0, 0, 0.3);
+  background: rgba(54, 58, 56, 0.92);
+}
+.market__shop-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.market__good {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: #1e242b;
+  padding: 3px 10px;
+  border-radius: 7px;
+}
+.market__owner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.market__you {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1e242b;
+  background: var(--wheat);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.market__strat {
+  font-size: 12px;
+  font-weight: 700;
+}
+.market__flag {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.market__flag--bust {
+  color: var(--madder-text);
+  background: rgba(178, 58, 72, 0.18);
+}
+.market__flag--strike {
+  color: var(--wheat-light);
+  background: rgba(217, 164, 65, 0.16);
+}
+.market__rows {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px 12px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.market__rows b {
+  font-family: var(--font-number);
+  color: var(--linen);
+  font-size: 16px;
+  margin-left: 4px;
+}
+.market__standing {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(237, 230, 214, 0.1);
+  font-size: 13px;
+}
+.market__treasury {
+  font-family: var(--font-number);
+  color: var(--wheat-light);
+}
+.market__rep {
+  font-weight: 600;
+}
+
+/* Public purse */
+.market__public {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+.market__public-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--inset);
+  border: 1px solid rgba(237, 230, 214, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.market__public-card--total {
+  border-color: rgba(217, 164, 65, 0.4);
+}
+.market__public-name {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.market__public-card b {
+  font-family: var(--font-number);
+  font-size: 22px;
+}
+.market__public-card small {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Ledger */
+.market__ledger {
+  box-sizing: border-box;
+  align-self: start;
+  position: sticky;
+  top: 72px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(35, 42, 50, 0.92);
+  border: 1px solid rgba(237, 230, 214, 0.1);
+  max-height: calc(100dvh - 96px);
+  display: flex;
+  flex-direction: column;
+}
+.market__ledger h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin: 0;
+}
+.market__ledger-sub {
+  margin: 2px 0 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.market__ledger-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.market__ledger-empty {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.market__ledger-item {
+  display: flex;
+  gap: 9px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.market__ledger-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+}
+.market__ledger-day {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* Phone */
+@media (max-width: 900px) {
+  .market__body {
+    grid-template-columns: 1fr;
+  }
+  .market__grid {
+    grid-template-columns: 1fr;
+  }
+  .market__public {
+    grid-template-columns: 1fr 1fr;
+  }
+  .market__ledger {
+    position: static;
+    max-height: 420px;
+  }
+}

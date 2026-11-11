@@ -8,6 +8,7 @@ import { Proof } from "./screens/Proof";
 import { FastForward } from "./screens/FastForward";
 import { Gazette } from "./screens/Gazette";
 import { Scoreboard } from "./screens/Scoreboard";
+import { Market } from "./screens/Market";
 import { Room } from "./screens/Room";
 import { Join } from "./screens/Join";
 import { SoloProvider } from "./game/SoloProvider";
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
   { path: "/gazette", element: <Gazette /> },
   { path: "/fast-forward", element: <FastForward /> },
   { path: "/scoreboard", element: <Scoreboard /> },
+  { path: "/market", element: <Market /> },
 ]);
 
 export function App() {
