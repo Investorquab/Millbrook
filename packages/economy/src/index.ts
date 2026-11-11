@@ -28,6 +28,7 @@ export { runSeasonReport, formatReport, type SeasonReport } from "./sim.js";
 export {
   SoloSession,
   createSoloSession,
+  reputationLabel,
   PRICE_MIN,
   PRICE_MAX,
   WAGE_MIN,

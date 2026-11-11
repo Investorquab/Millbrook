@@ -39,6 +39,9 @@ test("fast-forward fills the charts, then the scoreboard and Gazette read the sa
 
   const standings = page.getByRole("region", { name: "Final standings" });
   await expect(standings.getByText(/You \(your bakery\)/)).toBeVisible();
+  // Reputation is live now: at least one owner ends the season off neutral
+  // (a non-zero cell carries the pos/neg class rather than the "—" placeholder).
+  await expect(standings.locator(".sb__num.pos, .sb__num.neg").first()).toBeVisible();
   // The closed economy still holds: the town's coins total 10,000.
   await expect(page.getByText("10,000")).toBeVisible();
 

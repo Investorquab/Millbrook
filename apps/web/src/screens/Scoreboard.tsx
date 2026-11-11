@@ -81,8 +81,8 @@ export function Scoreboard() {
               </tbody>
             </table>
             <p className="sb__footnote">
-              Ranked by the {summary.goal.name} card: {summary.goal.howToWin.toLowerCase()} Reputation lands with the
-              reputation system (roadmap).
+              Ranked by the {summary.goal.name} card: {summary.goal.howToWin.toLowerCase()} Reputation runs from −100
+              (Ruthless) to +100 (Fair) and moves with wages against the town, layoffs and strikes.
             </p>
           </section>
 

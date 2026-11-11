@@ -48,6 +48,9 @@ import {
   townAverageWage,
   unemploymentRate,
   updateStrike,
+  reputationStep,
+  REPUTATION_MIN,
+  REPUTATION_MAX,
 } from "./rules.js";
 import type { DayMetrics, Resident, Workshop, World } from "./types.js";
 
@@ -576,6 +579,7 @@ function endOfDay(world: World, totalSales: number): void {
   world.coop.revenueYesterday = world.coop.revenueToday;
   world.hallIncomeYesterday = world.hallIncomeToday;
 
+  updateReputations(world);
   recordMetrics(world, totalSales);
 
   // Advance the day and note a phase change.
@@ -587,6 +591,24 @@ function endOfDay(world: World, totalSales: number): void {
   }
 
   world.ledger.assertInvariant(TOTAL_COINS);
+}
+
+/** Drift every owner's reputation by the day's behaviour (pay, layoffs, strikes).
+ *  Runs before the day advances, so today's layoff feed lines (e.day === world.day)
+ *  are the ones that count. Nothing in the sim reads reputation to decide yet. */
+function updateReputations(world: World): void {
+  const laidOffToday = new Set<string>();
+  for (const e of world.feed) {
+    if (e.day === world.day && e.kind === "layoff" && e.data?.workshop) {
+      laidOffToday.add(String(e.data.workshop));
+    }
+  }
+  for (const w of world.workshops.values()) {
+    const owner = world.owners.get(w.ownerId);
+    if (!owner) continue;
+    const { value: delta } = reputationStep(world, w, { laidOffToday: laidOffToday.has(w.id) });
+    owner.reputation = Math.max(REPUTATION_MIN, Math.min(REPUTATION_MAX, owner.reputation + delta));
+  }
 }
 
 function recordMetrics(world: World, totalSales: number): void {

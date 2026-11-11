@@ -191,6 +191,49 @@ describe("SoloSession", () => {
     expect(run()).toEqual(run());
   });
 
+  describe("reputation", () => {
+    it("starts at neutral and rises for a consistently high-paying player", () => {
+      const s = createSoloSession(42);
+      expect(s.view().reputation).toBe(0);
+      s.hire();
+      s.setWage(12); // well above the town average
+      for (let d = 0; d < 20; d++) s.step();
+      const v = s.view();
+      expect(v.reputation).toBeGreaterThan(15);
+      expect(v.reputationLabel).toMatch(/Fair|Well liked/);
+    });
+
+    it("falls for a player who pays rock-bottom wages", () => {
+      const s = createSoloSession(42);
+      s.hire();
+      s.setWage(5); // the floor, below the town average
+      for (let d = 0; d < 20; d++) s.step();
+      expect(s.view().reputation).toBeLessThan(0);
+    });
+
+    it("gives each owner a reputation in the final standings (not all zero)", () => {
+      const s = createSoloSession(7);
+      s.hire();
+      s.setWage(11);
+      for (let d = 0; d < 28; d++) s.step();
+      const rows = s.standings();
+      expect(rows.every((r) => Number.isFinite(r.reputation))).toBe(true);
+      // The season moved reputations off zero for at least some owners.
+      expect(rows.some((r) => r.reputation !== 0)).toBe(true);
+    });
+
+    it("is deterministic (same seed + actions → same reputations)", () => {
+      const run = () => {
+        const s = createSoloSession(3);
+        s.hire();
+        s.setWage(10);
+        for (let d = 0; d < 14; d++) s.step();
+        return s.standings().map((r) => r.reputation);
+      };
+      expect(run()).toEqual(run());
+    });
+  });
+
   describe("claiming shops (multiplayer rooms)", () => {
     it("lists four open shops, only the bakery claimed at the start", () => {
       const s = createSoloSession(42);

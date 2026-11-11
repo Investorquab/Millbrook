@@ -142,6 +142,45 @@ export function townAverageWage(world: World): number {
   return wages.reduce((a, b) => a + b, 0) / wages.length;
 }
 
+/** Reputation runs from −100 (Ruthless) to +100 (Fair). */
+export const REPUTATION_MIN = -100;
+export const REPUTATION_MAX = 100;
+
+/**
+ * How an owner's reputation drifts over one day (GAME_DESIGN "Reputation"): it
+ * moves with the shop's wage against the town average, and takes a hit for a
+ * layoff that day or workers on strike. Returns the (unclamped) daily delta and
+ * a short reason for the tooltip. Pure — nothing in the sim reads reputation to
+ * make decisions yet (that's roadmap), so this only scores behaviour.
+ */
+export function reputationStep(
+  world: World,
+  workshop: Workshop,
+  flags: { laidOffToday: boolean },
+): Reasoned<number> {
+  if (workshop.bankrupt || !workshop.open) {
+    return { value: 0, reason: "The shop is closed, so its standing holds." };
+  }
+  const avg = townAverageWage(world);
+  const gap = workshop.wage - avg;
+  // Pay vs the town average is the steady signal (±1.5 a day at the extremes).
+  let delta = Math.max(-1.5, Math.min(1.5, gap * 0.8));
+  const reasons: string[] = [];
+  if (gap >= 0.5) reasons.push(`pays ${gap.toFixed(1)} above the town wage`);
+  else if (gap <= -0.5) reasons.push(`pays ${(-gap).toFixed(1)} below it`);
+  else reasons.push("pays about the town wage");
+  if (flags.laidOffToday) {
+    delta -= 3;
+    reasons.push("laid a worker off today");
+  }
+  if (workshop.strikeDays > 0) {
+    delta -= 2;
+    reasons.push("has workers on strike");
+  }
+  const verb = delta > 0.05 ? "rose" : delta < -0.05 ? "fell" : "held";
+  return { value: delta, reason: `Standing ${verb}: ${reasons.join(", ")}.` };
+}
+
 export function aliveResidents(world: World): Resident[] {
   return [...world.residents.values()].filter((r) => r.alive);
 }

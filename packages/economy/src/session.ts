@@ -140,6 +140,9 @@ export interface SoloView {
   wage: number;
   priceReason: string;
   wageReason: string;
+  /** This shop's owner standing, −100 (Ruthless) … +100 (Fair), and a label. */
+  reputation: number;
+  reputationLabel: string;
   stock: number;
   soldToday: number;
   profitToday: number;
@@ -250,6 +253,15 @@ const ORDINALS = ["first", "second", "third", "fourth", "fifth", "sixth"];
 
 function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, Math.round(n)));
+}
+
+/** A short word for a reputation score, for the HUD and cards. */
+export function reputationLabel(rep: number): string {
+  if (rep >= 40) return "Fair";
+  if (rep >= 10) return "Well liked";
+  if (rep > -10) return "Neutral";
+  if (rep > -40) return "Harsh";
+  return "Ruthless";
 }
 
 function phaseLabel(phase: Phase): string {
@@ -517,6 +529,8 @@ export class SoloSession {
       wage: w.wage,
       priceReason: this.priceReason(w),
       wageReason: this.wageReason(w),
+      reputation: Math.round(this.world.owners.get(w.ownerId)?.reputation ?? 0),
+      reputationLabel: reputationLabel(this.world.owners.get(w.ownerId)?.reputation ?? 0),
       stock: Math.floor(w.outputStock),
       soldToday: Math.floor(w.soldToday),
       profitToday: isPrimary ? this.profitToday : (this.deltaByWs.get(w.id) ?? 0),
@@ -715,7 +729,7 @@ export class SoloSession {
       profit: this.world.ledger.get(w.id) - w.startingCoins,
       workers: w.workers.length,
       wage: w.wage,
-      reputation: owner.reputation,
+      reputation: Math.round(owner.reputation),
       score: scored.score,
       detail: scored.detail,
       rank: 0,
