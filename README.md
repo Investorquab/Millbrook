@@ -31,8 +31,9 @@ Hall. Residents work, get paid, shop, change jobs, strike and migrate; AI owners
 - `pnpm sim --seed 42 --days 28` prints a full season report.
 
 ### The game (`apps/web`)
-A React + React Three Fiber solo game: a low-poly mill town at dusk whose shops react
-to the simulation, walking residents who float speech bubbles with their real reason
+A React + React Three Fiber solo game: a low-poly mill town on a slow day → night
+cycle (golden dusk, then a lamp-lit night, then a bright day) whose shops react to
+the simulation, walking residents who float speech bubbles with their real reason
 (straight from the rules — "Bought today's bread", "Left the weaver for the smithy"),
 and a gold coin-flow on sales. Nine screens ported from the approved designs — Title,
 Sign-in, Hub, Town (3D HUD), Resident, Proof, Fast-forward, Scoreboard, Gazette. Rule

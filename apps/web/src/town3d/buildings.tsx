@@ -9,6 +9,7 @@ import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
 import type { WorkshopType } from "@millbrook/shared";
 import { diorama, tradeColor } from "./palette";
+import { lampMaterial } from "./lamps";
 import type { Vec2 } from "./layout";
 
 const xz = (p: Vec2, y = 0): [number, number, number] => [p[0], y, p[1]];
@@ -120,16 +121,18 @@ export function Workshop({ type, pos, rot, busy, bankrupt, isPlayer }: WorkshopP
       <Roof w={2.0} d={1.7} h={1.0} y={1.72} color={roofColor} />
       <Sign color={bankrupt ? diorama.stoneDark : accent} y={1.15} />
 
-      {/* a lit window, or boarded when bankrupt */}
-      <mesh position={[0.5, 0.78, 0.77]}>
-        <boxGeometry args={[0.34, 0.34, 0.04]} />
-        <meshStandardMaterial
-          color={bankrupt ? diorama.timberDark : diorama.lamp}
-          emissive={bankrupt ? "#000" : diorama.lamp}
-          emissiveIntensity={bankrupt ? 0 : 0.8}
-          flatShading
-        />
-      </mesh>
+      {/* a lit window (shared lamp material, so it dims by day and glows at
+          night), or boarded dark when bankrupt */}
+      {bankrupt ? (
+        <mesh position={[0.5, 0.78, 0.77]}>
+          <boxGeometry args={[0.34, 0.34, 0.04]} />
+          <meshStandardMaterial color={diorama.timberDark} emissive="#000" emissiveIntensity={0} flatShading />
+        </mesh>
+      ) : (
+        <mesh position={[0.5, 0.78, 0.77]} material={lampMaterial}>
+          <boxGeometry args={[0.34, 0.34, 0.04]} />
+        </mesh>
+      )}
 
       {/* trade props */}
       {type === "bakery" && (
@@ -203,10 +206,9 @@ export function TownHall({ pos, rot }: { pos: Vec2; rot: number }) {
         <coneGeometry args={[0.6, 0.6, 4]} />
         <meshStandardMaterial color={diorama.wheat} flatShading />
       </mesh>
-      {/* clock face */}
-      <mesh position={[0, 1.35, 0.96]}>
+      {/* clock face — lit like a lamp, so it reads after dark */}
+      <mesh position={[0, 1.35, 0.96]} material={lampMaterial}>
         <circleGeometry args={[0.28, 16]} />
-        <meshStandardMaterial color={diorama.lamp} emissive={diorama.lamp} emissiveIntensity={0.6} />
       </mesh>
     </group>
   );
@@ -255,9 +257,8 @@ export function House({ pos, rot, tone }: { pos: Vec2; rot: number; tone: number
         <boxGeometry args={[0.3, 0.5, 0.05]} />
         <meshStandardMaterial color={diorama.timber} flatShading />
       </mesh>
-      <mesh position={[0.35, 0.6, 0.56]}>
+      <mesh position={[0.35, 0.6, 0.56]} material={lampMaterial}>
         <boxGeometry args={[0.24, 0.24, 0.04]} />
-        <meshStandardMaterial color={diorama.lamp} emissive={diorama.lamp} emissiveIntensity={0.7} />
       </mesh>
     </group>
   );
