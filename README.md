@@ -9,7 +9,7 @@ room) and try to thrive without wrecking the place.
 Built for the **NEAR hackathon — Games With Real Economies**.
 
 - **Contract (live, NEAR testnet):** [`millbrook.testnet`](https://testnet.nearblocks.io/address/millbrook.testnet) — fixed 10,000-coin supply, auditable on-chain.
-- **Live demo URL:** not yet deployed (runs locally — see [Run it](#run-it)). A hosted build on a VPS is in [Roadmap](#roadmap).
+- **Live demo:** **https://millbrook-phi.vercel.app** — play the full solo game in your browser (economy, Game Master, and the live on-chain Proof read all run client-side). Multiplayer rooms need the game server; run them locally or on a VPS ([Run it](#run-it), [`docs/DEPLOY.md`](docs/DEPLOY.md)).
 - **Video:** coming for submission.
 
 ---
