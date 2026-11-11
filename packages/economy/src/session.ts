@@ -263,6 +263,14 @@ function phaseLabel(phase: Phase): string {
   }
 }
 
+/** One claimable shop in a room: its type, id and whether a player runs it. */
+export interface WorkshopSlot {
+  type: WorkshopType;
+  workshopId: string;
+  /** True once a human has claimed it (owner strategy null → engine leaves it alone). */
+  claimed: boolean;
+}
+
 export class SoloSession {
   readonly world: World;
   readonly playerWorkshopId: string;
@@ -274,6 +282,13 @@ export class SoloSession {
   private unemploymentRising = false;
   private goalCardId = "tycoon";
   private readonly priceHistory: PriceSnapshot[] = [];
+  /** Workshop ids a human controls (the bakery from the start; more via claim()). */
+  private readonly claimed = new Set<string>();
+  /** AI strategy saved when a shop was claimed, to restore it on release. */
+  private readonly savedStrategy = new Map<string, AiStrategyId>();
+  /** Per-claimed-workshop coins at the last dawn, for each player's day delta. */
+  private readonly prevCoinsByWs = new Map<string, number>();
+  private readonly deltaByWs = new Map<string, number>();
 
   constructor(config: SeasonConfig) {
     // A predictable solo town: the four Phase-1 workshops in a fixed order so
@@ -300,13 +315,72 @@ export class SoloSession {
     bakery.price = DEFAULT_PRICE;
     bakery.wage = DEFAULT_WAGE;
 
+    this.claimed.add(this.playerWorkshopId);
     this.prevCoins = this.world.ledger.get(this.playerWorkshopId);
+    this.prevCoinsByWs.set(this.playerWorkshopId, this.prevCoins);
     this.prevUnemployment = unemploymentRate(this.world);
     this.snapshotPrices();
   }
 
   private get workshop(): Workshop {
     return this.world.workshops.get(this.playerWorkshopId)!;
+  }
+
+  /** Resolve a workshop by id, defaulting to the primary (bakery) workshop. */
+  private resolveWorkshop(workshopId?: string): Workshop {
+    if (!workshopId) return this.workshop;
+    const w = this.world.workshops.get(workshopId);
+    if (!w) throw new Error(`no workshop ${workshopId}`);
+    return w;
+  }
+
+  // ── Claiming (multiplayer: each player runs one shop) ───────────────────────
+
+  /** The four open shops and whether a human already runs each — for the lobby. */
+  workshopSlots(): WorkshopSlot[] {
+    return [...this.world.workshops.values()]
+      .filter((w) => w.open)
+      .map((w) => ({ type: w.type, workshopId: w.id, claimed: this.claimed.has(w.id) }));
+  }
+
+  isClaimed(workshopId: string): boolean {
+    return this.claimed.has(workshopId);
+  }
+
+  /**
+   * Hand a shop to a human: its AI owner becomes player-controlled (strategy
+   * null → the engine stops setting its price/wage/headcount at dawn, the player
+   * does). Returns the workshop id, or null if the type isn't open or is already
+   * claimed. The caller tracks which player owns which shop.
+   */
+  claim(type: WorkshopType): string | null {
+    const w = this.workshopOfType(type);
+    if (!w || this.claimed.has(w.id)) return null;
+    const owner = this.world.owners.get(w.ownerId);
+    if (owner) {
+      if (owner.strategy) this.savedStrategy.set(w.id, owner.strategy);
+      owner.kind = "player";
+      owner.strategy = null;
+    }
+    // Inherit the shop as-is, but clamp into the stepper bounds so the UI is valid.
+    w.price = clamp(w.price, PRICE_MIN, PRICE_MAX);
+    w.wage = clamp(w.wage, WAGE_MIN, WAGE_MAX);
+    this.claimed.add(w.id);
+    this.prevCoinsByWs.set(w.id, this.world.ledger.get(w.id));
+    return w.id;
+  }
+
+  /** Hand a claimed shop back to the AI (restoring its strategy), e.g. on leave. */
+  release(workshopId: string): void {
+    if (workshopId === this.playerWorkshopId || !this.claimed.has(workshopId)) return;
+    const w = this.world.workshops.get(workshopId);
+    const owner = w && this.world.owners.get(w.ownerId);
+    if (owner) {
+      owner.strategy = this.savedStrategy.get(workshopId) ?? owner.strategy;
+      owner.kind = "ai";
+    }
+    this.claimed.delete(workshopId);
+    this.savedStrategy.delete(workshopId);
   }
 
   /** The AI/player workshop of a given type, if this town opened it. */
@@ -330,25 +404,27 @@ export class SoloSession {
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
-  setPrice(price: number): void {
-    this.workshop.price = clamp(price, PRICE_MIN, PRICE_MAX);
+  setPrice(price: number, workshopId?: string): void {
+    this.resolveWorkshop(workshopId).price = clamp(price, PRICE_MIN, PRICE_MAX);
   }
 
-  setWage(wage: number): void {
-    this.workshop.wage = clamp(wage, WAGE_MIN, WAGE_MAX);
+  setWage(wage: number, workshopId?: string): void {
+    this.resolveWorkshop(workshopId).wage = clamp(wage, WAGE_MIN, WAGE_MAX);
   }
 
-  /** Hire one idle resident into the bakery. Returns false if it couldn't. */
-  hire(): boolean {
-    const w = this.workshop;
+  /** Hire one idle resident into a player shop. Returns false if it couldn't. */
+  hire(workshopId?: string): boolean {
+    const w = this.resolveWorkshop(workshopId);
     if (w.bankrupt || w.workers.length >= w.maxWorkers) return false;
     const idle = aliveResidents(this.world).find((r) => r.employerId === null);
     if (!idle) return false;
+    // The bakery (the solo/host shop) keeps its familiar "your bakery" wording.
+    const shop = w.id === this.playerWorkshopId ? "your bakery" : `your ${w.type}`;
     idle.employerId = w.id;
     idle.daysUnemployed = 0;
-    idle.lastReason = `Hired at your bakery for ${w.wage} a day.`;
+    idle.lastReason = `Hired at ${shop} for ${w.wage} a day.`;
     w.workers.push(idle.id);
-    pushFeed(this.world, "hire", `You hired ${idle.name} at your bakery for ${w.wage} a day.`, {
+    pushFeed(this.world, "hire", `You hired ${idle.name} at ${shop} for ${w.wage} a day.`, {
       resident: idle.id,
       workshop: w.id,
     });
@@ -358,9 +434,15 @@ export class SoloSession {
   /** Advance one game day. No-op once the season has ended. */
   step(): void {
     if (this.world.day >= this.totalDays) return;
+    const before = new Map<string, number>();
+    for (const id of this.claimed) before.set(id, this.world.ledger.get(id));
     const beforeCoins = this.world.ledger.get(this.playerWorkshopId);
     const beforeUnemp = unemploymentRate(this.world);
     stepDay(this.world);
+    for (const id of this.claimed) {
+      this.deltaByWs.set(id, this.world.ledger.get(id) - (before.get(id) ?? 0));
+      this.prevCoinsByWs.set(id, this.world.ledger.get(id));
+    }
     const afterCoins = this.world.ledger.get(this.playerWorkshopId);
     this.coinsDelta = afterCoins - beforeCoins;
     this.profitToday = afterCoins - beforeCoins;
@@ -372,8 +454,7 @@ export class SoloSession {
 
   // ── Reasons (real data, short sentences for the tooltip) ────────────────────
 
-  private priceReason(): string {
-    const w = this.workshop;
+  private priceReason(w: Workshop = this.workshop): string {
     const def = WORKSHOP_DEFS[w.type];
     const wheat = this.world.coop.rawPrices[def.input as RawGood] ?? 0;
     const cost = def.inputPerOutput * wheat;
@@ -384,8 +465,7 @@ export class SoloSession {
     return "Steep — only the well-paid will buy at this price.";
   }
 
-  private wageReason(): string {
-    const w = this.workshop;
+  private wageReason(w: Workshop = this.workshop): string {
     const avg = townAverageWage(this.world);
     const avgLabel = avg.toFixed(1);
     if (w.wage < avg * 0.8) return `Below the town average of ${avgLabel}. Your workers may strike.`;
@@ -403,8 +483,10 @@ export class SoloSession {
 
   // ── View ────────────────────────────────────────────────────────────────────
 
-  view(): SoloView {
-    const w = this.workshop;
+  view(workshopId?: string): SoloView {
+    const w = this.resolveWorkshop(workshopId);
+    const isPrimary = w.id === this.playerWorkshopId;
+    const coinsDelta = isPrimary ? this.coinsDelta : (this.deltaByWs.get(w.id) ?? 0);
     const workers: WorkerView[] = w.workers
       .map((id) => this.world.residents.get(id))
       .filter((r): r is NonNullable<typeof r> => !!r)
@@ -422,8 +504,8 @@ export class SoloSession {
       phaseLabel: phaseLabel(this.world.phase),
       ended: this.world.day >= this.totalDays,
 
-      coins: this.world.ledger.get(this.playerWorkshopId),
-      coinsDelta: this.coinsDelta,
+      coins: this.world.ledger.get(w.id),
+      coinsDelta,
 
       unemploymentPct: Math.round(unemploymentRate(this.world) * 100),
       unemploymentRising: this.unemploymentRising,
@@ -433,11 +515,11 @@ export class SoloSession {
       workshopType: w.type,
       price: w.price,
       wage: w.wage,
-      priceReason: this.priceReason(),
-      wageReason: this.wageReason(),
+      priceReason: this.priceReason(w),
+      wageReason: this.wageReason(w),
       stock: Math.floor(w.outputStock),
       soldToday: Math.floor(w.soldToday),
-      profitToday: this.profitToday,
+      profitToday: isPrimary ? this.profitToday : (this.deltaByWs.get(w.id) ?? 0),
       workers,
       maxWorkers: w.maxWorkers,
       canHire: !w.bankrupt && w.workers.length < w.maxWorkers,

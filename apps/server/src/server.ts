@@ -47,7 +47,10 @@ export function createGameServer(opts: { dayMs?: number } = {}): GameServer {
 
   const broadcast = (room: Room) => {
     io.to(room.id).emit("room:state", room.state());
-    io.to(room.id).emit("game:view", room.view());
+    // Each player sees their own shop; spectators (no claim) watch the bakery.
+    for (const p of room.playerList) {
+      io.to(p.id).emit("game:view", room.viewFor(p.workshopId));
+    }
   };
   const roomOf = (roomId: unknown): Room | undefined =>
     typeof roomId === "string" ? rooms.get(roomId) : undefined;
@@ -71,6 +74,13 @@ export function createGameServer(opts: { dayMs?: number } = {}): GameServer {
       socket.data.roomId = room.id;
       void socket.join(room.id);
       broadcast(room);
+    });
+
+    socket.on("room:claim", ({ type }) => {
+      const room = roomOf(socket.data.roomId);
+      if (!room) return;
+      if (room.claim(socket.id, type)) broadcast(room);
+      else socket.emit("error", { message: `The ${type} is already taken.` });
     });
 
     socket.on("room:start", () => {
@@ -98,7 +108,9 @@ export function createGameServer(opts: { dayMs?: number } = {}): GameServer {
     socket.on("game:action", (action: GameAction) => {
       const room = roomOf(socket.data.roomId);
       if (!room) return;
-      applyAction(room, action);
+      const workshopId = room.workshopOf(socket.id);
+      if (!workshopId) return; // spectators without a shop can't act
+      applyAction(room, workshopId, action);
       broadcast(room);
     });
 
@@ -150,16 +162,16 @@ export function createGameServer(opts: { dayMs?: number } = {}): GameServer {
   };
 }
 
-function applyAction(room: Room, action: GameAction): void {
+function applyAction(room: Room, workshopId: string, action: GameAction): void {
   switch (action.type) {
     case "setPrice":
-      room.session.setPrice(action.value);
+      room.session.setPrice(action.value, workshopId);
       break;
     case "setWage":
-      room.session.setWage(action.value);
+      room.session.setWage(action.value, workshopId);
       break;
     case "hire":
-      room.session.hire();
+      room.session.hire(workshopId);
       break;
   }
 }

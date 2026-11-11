@@ -11,7 +11,8 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { createSoloSession, type SoloSession, type SoloView } from "@millbrook/economy";
+import { createSoloSession, type SoloSession, type SoloView, type WorkshopSlot } from "@millbrook/economy";
+import type { WorkshopType } from "@millbrook/shared";
 
 export type RoomStatus = "lobby" | "live" | "ended";
 
@@ -19,6 +20,9 @@ export interface Player {
   id: string;
   name: string;
   isHost: boolean;
+  /** The shop this player runs, once claimed (the host gets the bakery). */
+  workshopId?: string;
+  workshopType?: WorkshopType;
 }
 
 export interface RoomState {
@@ -27,6 +31,8 @@ export interface RoomState {
   status: RoomStatus;
   hostId: string;
   players: Player[];
+  /** The four shops and whether a human runs each — for the lobby claim grid. */
+  slots: WorkshopSlot[];
   seed: number;
   day: number;
   totalDays: number;
@@ -56,7 +62,14 @@ export class Room {
     this.seed = seed;
     this.hostId = hostId;
     this.session = createSoloSession(seed);
-    this.players.set(hostId, { id: hostId, name: hostName, isHost: true });
+    // The host runs the bakery (the session's pre-claimed player shop).
+    this.players.set(hostId, {
+      id: hostId,
+      name: hostName,
+      isHost: true,
+      workshopId: this.session.playerWorkshopId,
+      workshopType: "bakery",
+    });
   }
 
   addPlayer(id: string, name: string): Player {
@@ -67,15 +80,48 @@ export class Room {
     return player;
   }
 
+  /** A player claims an open shop to run. Returns true if the claim took. The
+   *  bakery belongs to the host, so it can't be claimed by anyone else. */
+  claim(playerId: string, type: WorkshopType): boolean {
+    const player = this.players.get(playerId);
+    if (!player || this.status !== "lobby") return false;
+    // Drop any shop they held first (but never the host's bakery).
+    if (player.workshopId && player.workshopId !== this.session.playerWorkshopId) {
+      this.session.release(player.workshopId);
+      player.workshopId = undefined;
+      player.workshopType = undefined;
+    }
+    const id = this.session.claim(type);
+    if (!id) return false;
+    player.workshopId = id;
+    player.workshopType = type;
+    return true;
+  }
+
+  /** The shop a player runs, if any. */
+  workshopOf(playerId: string): string | undefined {
+    return this.players.get(playerId)?.workshopId;
+  }
+
   removePlayer(id: string): void {
-    const wasHost = this.players.get(id)?.isHost;
+    const leaving = this.players.get(id);
+    const wasHost = leaving?.isHost;
+    // Hand their shop back to the AI (never the bakery; that passes to the next host).
+    if (leaving?.workshopId && leaving.workshopId !== this.session.playerWorkshopId) {
+      this.session.release(leaving.workshopId);
+    }
     this.players.delete(id);
-    // If the host leaves, hand the room to the next player so it isn't orphaned.
+    // If the host leaves, hand the room — and the bakery — to the next player.
     if (wasHost) {
       const next = this.players.values().next().value as Player | undefined;
       if (next) {
         next.isHost = true;
         this.hostId = next.id;
+        if (next.workshopId && next.workshopId !== this.session.playerWorkshopId) {
+          this.session.release(next.workshopId);
+        }
+        next.workshopId = this.session.playerWorkshopId;
+        next.workshopType = "bakery";
       }
     }
   }
@@ -86,6 +132,10 @@ export class Room {
 
   get playerCount(): number {
     return this.players.size;
+  }
+
+  get playerList(): Player[] {
+    return [...this.players.values()];
   }
 
   /** Host starts the season. */
@@ -106,6 +156,11 @@ export class Room {
     return this.session.view();
   }
 
+  /** The live view of one shop — a player's own, or the bakery for a spectator. */
+  viewFor(workshopId?: string): SoloView {
+    return this.session.view(workshopId);
+  }
+
   state(): RoomState {
     const v = this.session.view();
     return {
@@ -114,6 +169,7 @@ export class Room {
       status: this.status,
       hostId: this.hostId,
       players: [...this.players.values()],
+      slots: this.session.workshopSlots(),
       seed: this.seed,
       day: v.day,
       totalDays: v.totalDays,

@@ -190,4 +190,74 @@ describe("SoloSession", () => {
     };
     expect(run()).toEqual(run());
   });
+
+  describe("claiming shops (multiplayer rooms)", () => {
+    it("lists four open shops, only the bakery claimed at the start", () => {
+      const s = createSoloSession(42);
+      const slots = s.workshopSlots();
+      expect(slots.map((x) => x.type).sort()).toEqual(["bakery", "brewery", "smithy", "weaver"]);
+      expect(slots.filter((x) => x.claimed).map((x) => x.type)).toEqual(["bakery"]);
+    });
+
+    it("claims a second shop: its owner becomes player-controlled, and claim is idempotent", () => {
+      const s = createSoloSession(42);
+      const id = s.claim("weaver");
+      expect(id).not.toBeNull();
+      const w = s.world.workshops.get(id!)!;
+      const owner = s.world.owners.get(w.ownerId)!;
+      expect(owner.kind).toBe("player");
+      expect(owner.strategy).toBeNull();
+      // Already claimed → a second claim of the same type is refused.
+      expect(s.claim("weaver")).toBeNull();
+      // Price/wage land inside the stepper bounds so the UI is valid.
+      expect(w.price).toBeGreaterThanOrEqual(1);
+      expect(w.price).toBeLessThanOrEqual(PRICE_MAX);
+    });
+
+    it("the AI never overrides a claimed shop's price across a day", () => {
+      const s = createSoloSession(7);
+      const id = s.claim("smithy")!;
+      s.setPrice(5, id);
+      s.setWage(10, id);
+      s.step();
+      const v = s.view(id);
+      expect(v.workshopType).toBe("smithy");
+      expect(v.price).toBe(5);
+      expect(v.wage).toBe(10);
+    });
+
+    it("gives each claimed shop its own view, coins and day-delta", () => {
+      const s = createSoloSession(42);
+      const weaverId = s.claim("weaver")!;
+      s.hire(); // into the bakery
+      s.hire(weaverId); // into the weaver
+      s.setPrice(3);
+      s.setPrice(4, weaverId);
+      for (let d = 0; d < 6; d++) s.step();
+      const bakery = s.view();
+      const weaver = s.view(weaverId);
+      expect(bakery.workshopType).toBe("bakery");
+      expect(weaver.workshopType).toBe("weaver");
+      // Two different shops, two different coin positions.
+      expect(bakery.coins).not.toBe(weaver.coins);
+      s.world.ledger.assertInvariant(TOTAL_COINS);
+    });
+
+    it("releasing a claimed shop restores its AI strategy", () => {
+      const s = createSoloSession(5);
+      const id = s.claim("brewery")!;
+      const owner = s.world.owners.get(s.world.workshops.get(id)!.ownerId)!;
+      expect(owner.strategy).toBeNull();
+      s.release(id);
+      expect(owner.kind).toBe("ai");
+      expect(owner.strategy).not.toBeNull();
+      expect(s.isClaimed(id)).toBe(false);
+    });
+
+    it("never releases the primary bakery", () => {
+      const s = createSoloSession(5);
+      s.release(s.playerWorkshopId);
+      expect(s.isClaimed(s.playerWorkshopId)).toBe(true);
+    });
+  });
 });

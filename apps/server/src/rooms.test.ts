@@ -61,6 +61,51 @@ describe("RoomManager", () => {
     expect(rm.size).toBe(0);
   });
 
+  it("lets a joiner claim an open shop, and keeps the bakery for the host", () => {
+    const rm = new RoomManager();
+    const room = rm.create("host1", "Ada", 42);
+    rm.join(room.code, "p2", "Tom");
+    // The host already runs the bakery; a joiner can't take it.
+    expect(room.claim("p2", "bakery")).toBe(false);
+    // But they can claim the weaver.
+    expect(room.claim("p2", "weaver")).toBe(true);
+    const slot = room.state().slots.find((s) => s.type === "weaver");
+    expect(slot?.claimed).toBe(true);
+    expect(room.state().players.find((p) => p.id === "p2")?.workshopType).toBe("weaver");
+    // A third player can't take the weaver now; another shop is still free.
+    rm.join(room.code, "p3", "Mara");
+    expect(room.claim("p3", "weaver")).toBe(false);
+    expect(room.claim("p3", "smithy")).toBe(true);
+  });
+
+  it("routes each player's action to their own shop (independent coins)", () => {
+    const rm = new RoomManager();
+    const room = rm.create("host1", "Ada", 42);
+    rm.join(room.code, "p2", "Tom");
+    room.claim("p2", "weaver");
+    const hostWs = room.workshopOf("host1")!;
+    const weaverWs = room.workshopOf("p2")!;
+    expect(hostWs).not.toBe(weaverWs);
+    room.session.setPrice(2, hostWs);
+    room.session.setPrice(5, weaverWs);
+    room.start();
+    for (let i = 0; i < 5; i++) room.step();
+    expect(room.viewFor(hostWs).workshopType).toBe("bakery");
+    expect(room.viewFor(weaverWs).workshopType).toBe("weaver");
+    expect(room.viewFor(hostWs).price).toBe(2);
+    expect(room.viewFor(weaverWs).price).toBe(5);
+  });
+
+  it("frees a claimed shop back to the AI when its player leaves", () => {
+    const rm = new RoomManager();
+    const room = rm.create("host1", "Ada", 42);
+    rm.join(room.code, "p2", "Tom");
+    room.claim("p2", "smithy");
+    expect(room.state().slots.find((s) => s.type === "smithy")?.claimed).toBe(true);
+    rm.leaveAll("p2");
+    expect(room.state().slots.find((s) => s.type === "smithy")?.claimed).toBe(false);
+  });
+
   it("two rooms run independent seasons", () => {
     const rm = new RoomManager();
     const a = rm.create("h1", "A", 1);

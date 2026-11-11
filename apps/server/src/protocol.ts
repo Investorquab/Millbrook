@@ -4,12 +4,14 @@
  */
 
 import type { SoloView } from "@millbrook/economy";
+import type { WorkshopType } from "@millbrook/shared";
 import type { RoomState } from "./rooms.js";
 
 /** Client → server events. */
 export interface ClientToServer {
   "room:create": (payload: { name: string; seed?: number }) => void;
   "room:join": (payload: { code: string; name: string }) => void;
+  "room:claim": (payload: { type: WorkshopType }) => void;
   "room:leave": () => void;
   "room:start": () => void;
   "game:play": () => void;

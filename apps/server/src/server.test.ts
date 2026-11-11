@@ -89,4 +89,46 @@ describe("game server (socket.io)", () => {
     expect(view.price).toBe(5);
     c.close();
   });
+
+  it("gives a joiner who claims a shop their own view, actions and feed", async () => {
+    const host = connect();
+    host.emit("room:create", { name: "Ada", seed: 42 });
+    const created = await once<RoomState>(host, "room:state");
+
+    const guest = connect();
+    guest.emit("room:join", { code: created.code, name: "Tom" });
+    await once<RoomState>(guest, "room:state");
+
+    // The guest claims the weaver; the room state marks the slot taken by them.
+    guest.emit("room:claim", { type: "weaver" });
+    const claimed = await once<RoomState>(guest, "room:state");
+    expect(claimed.slots.find((s) => s.type === "weaver")?.claimed).toBe(true);
+    expect(claimed.players.find((p) => p.name === "Tom")?.workshopType).toBe("weaver");
+
+    // The guest's own view is their weaver, and their action hits the weaver.
+    guest.emit("game:action", { type: "setPrice", value: 4 });
+    const guestView = await once<SoloView>(guest, "game:view");
+    expect(guestView.workshopType).toBe("weaver");
+    expect(guestView.price).toBe(4);
+
+    host.close();
+    guest.close();
+  });
+
+  it("refuses to let a joiner claim the host's bakery", async () => {
+    const host = connect();
+    host.emit("room:create", { name: "Ada", seed: 42 });
+    const created = await once<RoomState>(host, "room:state");
+
+    const guest = connect();
+    guest.emit("room:join", { code: created.code, name: "Tom" });
+    await once<RoomState>(guest, "room:state");
+
+    guest.emit("room:claim", { type: "bakery" });
+    const err = await once<{ message: string }>(guest, "error");
+    expect(err.message).toMatch(/already taken/);
+
+    host.close();
+    guest.close();
+  });
 });

@@ -1,7 +1,9 @@
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { io, type Socket } from "socket.io-client";
-import type { SoloView } from "@millbrook/economy";
+import type { SoloView, WorkshopSlot } from "@millbrook/economy";
+
+export type WorkshopType = WorkshopSlot["type"];
 
 /**
  * The client side of the rooms server. Connects to the game server over
@@ -16,6 +18,8 @@ export interface RoomPlayer {
   id: string;
   name: string;
   isHost: boolean;
+  /** The shop this player runs, once claimed (the host gets the bakery). */
+  workshopType?: WorkshopType;
 }
 
 export interface RoomState {
@@ -24,6 +28,8 @@ export interface RoomState {
   status: "lobby" | "live" | "ended";
   hostId: string;
   players: RoomPlayer[];
+  /** The four shops and whether a human runs each — for the lobby claim grid. */
+  slots: WorkshopSlot[];
   seed: number;
   day: number;
   totalDays: number;
@@ -41,8 +47,11 @@ export interface RoomController {
   error: string | null;
   myId: string | null;
   isHost: boolean;
+  /** The shop I run this room, if I've claimed one (host always runs the bakery). */
+  myWorkshop: WorkshopType | null;
   createRoom: (name: string, seed?: number) => void;
   joinRoom: (code: string, name: string) => void;
+  claimWorkshop: (type: WorkshopType) => void;
   leaveRoom: () => void;
   startRoom: () => void;
   play: () => void;
@@ -108,6 +117,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socketRef.current?.emit(event, payload);
   }, []);
 
+  const me = room && myId ? room.players.find((p) => p.id === myId) : undefined;
+
   const value: RoomController = {
     status,
     room,
@@ -115,8 +126,10 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     error,
     myId,
     isHost: !!room && !!myId && room.hostId === myId,
+    myWorkshop: me?.workshopType ?? null,
     createRoom,
     joinRoom,
+    claimWorkshop: (type) => emit("room:claim", { type }),
     leaveRoom,
     startRoom: () => emit("room:start"),
     play: () => emit("game:play"),

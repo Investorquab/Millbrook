@@ -1,17 +1,34 @@
 import { useNavigate } from "react-router-dom";
 import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN } from "@millbrook/economy";
-import { useRoom } from "../game/RoomProvider";
+import { useRoom, type WorkshopType } from "../game/RoomProvider";
 import "./Room.css";
 
 /**
  * A networked room — the lobby and the live town over Socket.IO, driven by
- * {@link RoomProvider}. Matches the structure of `design/screenshots/Lobby.png`
- * for what's wired: the live invite code, the real player slots, and the start
- * button. Per-player workshops, chat and the settings pickers are marked as
- * roadmap rather than faked.
+ * {@link RoomProvider}. The live invite code, the claimable shop slots, and the
+ * start button are wired to the server; each player claims one shop and runs it
+ * (the host runs the bakery). Chat and the settings pickers are roadmap.
  */
 
-const WORKSHOP_SLOTS = ["Bakery", "Smithy", "Weaver", "Brewery"] as const;
+const SHOP_LABEL: Record<string, string> = {
+  bakery: "Bakery",
+  weaver: "Weaver",
+  smithy: "Smithy",
+  brewery: "Brewery",
+  tailor: "Tailor",
+  tavern: "Tavern",
+  carpenter: "Carpenter",
+  apothecary: "Apothecary",
+};
+const shopName = (type: WorkshopType | string) => SHOP_LABEL[type] ?? type;
+
+/** The good each shop sells, for labelling the price stepper. */
+const GOOD_LABEL: Record<string, string> = {
+  bakery: "Bread",
+  weaver: "Cloth",
+  smithy: "Tools",
+  brewery: "Ale",
+};
 
 function Stepper({
   label,
@@ -111,22 +128,30 @@ export function Room() {
 
       {room.error && <p className="room__error">{room.error}</p>}
 
-      {/* Player / workshop slots */}
+      {/* Claimable shop slots — one per player, AI fills the rest */}
       <div className="room__slots">
-        {WORKSHOP_SLOTS.map((slot, i) => {
-          const player = r.players[i];
+        {r.slots.map((slot) => {
+          const owner = r.players.find((p) => p.workshopType === slot.type);
+          const mine = owner?.id === room.myId;
+          const canClaim = !slot.claimed && room.myWorkshop === null && !live && !ended;
           return (
-            <div key={slot} className={`room__slot ${player ? "room__slot--filled" : "room__slot--ai"}`}>
-              <span className="room__slot-shop">{slot}</span>
-              {player ? (
+            <div key={slot.type} className={`room__slot ${slot.claimed ? "room__slot--filled" : "room__slot--ai"} ${mine ? "room__slot--mine" : ""}`}>
+              <span className="room__slot-shop">{shopName(slot.type)}</span>
+              {owner ? (
                 <>
-                  <span className="room__slot-name">{player.name}</span>
-                  <span className="room__slot-state">{player.isHost ? "Host" : "Joined"}</span>
+                  <span className="room__slot-name">{mine ? "You" : owner.name}</span>
+                  <span className="room__slot-state">{owner.isHost ? "Host · runs the bakery" : "Running this shop"}</span>
                 </>
               ) : (
                 <>
                   <span className="room__slot-name room__slot-name--ai">AI owner</span>
-                  <span className="room__slot-state">Fills this shop until someone joins</span>
+                  {canClaim ? (
+                    <button type="button" className="room__claim" onClick={() => room.claimWorkshop(slot.type)}>
+                      Claim this shop
+                    </button>
+                  ) : (
+                    <span className="room__slot-state">Runs until a player claims it</span>
+                  )}
                 </>
               )}
             </div>
@@ -139,7 +164,12 @@ export function Room() {
           <div className="room__settings">
             <div>
               <h2>This town</h2>
-              <p>30 residents, the four Phase-1 workshops, seed #{r.seed}.</p>
+              <p>
+                30 residents, the four Phase-1 workshops, seed #{r.seed}.{" "}
+                {room.myWorkshop
+                  ? `You run the ${shopName(room.myWorkshop).toLowerCase()}.`
+                  : "Claim a shop above to run one, or watch."}
+              </p>
             </div>
             <div>
               <h2>Speed &amp; goal</h2>
@@ -189,11 +219,11 @@ export function Room() {
           {ended ? (
             <p className="room__ended">The season has ended. Thanks for playing Millbrook.</p>
           ) : (
-            <div className="room__controls" aria-label="Your bakery">
-              {room.isHost ? (
+            <div className="room__controls" aria-label="Your shop">
+              {room.myWorkshop ? (
                 <>
                   <Stepper
-                    label="Bread price"
+                    label={`${GOOD_LABEL[v?.workshopType ?? "bakery"] ?? "Good"} price`}
                     value={v?.price ?? 3}
                     unit="coins"
                     min={PRICE_MIN}
@@ -214,18 +244,22 @@ export function Room() {
                   />
                   <div className="room__live-actions">
                     <button type="button" className="room__btn-linen" onClick={room.hire} disabled={!v?.canHire}>
-                      {v?.canHire ? "Hire a baker" : "Bakery full"}
+                      {v?.canHire ? "Hire a worker" : "Shop full"}
                     </button>
-                    <button type="button" className="room__btn-ghost" onClick={room.play}>
-                      Play
-                    </button>
-                    <button type="button" className="room__btn-ghost" onClick={room.pause}>
-                      Pause
-                    </button>
+                    {room.isHost && (
+                      <>
+                        <button type="button" className="room__btn-ghost" onClick={room.play}>
+                          Play
+                        </button>
+                        <button type="button" className="room__btn-ghost" onClick={room.pause}>
+                          Pause
+                        </button>
+                      </>
+                    )}
                   </div>
                 </>
               ) : (
-                <p className="room__waiting">The host runs the bakery. Per-player workshops are on the roadmap.</p>
+                <p className="room__waiting">You're watching this season. Claim a shop from the lobby next time to run one.</p>
               )}
             </div>
           )}

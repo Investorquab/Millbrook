@@ -33,6 +33,7 @@ export {
   WAGE_MIN,
   WAGE_MAX,
   type SoloView,
+  type WorkshopSlot,
   type WorkerView,
   type FeedLine,
   type GmEventCard,

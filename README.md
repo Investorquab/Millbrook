@@ -69,10 +69,13 @@ reasoning and the source.
 - If the weather feed or the AI model is unavailable, it falls back to town metrics
   and a template, and **says so** — tested at both the simulation and enclave layers.
 
-### Rooms (`apps/server`)
+### Rooms (`apps/server` + web client)
 A Socket.IO server with rooms: create, invite code, lobby, host start, and a live
-tick that advances the season. HTTP `/health` and `/rooms`. The `infra/` stack
-(Node server + Postgres 16 + Caddy) is ready for a VPS.
+tick that advances the season. The web client (Host/Join screens) is wired to it:
+friends join by code, **each claims one of the four shops and runs it** (the host
+runs the bakery), and everyone watches the same shared town. AI owners fill any
+shop no one claims. HTTP `/health` and `/rooms`. The `infra/` stack (Node server +
+Postgres 16 + Caddy) is ready for a VPS.
 
 ---
 
@@ -133,15 +136,14 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture and
 - **Fallbacks are on by default.** Without a NEAR AI Cloud key or an OutLayer enclave
   account, the Game Master runs on town metrics with template reasoning and an
   unattested (but still hash-verifiable) receipt, and the UI says so.
-- **Rooms are early.** Today the host plays the one workshop and others join to watch
-  the same live town; per-player workshops, chat and trades are in Roadmap. Rooms are
-  in memory until Postgres persistence lands.
+- **Rooms are early.** Each player claims and runs one of the four shops in a shared
+  town; chat and trades are still in Roadmap, and rooms live in memory until Postgres
+  persistence lands.
 
 ---
 
 ## Roadmap
 
-- Web rooms client (Lobby/Host/Join wired to the server) and per-player workshops
 - Room chat, trade offers, who's-online and moderation
 - Postgres persistence so a server restart loses nothing
 - Foreman standing orders and decision cards; reputation

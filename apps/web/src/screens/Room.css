@@ -113,6 +113,22 @@
 .room__slot--filled {
   border-color: var(--wheat);
 }
+.room__slot--mine {
+  border-color: var(--meadow);
+  background: rgba(58, 90, 64, 0.22);
+}
+.room__claim {
+  margin-top: auto;
+  align-self: flex-start;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--wheat);
+  color: var(--millstone);
+  font: 700 14px var(--font-body);
+  cursor: pointer;
+}
 .room__slot--ai {
   border: 2px dashed rgba(237, 230, 214, 0.25);
   background: rgba(36, 42, 50, 0.5);
