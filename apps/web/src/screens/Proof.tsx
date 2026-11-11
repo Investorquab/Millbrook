@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSolo } from "../game/SoloProvider";
 import { color } from "../theme/tokens";
+import { CONTRACT_ID, EXPLORER, readChainAudit } from "../game/chain";
 import "./Proof.css";
 
 /**
@@ -14,9 +16,6 @@ import "./Proof.css";
  * its net daily transfers to that contract.
  */
 
-const CONTRACT_ID = "millbrook.testnet";
-const EXPLORER = `https://testnet.nearblocks.io/address/${CONTRACT_ID}`;
-
 const SLICES = [
   { key: "residents", label: "Residents", color: color.meadow },
   { key: "workshops", label: "Workshops", color: color.wheat },
@@ -24,11 +23,28 @@ const SLICES = [
   { key: "townHall", label: "Town Hall", color: color.textSecondary },
 ] as const;
 
+type ChainState =
+  | { status: "loading" }
+  | { status: "ok"; auditTotal: number; settlements: number }
+  | { status: "offline" };
+
 export function Proof() {
   const { session } = useSolo();
   const h = session.holdings();
   const pct = (n: number) => (h.total > 0 ? (n / h.total) * 100 : 0);
   const gmEvents = session.gmEvents(4);
+
+  // Read the real audited total from the live contract on testnet, once.
+  const [chain, setChain] = useState<ChainState>({ status: "loading" });
+  useEffect(() => {
+    let alive = true;
+    readChainAudit()
+      .then((r) => alive && setChain({ status: "ok", ...r }))
+      .catch(() => alive && setChain({ status: "offline" }));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <div className="proof">
@@ -63,6 +79,29 @@ export function Proof() {
             The game contract refuses any settlement that changes the total. It has no admin key and no way to mint, so
             not even the developer can print money.
           </p>
+
+          <div className="proof__onchain" data-status={chain.status} aria-live="polite">
+            <span className="proof__onchain-dot" aria-hidden="true" />
+            {chain.status === "loading" && <span>Reading {CONTRACT_ID} on testnet…</span>}
+            {chain.status === "ok" && (
+              <span>
+                On-chain right now:{" "}
+                <a className="proof__link" href={EXPLORER} target="_blank" rel="noreferrer">
+                  <b>{chain.auditTotal.toLocaleString()}</b> coins audited
+                </a>{" "}
+                · {chain.settlements} settlement{chain.settlements === 1 ? "" : "s"} so far
+              </span>
+            )}
+            {chain.status === "offline" && (
+              <span>
+                Testnet unreachable right now — the figure above is the live sim; the{" "}
+                <a className="proof__link" href={EXPLORER} target="_blank" rel="noreferrer">
+                  contract ↗
+                </a>{" "}
+                still audits to 10,000 on-chain.
+              </span>
+            )}
+          </div>
 
           <div>
             <div
