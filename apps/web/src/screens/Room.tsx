@@ -269,6 +269,8 @@ export function Room() {
             </div>
           )}
 
+          {!ended && <TradePanel />}
+
           <div className="room__feed" aria-label="Town feed">
             {(v?.feed ?? []).slice(0, 8).map((line, i) => (
               <div key={`${line.day}-${i}`} className="room__feed-item">
@@ -283,6 +285,93 @@ export function Room() {
 
       <ChatPanel />
     </div>
+  );
+}
+
+/** Trade offers (the design's "offer N goods for P coins" decision card), driven
+ *  by {@link useRoom}. Shown while a room is live. You post offers of your shop's
+ *  output good for coins; others accept or decline. */
+function TradePanel() {
+  const room = useRoom();
+  const [qty, setQty] = useState(1);
+  const [coins, setCoins] = useState(5);
+  const [to, setTo] = useState<string>("");
+
+  const myGood = room.view ? GOOD_LABEL[room.view.workshopType] ?? "goods" : "goods";
+  const others = (room.room?.players ?? []).filter((p) => p.id !== room.myId && p.workshopType);
+  // Offers I can act on: open to the room, or addressed to me, and not my own.
+  const incoming = room.offers.filter(
+    (o) => o.fromPlayerId !== room.myId && (o.toPlayerId === null || o.toPlayerId === room.myId),
+  );
+  const mine = room.offers.filter((o) => o.fromPlayerId === room.myId);
+
+  function post(e: FormEvent) {
+    e.preventDefault();
+    if (qty <= 0) return;
+    room.offerTrade({ qty, coins, toPlayerId: to || null });
+  }
+
+  return (
+    <section className="room__trade" aria-label="Trade offers">
+      <h2>Deals</h2>
+      {room.myWorkshop ? (
+        <form className="room__trade-form" onSubmit={post}>
+          <span>Offer</span>
+          <input aria-label="Quantity" type="number" min={1} value={qty} onChange={(e) => setQty(Math.max(1, +e.target.value))} />
+          <b>{myGood.toLowerCase()}</b>
+          <span>for</span>
+          <input aria-label="Price in coins" type="number" min={0} value={coins} onChange={(e) => setCoins(Math.max(0, +e.target.value))} />
+          <span>coins</span>
+          <select aria-label="Offer to" value={to} onChange={(e) => setTo(e.target.value)}>
+            <option value="">to the room</option>
+            {others.map((p) => (
+              <option key={p.id} value={p.id}>
+                to {p.name}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="room__btn-linen">
+            Post offer
+          </button>
+        </form>
+      ) : (
+        <p className="room__trade-empty">Claim a shop to make and take trades.</p>
+      )}
+
+      <div className="room__trade-list">
+        {incoming.map((o) => (
+          <div key={o.id} className="room__offer">
+            <span className="room__offer-text">
+              <b>{o.fromName}</b> offers {o.qty} {o.good} for {o.coins} coins
+              {o.toPlayerId === room.myId ? " (to you)" : ""}
+            </span>
+            {room.myWorkshop && (
+              <span className="room__offer-actions">
+                <button type="button" className="room__btn-linen" onClick={() => room.acceptTrade(o.id)}>
+                  Accept
+                </button>
+                <button type="button" className="room__btn-ghost" onClick={() => room.declineTrade(o.id)}>
+                  Decline
+                </button>
+              </span>
+            )}
+          </div>
+        ))}
+        {mine.map((o) => (
+          <div key={o.id} className="room__offer room__offer--mine">
+            <span className="room__offer-text">
+              You offer {o.qty} {o.good} for {o.coins} coins{o.toPlayerId ? " (addressed)" : " (open)"}
+            </span>
+            <button type="button" className="room__btn-ghost" onClick={() => room.declineTrade(o.id)}>
+              Withdraw
+            </button>
+          </div>
+        ))}
+        {incoming.length === 0 && mine.length === 0 && (
+          <p className="room__trade-empty">No open deals. Tools lift a shop's output — a good thing to trade for.</p>
+        )}
+      </div>
+    </section>
   );
 }
 

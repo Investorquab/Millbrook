@@ -126,6 +126,50 @@ describe("RoomManager", () => {
     expect(history.some((m) => m.system && m.text.includes("season"))).toBe(true);
   });
 
+  it("runs a trade offer: seller posts, buyer accepts, coins and goods move", () => {
+    const rm = new RoomManager();
+    const room = rm.create("host1", "Ada", 42); // host runs the bakery
+    rm.join(room.code, "p2", "Tom");
+    room.claim("p2", "smithy"); // Tom makes tools
+    room.start();
+    // Build the smithy some tool stock, then guarantee it for a clean assert.
+    for (let i = 0; i < 6; i++) room.step();
+    const smithyWs = room.workshopOf("p2")!;
+    room.session.world.workshops.get(smithyWs)!.outputStock = 5;
+
+    // Offers need a live room and a shop; garbage is refused.
+    expect(room.makeOffer("p2", { qty: 0, coins: 5 }).error).toBeTruthy();
+    const { offer } = room.makeOffer("p2", { qty: 2, coins: 12 });
+    expect(offer).toBeTruthy();
+    expect(room.openOffers()).toHaveLength(1);
+
+    const bakeryWs = room.workshopOf("host1")!;
+    const buyerBefore = room.session.world.ledger.get(bakeryWs);
+    const sellerBefore = room.session.world.ledger.get(smithyWs);
+
+    // The seller can't accept their own offer; the buyer can.
+    expect(room.acceptOffer("p2", offer!.id).ok).toBe(false);
+    const res = room.acceptOffer("host1", offer!.id);
+    expect(res.ok).toBe(true);
+    expect(room.openOffers()).toHaveLength(0);
+    expect(room.session.world.ledger.get(bakeryWs)).toBe(buyerBefore - 12);
+    expect(room.session.world.ledger.get(smithyWs)).toBe(sellerBefore + 12);
+    expect(room.session.world.workshops.get(bakeryWs)!.tools).toBeGreaterThan(0);
+  });
+
+  it("drops a player's offers when they leave", () => {
+    const rm = new RoomManager();
+    const room = rm.create("host1", "Ada", 42);
+    rm.join(room.code, "p2", "Tom");
+    room.claim("p2", "smithy");
+    room.start();
+    room.session.world.workshops.get(room.workshopOf("p2")!)!.outputStock = 5;
+    room.makeOffer("p2", { qty: 1, coins: 5 });
+    expect(room.openOffers()).toHaveLength(1);
+    rm.leaveAll("p2");
+    expect(room.openOffers()).toHaveLength(0);
+  });
+
   it("two rooms run independent seasons", () => {
     const rm = new RoomManager();
     const a = rm.create("h1", "A", 1);

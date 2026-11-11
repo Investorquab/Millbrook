@@ -16,6 +16,19 @@ export interface ChatMessage {
   system?: boolean;
 }
 
+/** A standing trade offer (mirrors apps/server/src/protocol.ts). */
+export interface TradeOffer {
+  id: string;
+  fromPlayerId: string;
+  fromName: string;
+  fromWorkshopId: string;
+  good: string;
+  qty: number;
+  coins: number;
+  toPlayerId: string | null;
+  ts: number;
+}
+
 /**
  * The client side of the rooms server. Connects to the game server over
  * Socket.IO on demand (only when you host or join — solo play never opens a
@@ -61,10 +74,14 @@ export interface RoomController {
   /** The shop I run this room, if I've claimed one (host always runs the bakery). */
   myWorkshop: WorkshopType | null;
   messages: ChatMessage[];
+  offers: TradeOffer[];
   createRoom: (name: string, seed?: number) => void;
   joinRoom: (code: string, name: string) => void;
   claimWorkshop: (type: WorkshopType) => void;
   sendChat: (text: string) => void;
+  offerTrade: (spec: { qty: number; coins: number; toPlayerId?: string | null }) => void;
+  acceptTrade: (offerId: string) => void;
+  declineTrade: (offerId: string) => void;
   leaveRoom: () => void;
   startRoom: () => void;
   play: () => void;
@@ -84,6 +101,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [myId, setMyId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [offers, setOffers] = useState<TradeOffer[]>([]);
 
   const ensureSocket = useCallback((): Socket => {
     if (socketRef.current) return socketRef.current;
@@ -99,6 +117,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socket.on("game:view", (v: SoloView) => setView(v));
     socket.on("chat:history", (msgs: ChatMessage[]) => setMessages(msgs));
     socket.on("chat:message", (msg: ChatMessage) => setMessages((prev) => [...prev, msg]));
+    socket.on("trade:offers", (list: TradeOffer[]) => setOffers(list));
     socket.on("error", (payload: { message: string }) => setError(payload.message));
     socketRef.current = socket;
     return socket;
@@ -127,6 +146,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setRoom(null);
     setView(null);
     setMessages([]);
+    setOffers([]);
     setStatus("idle");
   }, []);
 
@@ -145,6 +165,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     isHost: !!room && !!myId && room.hostId === myId,
     myWorkshop: me?.workshopType ?? null,
     messages,
+    offers,
     createRoom,
     joinRoom,
     claimWorkshop: (type) => emit("room:claim", { type }),
@@ -152,6 +173,9 @@ export function RoomProvider({ children }: { children: ReactNode }) {
       const t = text.trim();
       if (t) emit("chat:send", { text: t });
     },
+    offerTrade: (spec) => emit("trade:offer", spec),
+    acceptTrade: (offerId) => emit("trade:accept", { offerId }),
+    declineTrade: (offerId) => emit("trade:decline", { offerId }),
     leaveRoom,
     startRoom: () => emit("room:start"),
     play: () => emit("game:play"),

@@ -111,4 +111,41 @@ test.describe("Rooms", () => {
 
     await guestContext.close();
   });
+
+  test("a player posts a trade offer the others see, and can withdraw it", async ({ page, browser }) => {
+    await page.goto("/hub");
+    await page.getByRole("button", { name: "Create room" }).click();
+    await expect(page.getByText("You're the host")).toBeVisible({ timeout: 15000 });
+    const code = ((await page.locator(".room__code-value").textContent()) ?? "").trim();
+
+    const guestContext = await browser.newContext();
+    const guest = await guestContext.newPage();
+    await guest.goto(`/join?code=${code}`);
+    await guest.getByLabel("Your name").fill("smith-lee");
+    await guest.getByLabel("Room code").fill(code);
+    await guest.getByRole("button", { name: "Join the room" }).click();
+    await guest.locator(".room__slot", { hasText: "Smithy" }).getByRole("button", { name: "Claim this shop" }).click();
+
+    // Trading opens once the host starts the season.
+    await page.getByRole("button", { name: "Start the season" }).click();
+    const guestTrade = guest.getByLabel("Trade offers");
+    await expect(guestTrade).toBeVisible({ timeout: 15000 });
+
+    // The smith offers 2 tools for 8 coins to the room.
+    await guestTrade.getByLabel("Quantity").fill("2");
+    await guestTrade.getByLabel("Price in coins").fill("8");
+    await guestTrade.getByRole("button", { name: "Post offer" }).click();
+
+    // The host sees the offer with Accept/Decline.
+    const hostTrade = page.getByLabel("Trade offers");
+    await expect(hostTrade).toContainText("smith-lee");
+    await expect(hostTrade).toContainText("2 tool for 8 coins");
+    await expect(hostTrade.getByRole("button", { name: "Accept" })).toBeVisible();
+
+    // The smith withdraws it; it clears for the host.
+    await guestTrade.getByRole("button", { name: "Withdraw" }).click();
+    await expect(hostTrade.getByRole("button", { name: "Accept" })).toHaveCount(0);
+
+    await guestContext.close();
+  });
 });

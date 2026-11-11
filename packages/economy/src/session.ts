@@ -382,6 +382,56 @@ export class SoloSession {
     return w.id;
   }
 
+  /** What one shop can put up for trade: its own output good. */
+  tradeGood(workshopId: string): Good | null {
+    const w = this.world.workshops.get(workshopId);
+    return w ? WORKSHOP_DEFS[w.type].output : null;
+  }
+
+  /**
+   * Execute a trade between two shops: the buyer pays `coins` to the seller, and
+   * the seller hands over `qty` units of its output good. Tools lift the buyer's
+   * output (each tool raises one worker to the with-tools rate); other goods are
+   * simply bought off the market. Only coins move on the ledger, so the town's
+   * 10,000 total is conserved. Returns whether it went through and why.
+   */
+  trade(sellerWorkshopId: string, buyerWorkshopId: string, qty: number, coins: number): { ok: boolean; reason: string } {
+    const seller = this.world.workshops.get(sellerWorkshopId);
+    const buyer = this.world.workshops.get(buyerWorkshopId);
+    if (!seller || !buyer || seller.id === buyer.id) return { ok: false, reason: "That trade needs two different shops." };
+    if (!Number.isInteger(qty) || qty <= 0 || !Number.isInteger(coins) || coins < 0) {
+      return { ok: false, reason: "A trade needs a whole quantity and price." };
+    }
+    if (seller.bankrupt || buyer.bankrupt) return { ok: false, reason: "A bankrupt shop can't trade." };
+    if (Math.floor(seller.outputStock) < qty) {
+      return { ok: false, reason: `The seller only has ${Math.floor(seller.outputStock)} to give.` };
+    }
+    if (this.world.ledger.get(buyer.id) < coins) {
+      return { ok: false, reason: "The buyer can't cover that price." };
+    }
+    const good = WORKSHOP_DEFS[seller.type].output;
+    // Coins: buyer → seller (conserves the total).
+    if (coins > 0) this.world.ledger.payUpTo(buyer.id, seller.id, coins);
+    // Goods: out of the seller, into the buyer.
+    seller.outputStock -= qty;
+    seller.soldToday += qty;
+    seller.revenueToday += coins;
+    if (good === "tool") buyer.tools += qty;
+    pushFeed(
+      this.world,
+      "trade",
+      `${this.shopLabel(seller)} sold ${qty} ${good} to ${this.shopLabel(buyer)} for ${coins} coins.`,
+      { workshop: buyer.id, from: seller.id, good, qty, coins },
+    );
+    this.world.ledger.assertInvariant(TOTAL_COINS);
+    return { ok: true, reason: `Traded ${qty} ${good} for ${coins} coins.` };
+  }
+
+  private shopLabel(w: Workshop): string {
+    const owner = this.world.owners.get(w.ownerId);
+    return owner && owner.kind === "player" ? `the ${w.type}` : `${owner?.name ?? "a rival"}'s ${w.type}`;
+  }
+
   /** Hand a claimed shop back to the AI (restoring its strategy), e.g. on leave. */
   release(workshopId: string): void {
     if (workshopId === this.playerWorkshopId || !this.claimed.has(workshopId)) return;

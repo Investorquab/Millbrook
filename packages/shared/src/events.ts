@@ -24,6 +24,7 @@ export const FEED_EVENT_KINDS = [
   "phase_change",
   "gm_event",
   "sale_summary",
+  "trade",
 ] as const;
 export type FeedEventKind = (typeof FEED_EVENT_KINDS)[number];
 

@@ -4,8 +4,23 @@
  */
 
 import type { SoloView } from "@millbrook/economy";
-import type { WorkshopType } from "@millbrook/shared";
+import type { Good, WorkshopType } from "@millbrook/shared";
 import type { RoomState } from "./rooms.js";
+
+/** A standing trade offer: a seller will give `qty` of their output good for
+ *  `coins`, to one player or to anyone in the room. Accept or let it lapse. */
+export interface TradeOffer {
+  id: string;
+  fromPlayerId: string;
+  fromName: string;
+  fromWorkshopId: string;
+  good: Good;
+  qty: number;
+  coins: number;
+  /** A targeted offer names its recipient; null means open to the room. */
+  toPlayerId: string | null;
+  ts: number;
+}
 
 /** One line of room chat. The server stamps id, author, day and timestamp. */
 export interface ChatMessage {
@@ -32,6 +47,9 @@ export interface ClientToServer {
   "room:leave": () => void;
   "room:start": () => void;
   "chat:send": (payload: { text: string }) => void;
+  "trade:offer": (payload: { qty: number; coins: number; toPlayerId?: string | null }) => void;
+  "trade:accept": (payload: { offerId: string }) => void;
+  "trade:decline": (payload: { offerId: string }) => void;
   "game:play": () => void;
   "game:pause": () => void;
   "game:action": (payload: GameAction) => void;
@@ -44,6 +62,8 @@ export interface ServerToClient {
   "chat:message": (message: ChatMessage) => void;
   /** The recent backlog, sent to a client as it joins. */
   "chat:history": (messages: ChatMessage[]) => void;
+  /** The room's current open trade offers. */
+  "trade:offers": (offers: TradeOffer[]) => void;
   "error": (payload: { message: string }) => void;
 }
 

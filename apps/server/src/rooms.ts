@@ -13,7 +13,7 @@
 import { randomUUID } from "node:crypto";
 import { createSoloSession, type SoloSession, type SoloView, type WorkshopSlot } from "@millbrook/economy";
 import type { WorkshopType } from "@millbrook/shared";
-import { CHAT_MAX_LEN, type ChatMessage } from "./protocol.js";
+import { CHAT_MAX_LEN, type ChatMessage, type TradeOffer } from "./protocol.js";
 
 /** Keep the chat bounded so a long-lived room doesn't grow without end. */
 const CHAT_HISTORY = 100;
@@ -66,6 +66,7 @@ export class Room {
   hostId: string;
   private readonly players = new Map<string, Player>();
   private readonly chatLog: ChatMessage[] = [];
+  private readonly offers = new Map<string, TradeOffer>();
 
   constructor(id: string, code: string, hostId: string, hostName: string, seed: number) {
     this.id = id;
@@ -121,6 +122,7 @@ export class Room {
     if (leaving?.workshopId && leaving.workshopId !== this.session.playerWorkshopId) {
       this.session.release(leaving.workshopId);
     }
+    this.dropOffersInvolving(id);
     this.players.delete(id);
     // If the host leaves, hand the room — and the bakery — to the next player.
     if (wasHost) {
@@ -147,6 +149,10 @@ export class Room {
 
   get playerList(): Player[] {
     return [...this.players.values()];
+  }
+
+  nameOf(playerId: string): string | undefined {
+    return this.players.get(playerId)?.name;
   }
 
   /** Host starts the season. */
@@ -215,6 +221,76 @@ export class Room {
 
   chatHistory(): ChatMessage[] {
     return [...this.chatLog];
+  }
+
+  // ── Trade offers ─────────────────────────────────────────────────────────────
+
+  openOffers(): TradeOffer[] {
+    return [...this.offers.values()];
+  }
+
+  /** A shop-running player posts an offer to sell its output good for coins.
+   *  Validated for shape here; stock and funds are checked when it's accepted. */
+  makeOffer(
+    fromPlayerId: string,
+    spec: { qty: number; coins: number; toPlayerId?: string | null },
+  ): { offer?: TradeOffer; error?: string } {
+    if (this.status !== "live") return { error: "Trading opens once the season is live." };
+    const seller = this.players.get(fromPlayerId);
+    if (!seller?.workshopId) return { error: "Claim a shop before you offer a trade." };
+    const qty = Math.floor(spec.qty);
+    const coins = Math.floor(spec.coins);
+    if (!(qty > 0) || !(coins >= 0)) return { error: "An offer needs a whole quantity and price." };
+    const good = this.session.tradeGood(seller.workshopId);
+    if (!good) return { error: "That shop has nothing to sell." };
+    const toPlayerId = spec.toPlayerId ?? null;
+    if (toPlayerId && !this.players.has(toPlayerId)) return { error: "That player isn't in the room." };
+    if (toPlayerId === fromPlayerId) return { error: "You can't trade with yourself." };
+    const offer: TradeOffer = {
+      id: randomUUID(),
+      fromPlayerId,
+      fromName: seller.name,
+      fromWorkshopId: seller.workshopId,
+      good,
+      qty,
+      coins,
+      toPlayerId,
+      ts: Date.now(),
+    };
+    this.offers.set(offer.id, offer);
+    return { offer };
+  }
+
+  /** Another shop-running player accepts an offer; runs the trade on the economy. */
+  acceptOffer(byPlayerId: string, offerId: string): { ok: boolean; reason: string; offer?: TradeOffer } {
+    const offer = this.offers.get(offerId);
+    if (!offer) return { ok: false, reason: "That offer is no longer open." };
+    if (offer.toPlayerId && offer.toPlayerId !== byPlayerId) {
+      return { ok: false, reason: "That offer was made to someone else." };
+    }
+    const buyer = this.players.get(byPlayerId);
+    if (!buyer?.workshopId) return { ok: false, reason: "Claim a shop before you accept a trade." };
+    if (buyer.id === offer.fromPlayerId) return { ok: false, reason: "You can't accept your own offer." };
+    const res = this.session.trade(offer.fromWorkshopId, buyer.workshopId, offer.qty, offer.coins);
+    if (res.ok) this.offers.delete(offerId);
+    return { ...res, offer };
+  }
+
+  /** The recipient (or anyone it's open to) turns an offer down, or the seller pulls it. */
+  declineOffer(byPlayerId: string, offerId: string): TradeOffer | undefined {
+    const offer = this.offers.get(offerId);
+    if (!offer) return undefined;
+    const mayAct = offer.fromPlayerId === byPlayerId || !offer.toPlayerId || offer.toPlayerId === byPlayerId;
+    if (!mayAct) return undefined;
+    this.offers.delete(offerId);
+    return offer;
+  }
+
+  /** Drop any offers from or to a player (they left, or their shop changed). */
+  private dropOffersInvolving(playerId: string): void {
+    for (const [id, o] of this.offers) {
+      if (o.fromPlayerId === playerId || o.toPlayerId === playerId) this.offers.delete(id);
+    }
   }
 
   state(): RoomState {

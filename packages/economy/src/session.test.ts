@@ -244,6 +244,47 @@ describe("SoloSession", () => {
     });
   });
 
+  describe("trades between shops", () => {
+    it("moves coins buyer→seller and goods seller→buyer, holding the invariant", () => {
+      const s = createSoloSession(42);
+      const smithyId = s.claim("smithy")!;
+      const bakeryId = s.playerWorkshopId;
+      // Run a few days so the smithy builds some tool stock.
+      s.hire(smithyId);
+      for (let d = 0; d < 6; d++) s.step();
+      const smithy = s.world.workshops.get(smithyId)!;
+      const bakery = s.world.workshops.get(bakeryId)!;
+      // Give the smithy guaranteed stock and the bakery coins for a clean assert.
+      smithy.outputStock = 5;
+      const sellerBefore = s.world.ledger.get(smithyId);
+      const buyerBefore = s.world.ledger.get(bakeryId);
+      const toolsBefore = bakery.tools;
+
+      const res = s.trade(smithyId, bakeryId, 2, 10);
+      expect(res.ok).toBe(true);
+      expect(s.world.ledger.get(smithyId)).toBe(sellerBefore + 10);
+      expect(s.world.ledger.get(bakeryId)).toBe(buyerBefore - 10);
+      expect(bakery.tools).toBe(toolsBefore + 2); // tools lift the buyer's output
+      expect(Math.floor(smithy.outputStock)).toBe(3);
+      s.world.ledger.assertInvariant(TOTAL_COINS);
+    });
+
+    it("refuses a trade the seller can't supply or the buyer can't afford", () => {
+      const s = createSoloSession(7);
+      const smithyId = s.claim("smithy")!;
+      const smithy = s.world.workshops.get(smithyId)!;
+      smithy.outputStock = 1;
+      expect(s.trade(smithyId, s.playerWorkshopId, 5, 1).ok).toBe(false); // not enough stock
+      smithy.outputStock = 10;
+      const tooMuch = s.world.ledger.get(s.playerWorkshopId) + 1;
+      expect(s.trade(smithyId, s.playerWorkshopId, 1, tooMuch).ok).toBe(false); // can't afford
+      // Garbage inputs are rejected.
+      expect(s.trade(smithyId, s.playerWorkshopId, 0, 5).ok).toBe(false);
+      expect(s.trade(smithyId, smithyId, 1, 5).ok).toBe(false); // same shop
+      s.world.ledger.assertInvariant(TOTAL_COINS);
+    });
+  });
+
   describe("claiming shops (multiplayer rooms)", () => {
     it("lists four open shops, only the bakery claimed at the start", () => {
       const s = createSoloSession(42);

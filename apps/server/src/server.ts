@@ -53,6 +53,7 @@ export function createGameServer(opts: { dayMs?: number } = {}): GameServer {
     }
   };
   const emitChat = (room: Room, msg: ReturnType<Room["note"]>) => io.to(room.id).emit("chat:message", msg);
+  const emitOffers = (room: Room) => io.to(room.id).emit("trade:offers", room.openOffers());
   const roomOf = (roomId: unknown): Room | undefined =>
     typeof roomId === "string" ? rooms.get(roomId) : undefined;
 
@@ -74,8 +75,9 @@ export function createGameServer(opts: { dayMs?: number } = {}): GameServer {
       }
       socket.data.roomId = room.id;
       void socket.join(room.id);
-      // Hand the newcomer the recent chat, then tell the room they arrived.
+      // Hand the newcomer the recent chat and open offers, then announce them.
       socket.emit("chat:history", room.chatHistory());
+      socket.emit("trade:offers", room.openOffers());
       broadcast(room);
       emitChat(room, room.note(`${name} joined the room.`));
     });
@@ -94,6 +96,42 @@ export function createGameServer(opts: { dayMs?: number } = {}): GameServer {
       if (!room) return;
       const msg = room.postChat(socket.id, text);
       if (msg) emitChat(room, msg);
+    });
+
+    socket.on("trade:offer", ({ qty, coins, toPlayerId }) => {
+      const room = roomOf(socket.data.roomId);
+      if (!room) return;
+      const { offer, error } = room.makeOffer(socket.id, { qty, coins, toPlayerId });
+      if (error) {
+        socket.emit("error", { message: error });
+        return;
+      }
+      emitOffers(room);
+      if (offer) {
+        const who = offer.toPlayerId ? `${room.nameOf(offer.toPlayerId) ?? "a player"}` : "the room";
+        emitChat(room, room.note(`${offer.fromName} offers ${who} ${offer.qty} ${offer.good} for ${offer.coins} coins.`));
+      }
+    });
+
+    socket.on("trade:accept", ({ offerId }) => {
+      const room = roomOf(socket.data.roomId);
+      if (!room) return;
+      const res = room.acceptOffer(socket.id, offerId);
+      if (!res.ok) {
+        socket.emit("error", { message: res.reason });
+        return;
+      }
+      emitOffers(room);
+      broadcast(room);
+      if (res.offer) {
+        emitChat(room, room.note(`${room.nameOf(socket.id) ?? "A player"} accepted ${res.offer.fromName}'s offer: ${res.offer.qty} ${res.offer.good} for ${res.offer.coins} coins.`));
+      }
+    });
+
+    socket.on("trade:decline", ({ offerId }) => {
+      const room = roomOf(socket.data.roomId);
+      if (!room) return;
+      if (room.declineOffer(socket.id, offerId)) emitOffers(room);
     });
 
     socket.on("room:start", () => {

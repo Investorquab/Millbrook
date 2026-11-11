@@ -319,6 +319,83 @@
   margin: 0;
 }
 
+.room__trade {
+  background: rgba(36, 42, 50, 0.7);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.room__trade h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.room__trade-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--text-soft);
+  font-size: 15px;
+}
+.room__trade-form b {
+  color: var(--wheat-light);
+}
+.room__trade-form input {
+  width: 64px;
+  height: 38px;
+  border-radius: 9px;
+  border: 1px solid rgba(237, 230, 214, 0.3);
+  background: rgba(36, 42, 50, 0.9);
+  color: var(--linen);
+  padding: 0 10px;
+  font: 600 15px var(--font-body);
+}
+.room__trade-form select {
+  height: 38px;
+  border-radius: 9px;
+  border: 1px solid rgba(237, 230, 214, 0.3);
+  background: rgba(36, 42, 50, 0.9);
+  color: var(--linen);
+  padding: 0 10px;
+  font: 500 14px var(--font-body);
+}
+.room__trade-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.room__offer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: rgba(24, 28, 34, 0.7);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.room__offer--mine {
+  border: 1px dashed rgba(237, 230, 214, 0.25);
+  background: transparent;
+}
+.room__offer-text {
+  font-size: 15px;
+}
+.room__offer-text b {
+  color: var(--wheat-light);
+}
+.room__offer-actions {
+  display: flex;
+  gap: 8px;
+}
+.room__trade-empty {
+  color: var(--text-soft);
+  margin: 0;
+  font-size: 14px;
+}
+
 .room__chat {
   margin-top: 20px;
   background: rgba(36, 42, 50, 0.7);
