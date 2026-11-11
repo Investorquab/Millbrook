@@ -142,6 +142,7 @@ economy is provably closed.
 - **Player accounts are custodial** testnet sub-accounts held by the server, which is
   what lets email-style login work with no wallet. **Testnet only.**
 
+New here? [`docs/DEMO.md`](docs/DEMO.md) is a **5-minute walkthrough for judges**.
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture and
 [`docs/GAME_RULES.md`](docs/GAME_RULES.md) for the economy rules.
 
