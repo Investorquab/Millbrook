@@ -44,6 +44,51 @@ export function runAgeing(world: World): void {
   for (const r of aliveResidents(world)) {
     if (r.age >= DEATH_AGE) passAway(world, r);
   }
+
+  // 4) Once a season, an AI owner retires and their shop goes up for auction —
+  //    the moment that puts the bankruptcy-auction system in front of the player.
+  maybeRetireAnOwner(world);
+}
+
+/** The game-day window in which the one owner-retirement beat may fire. */
+export const OWNER_RETIRE_FROM_DAY = 14;
+export const OWNER_RETIRE_TO_DAY = 21;
+
+/**
+ * At most once a season, an AI owner retires and vacates their shop, which the
+ * auction system then re-lets — so a solo player reliably meets the auction and
+ * can bid to run a second shop. Only fires when there is a human to bid and the
+ * auction system is on, so headless sims and pure-AI towns are untouched.
+ */
+function maybeRetireAnOwner(world: World): void {
+  if (!world.config.auctions || world.ownerRetired) return;
+  if (world.day < OWNER_RETIRE_FROM_DAY || world.day > OWNER_RETIRE_TO_DAY) return;
+  const hasHuman = [...world.owners.values()].some((o) => o.kind === "player");
+  if (!hasHuman) return;
+
+  const candidates = [...world.workshops.values()].filter((w) => {
+    const o = world.owners.get(w.ownerId);
+    return w.open && !w.bankrupt && o?.kind === "ai";
+  });
+  if (candidates.length === 0) return;
+
+  const w = world.rng.pick(candidates);
+  const owner = world.owners.get(w.ownerId)!;
+  pushFeed(world, "retire", `${owner.name} retired after years at the ${w.type}; the premises will go to auction.`, {
+    workshop: w.id,
+  });
+  // Vacate the premises so the auction system (next day, past cooldown) re-lets them.
+  for (const rid of w.workers) {
+    const r = world.residents.get(rid);
+    if (r) {
+      r.employerId = null;
+      r.lastReason = `The ${w.type} closed when its owner retired.`;
+    }
+  }
+  w.workers = [];
+  w.bankrupt = true;
+  w.daysBankrupt = 0;
+  world.ownerRetired = true;
 }
 
 /** Leave the workforce: drop the job, keep shopping on savings. */

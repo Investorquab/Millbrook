@@ -104,3 +104,74 @@ describe("bankruptcy auctions", () => {
     expect(auctionsFired).toBeGreaterThan(0);
   });
 });
+
+describe("player bidding at auction", () => {
+  function sessionWithBankruptRival() {
+    const s = createSoloSession(42);
+    const rival = [...s.world.workshops.values()].find((w) => w.id !== s.playerWorkshopId)!;
+    rival.bankrupt = true;
+    rival.daysBankrupt = 0;
+    rival.workers = [];
+    // Advance the auction clock; with a human in town it opens for a bid, not an AI re-let.
+    for (let i = 0; i < AUCTION_COOLDOWN_DAYS; i++) runAuctions(s.world);
+    return { s, rival };
+  }
+
+  it("puts a failed rival up for auction instead of auto-reletting", () => {
+    const { s, rival } = sessionWithBankruptRival();
+    expect(rival.upForAuction).toBe(true);
+    expect(rival.bankrupt).toBe(true);
+    expect(s.auctionOffers().map((o) => o.workshopId)).toContain(rival.id);
+  });
+
+  it("lets the player win the premises, conserving the total", () => {
+    const { s, rival } = sessionWithBankruptRival();
+    const purseBefore = s.world.ledger.get(s.playerWorkshopId);
+    expect(s.auctionOffers().find((o) => o.workshopId === rival.id)!.affordable).toBe(true);
+
+    expect(s.takeOverAtAuction(rival.id)).toBe(true);
+    expect(rival.bankrupt).toBe(false);
+    expect(rival.upForAuction).toBe(false);
+    expect(s.isClaimed(rival.id)).toBe(true);
+    expect(s.world.owners.get(rival.ownerId)!.kind).toBe("player");
+    // The player staked the bid from their own purse; the premises hold it now.
+    expect(s.world.ledger.get(s.playerWorkshopId)).toBe(purseBefore - AUCTION_STAKE);
+    expect(s.world.ledger.get(rival.id)).toBe(AUCTION_STAKE);
+    s.world.ledger.assertInvariant(TOTAL_COINS);
+  });
+
+  it("lets the player pass, and an AI takes the premises", () => {
+    const { s, rival } = sessionWithBankruptRival();
+    s.passAtAuction(rival.id);
+    expect(rival.bankrupt).toBe(false);
+    expect(rival.upForAuction).toBe(false);
+    expect(s.world.owners.get(rival.ownerId)!.kind).toBe("ai");
+    expect(s.isClaimed(rival.id)).toBe(false);
+    s.world.ledger.assertInvariant(TOTAL_COINS);
+  });
+
+  it("an AI owner retires once a season, putting a shop up for auction", () => {
+    const s = createSoloSession(42);
+    let sawOffer = false;
+    for (let i = 0; i < 28; i++) {
+      s.step();
+      if (s.auctionOffers().length > 0) sawOffer = true;
+      s.world.ledger.assertInvariant(TOTAL_COINS);
+    }
+    const retires = s.world.feed.filter((e) => e.kind === "retire" && e.data?.workshop);
+    expect(retires.length).toBe(1); // exactly one owner-retirement beat
+    expect(sawOffer).toBe(true); // the player got a chance to bid
+  });
+
+  it("blocks a bid the player can't afford", () => {
+    const { s, rival } = sessionWithBankruptRival();
+    const bakery = s.playerWorkshopId;
+    const bal = s.world.ledger.get(bakery);
+    const leave = AUCTION_STAKE - 1;
+    if (bal > leave) s.world.ledger.transfer(bakery, TOWN_HALL_ID, bal - leave);
+    expect(s.auctionOffers().find((o) => o.workshopId === rival.id)!.affordable).toBe(false);
+    expect(s.takeOverAtAuction(rival.id)).toBe(false);
+    expect(rival.upForAuction).toBe(true); // still open to bid later
+    s.world.ledger.assertInvariant(TOTAL_COINS);
+  });
+});

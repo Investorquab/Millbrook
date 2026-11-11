@@ -16,7 +16,14 @@ export {
   DEATH_AGE,
   ESTATE_TAX_RATE,
 } from "./ageing.js";
-export { runAuctions, AUCTION_COOLDOWN_DAYS, AUCTION_STAKE } from "./auction.js";
+export {
+  runAuctions,
+  reletToAi,
+  freshenPremises,
+  AUCTION_COOLDOWN_DAYS,
+  AUCTION_STAKE,
+  AUCTION_BID_WINDOW_DAYS,
+} from "./auction.js";
 export {
   runGameMaster,
   readGmMetrics,
@@ -43,6 +50,7 @@ export {
   WAGE_MAX,
   type SoloView,
   type WorkshopSlot,
+  type AuctionOffer,
   type CoinHop,
   type CoinTrail,
   type ForemanOrders,

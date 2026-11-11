@@ -22,6 +22,7 @@ import {
 } from "@millbrook/shared";
 import { createWorld } from "./state.js";
 import { pushFeed, stepDay } from "./engine.js";
+import { reletToAi, freshenPremises, AUCTION_STAKE } from "./auction.js";
 import {
   TOWN_HALL_PUBLIC_WORKS_EMPLOYER,
   WORKSHOP_DEFS,
@@ -304,6 +305,20 @@ export interface WorkshopSlot {
   claimed: boolean;
 }
 
+/** A bankrupt shop whose premises are up for auction — the player may bid. */
+export interface AuctionOffer {
+  workshopId: string;
+  type: WorkshopType;
+  /** The good the premises are fitted out to make ("bread", "cloth"…). */
+  good: Good;
+  /** The failed owner's name, for the offer copy. */
+  formerOwner: string;
+  /** Coins the player must stake from their own shop to take it over. */
+  bid: number;
+  /** Whether the player's primary shop can currently cover the bid. */
+  affordable: boolean;
+}
+
 /** One hop in a coin's journey through the town, for Follow-a-coin. */
 export interface CoinHop {
   /** 1-indexed game day the move happened. */
@@ -507,6 +522,71 @@ export class SoloSession {
     }
     this.claimed.delete(workshopId);
     this.savedStrategy.delete(workshopId);
+  }
+
+  // ── Bankruptcy auctions: the player may bid on a failed rival's premises ─────
+
+  /** Failed shops whose premises are up for auction, for the HUD decision card. */
+  auctionOffers(): AuctionOffer[] {
+    const purse = this.world.ledger.get(this.playerWorkshopId);
+    return [...this.world.workshops.values()]
+      .filter((w) => w.upForAuction && !this.claimed.has(w.id))
+      .map((w) => ({
+        workshopId: w.id,
+        type: w.type,
+        good: WORKSHOP_DEFS[w.type].output,
+        formerOwner: this.world.owners.get(w.ownerId)?.name ?? "A rival",
+        bid: AUCTION_STAKE,
+        affordable: purse >= AUCTION_STAKE,
+      }));
+  }
+
+  /**
+   * Win a shop at auction: the player stakes {@link AUCTION_STAKE} from their
+   * primary shop to capitalise the premises, then runs them. The failed shop's
+   * estate goes to the Town Hall. Only coins move, so the 10,000 total holds.
+   * Returns whether the bid went through.
+   */
+  takeOverAtAuction(workshopId: string): boolean {
+    const w = this.world.workshops.get(workshopId);
+    if (!w || !w.upForAuction || this.claimed.has(w.id)) return false;
+    if (this.world.ledger.get(this.playerWorkshopId) < AUCTION_STAKE) return false;
+
+    // The failed shop's estate is swept to the Town Hall.
+    const estate = this.world.ledger.get(w.id);
+    if (estate > 0) this.world.ledger.transfer(w.id, TOWN_HALL_ID, estate);
+    // The player capitalises the premises from their own purse.
+    this.world.ledger.transfer(this.playerWorkshopId, w.id, AUCTION_STAKE);
+
+    // Reopen fresh, then take control (a player-run shop, like a claim).
+    freshenPremises(w);
+    const owner = this.world.owners.get(w.ownerId);
+    if (owner) {
+      owner.kind = "player";
+      owner.strategy = null;
+      owner.name = "You";
+      owner.reputation = 0;
+    }
+    w.price = clamp(WORKSHOP_DEFS[w.type].defaultPrice, PRICE_MIN, PRICE_MAX);
+    w.wage = clamp(w.wage, WAGE_MIN, WAGE_MAX);
+    this.claimed.add(w.id);
+    this.prevCoinsByWs.set(w.id, this.world.ledger.get(w.id));
+    this.deltaByWs.set(w.id, 0);
+
+    pushFeed(this.world, "auction", `You bought the failed ${w.type} at auction and reopened it.`, {
+      workshop: w.id,
+      bid: AUCTION_STAKE,
+    });
+    this.world.ledger.assertInvariant(TOTAL_COINS);
+    return true;
+  }
+
+  /** Let a failed shop go to an AI buyer instead of bidding on it. */
+  passAtAuction(workshopId: string): void {
+    const w = this.world.workshops.get(workshopId);
+    if (!w || !w.upForAuction || this.claimed.has(w.id)) return;
+    reletToAi(this.world, w);
+    this.world.ledger.assertInvariant(TOTAL_COINS);
   }
 
   /** The AI/player workshop of a given type, if this town opened it. */

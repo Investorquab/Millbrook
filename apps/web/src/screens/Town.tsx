@@ -94,7 +94,7 @@ function dataLine(key: string, value: string | number): string | null {
 }
 
 export function Town() {
-  const { view, session, running, play, pause, setPrice, setWage, hire } = useSolo();
+  const { view, session, running, play, pause, setPrice, setWage, hire, takeOverAuction, passAuction } = useSolo();
   const [tab, setTab] = useState<"town" | "chat">("town");
   const [whyOpen, setWhyOpen] = useState(false);
   const [dismissed, setDismissed] = useState<string | null>(null);
@@ -115,6 +115,9 @@ export function Town() {
   const gm = session.gmEvents(1)[0];
   const gmKey = gm ? `${gm.day}-${gm.id}` : null;
   const showGm = gm && dismissed !== gmKey;
+
+  // A failed rival's premises up for auction — the player may bid to take over.
+  const auction = session.auctionOffers()[0];
 
   // ── Sound cues (synthesized; silent when muted) ──
   // A coin chime on each day the bakery sells (deduped by day).
@@ -458,6 +461,54 @@ export function Town() {
             </section>
           )}
         </section>
+
+        {/* Bankruptcy auction — a failed rival's premises are up for grabs. The
+            player can stake coins to take them over and run a second shop, or
+            let an AI buyer have them. */}
+        {auction && (
+          <section className="town__decision town__decision--auction" aria-label="Auction">
+            <div className="town__decision-head">
+              <span className="town__decision-source">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 13h10M5 11l3-3M8 8l3 3M8 2l3 3-3 3-3-3z" stroke="#D9A441" strokeWidth="1.4" fill="none" />
+                </svg>
+                Up for auction
+              </span>
+            </div>
+            <h2>
+              {auction.formerOwner}'s {auction.type} is up for auction. Take over the premises for {auction.bid} coins?
+            </h2>
+            <p>
+              Stake {auction.bid} coins from your till and you'll run the {auction.type} too — another shop, another
+              market. The failed owner's estate goes to the Town Hall, so the town's 10,000 coins stay in town.
+            </p>
+            <div className="town__decision-actions">
+              <button
+                type="button"
+                className="town__decide-primary"
+                disabled={!auction.affordable}
+                onClick={() => {
+                  if (auction.affordable) {
+                    playClick();
+                    takeOverAuction(auction.workshopId);
+                  }
+                }}
+              >
+                {auction.affordable ? `Take it over (${auction.bid})` : `Need ${auction.bid} coins`}
+              </button>
+              <button
+                type="button"
+                className="town__decide-ghost"
+                onClick={() => {
+                  playClick();
+                  passAuction(auction.workshopId);
+                }}
+              >
+                Let it go
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Game Master event card — live from the season (M4). It shows the most
             recent event, its real reasoning and the data it read; "Why did this

@@ -18,6 +18,9 @@ export interface SoloController {
   setPrice: (n: number) => void;
   setWage: (n: number) => void;
   hire: () => void;
+  /** Bid on a failed rival's premises at auction (takes it over), or pass. */
+  takeOverAuction: (workshopId: string) => void;
+  passAuction: (workshopId: string) => void;
   /** Start a fresh season (optionally with a new seed). */
   newSeason: (seed?: number) => void;
 }
@@ -65,6 +68,22 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
     refresh();
   }, [refresh]);
 
+  const takeOverAuction = useCallback(
+    (workshopId: string) => {
+      ref.current!.takeOverAtAuction(workshopId);
+      refresh();
+    },
+    [refresh],
+  );
+
+  const passAuction = useCallback(
+    (workshopId: string) => {
+      ref.current!.passAtAuction(workshopId);
+      refresh();
+    },
+    [refresh],
+  );
+
   const play = useCallback(() => setRunning(true), []);
   const pause = useCallback(() => setRunning(false), []);
 
@@ -102,6 +121,8 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
     setPrice,
     setWage,
     hire,
+    takeOverAuction,
+    passAuction,
     newSeason,
   };
 

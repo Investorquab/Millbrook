@@ -127,6 +127,7 @@ export function createWorld(config: SeasonConfig): World {
       strikeDays: 0,
       bankrupt: false,
       daysBankrupt: 0,
+      upForAuction: false,
       auctions: 0,
       daysShortOnWages: 0,
       soldToday: 0,
@@ -193,6 +194,7 @@ export function createWorld(config: SeasonConfig): World {
     hallIncomeToday: 0,
     hallIncomeYesterday: 0,
     nextResidentNumber: STARTING_RESIDENTS,
+    ownerRetired: false,
   };
 
   assignInitialJobs(world, startUnemployment);

@@ -519,6 +519,14 @@
 .town__decision--idle h2 {
   font-size: 26px;
 }
+.town__decision--auction {
+  border-color: var(--wheat);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 4px rgba(217, 164, 65, 0.14);
+}
+.town__decide-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* Decision resolved → toast in the same slot */
 .town__toast {

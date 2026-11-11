@@ -77,6 +77,8 @@ export interface Workshop {
   bankrupt: boolean;
   /** Days spent bankrupt, counting up to the auction that re-lets the premises. */
   daysBankrupt: number;
+  /** Premises are up for auction, awaiting a human's bid before an AI re-lets. */
+  upForAuction: boolean;
   /** How many times the premises have been re-let at auction (for the name). */
   auctions: number;
   /** Days in a row the workshop could not pay full wages. */
@@ -255,4 +257,6 @@ export interface World {
   hallIncomeYesterday: number;
   /** Monotonic counter for naming new arrivals. */
   nextResidentNumber: number;
+  /** An AI owner has already retired this season (the once-a-season auction beat). */
+  ownerRetired: boolean;
 }
