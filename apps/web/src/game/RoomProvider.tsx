@@ -36,7 +36,14 @@ export interface TradeOffer {
  * the host's actions back. See apps/server/src/protocol.ts for the contract.
  */
 
-const SERVER_URL = (import.meta.env.VITE_SERVER_URL as string | undefined) ?? "http://localhost:8080";
+// Where the Socket.IO client connects. An explicit VITE_SERVER_URL always wins.
+// Otherwise: in dev the server runs on :8080 (the web is on :5173); in a
+// production build we connect SAME-ORIGIN ("") so Caddy proxies /socket.io to
+// the server on the deploy domain — no build-time URL needed for a one-domain
+// deploy.
+const SERVER_URL =
+  (import.meta.env.VITE_SERVER_URL as string | undefined) ??
+  (import.meta.env.DEV ? "http://localhost:8080" : "");
 
 export interface RoomPlayer {
   id: string;
@@ -106,7 +113,9 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const ensureSocket = useCallback((): Socket => {
     if (socketRef.current) return socketRef.current;
     setStatus("connecting");
-    const socket = io(SERVER_URL, { transports: ["websocket"], forceNew: true });
+    // Empty SERVER_URL → connect to the current origin (production behind Caddy).
+    const opts = { transports: ["websocket"], forceNew: true };
+    const socket = SERVER_URL ? io(SERVER_URL, opts) : io(opts);
     socket.on("connect", () => {
       setMyId(socket.id ?? null);
       setStatus("connected");
