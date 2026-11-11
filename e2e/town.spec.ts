@@ -42,6 +42,30 @@ test.describe("Town HUD", () => {
     await expect(page.getByText(/You hired/)).toBeVisible();
   });
 
+  test("the Foreman runs standing orders and reports what it did", async ({ page }) => {
+    test.setTimeout(45_000); // the note appears after a few real-time game days
+    const bakery = page.getByRole("region", { name: "Your bakery" });
+    await bakery.getByRole("button", { name: /Hire a baker/ }).click();
+    // Drop our wage to the floor so a rival almost certainly out-pays us,
+    // giving the Foreman something to match.
+    const lower = bakery.getByRole("button", { name: "Lower the wage" });
+    for (let i = 0; i < 3; i++) await lower.click();
+
+    // Open the Foreman panel and turn on both standing orders (off by default).
+    await bakery.getByRole("button", { name: "Foreman's orders" }).click();
+    const foreman = page.getByRole("region", { name: "Foreman's standing orders" });
+    await expect(foreman).toBeVisible();
+    await foreman.getByText("Match rival wages to keep my workers").click();
+    // The wage cap stepper appears once matching is on.
+    await expect(foreman.getByText(/Wage cap/)).toBeVisible();
+    await foreman.getByText("Hire when demand for bread goes unmet").click();
+
+    // Run the season; within a few days the Foreman acts and leaves a note.
+    await page.getByRole("button", { name: "Play" }).click();
+    await expect(page.locator(".town__foreman-note")).toBeVisible({ timeout: 30000 });
+    await page.getByRole("button", { name: "Pause" }).click();
+  });
+
   test("the Game Master card goes live once an event fires and explains itself", async ({ page }) => {
     const gm = page.getByRole("region", { name: "Game Master" });
     // At day 1 the card is idle, watching the town.

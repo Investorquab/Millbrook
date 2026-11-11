@@ -35,6 +35,8 @@ export {
   WAGE_MAX,
   type SoloView,
   type WorkshopSlot,
+  type ForemanOrders,
+  type ForemanNote,
   type WorkerView,
   type FeedLine,
   type GmEventCard,

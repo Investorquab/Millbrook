@@ -117,6 +117,23 @@ const ROLE_BY_TYPE: Record<WorkshopType, string> = {
   apothecary: "Apothecary",
 };
 
+/** The Foreman's standing orders: plain-code rules it runs for you each dawn
+ *  (GAME_DESIGN "The Foreman"). The optional AI-written wording is roadmap. */
+export interface ForemanOrders {
+  /** Match the top rival wage (up to the cap) so your workers aren't poached. */
+  matchWages: boolean;
+  /** The most the Foreman will pay a worker while matching. */
+  wageCap: number;
+  /** Hire when there's unmet demand for your good and you can afford it. */
+  autoHire: boolean;
+}
+
+/** One line from the Foreman explaining what it did, in plain words. */
+export interface ForemanNote {
+  day: number;
+  text: string;
+}
+
 export interface SoloView {
   /** 1-indexed current game day, capped at the season length. */
   day: number;
@@ -143,6 +160,8 @@ export interface SoloView {
   /** This shop's owner standing, −100 (Ruthless) … +100 (Fair), and a label. */
   reputation: number;
   reputationLabel: string;
+  /** The Foreman's most recent note to you, or null if it has said nothing. */
+  foremanNote: string | null;
   stock: number;
   soldToday: number;
   profitToday: number;
@@ -294,6 +313,8 @@ export class SoloSession {
   private unemploymentRising = false;
   private goalCardId = "tycoon";
   private readonly priceHistory: PriceSnapshot[] = [];
+  private foreman: ForemanOrders = { matchWages: false, wageCap: WAGE_MAX, autoHire: false };
+  private readonly foremanLog: ForemanNote[] = [];
   /** Workshop ids a human controls (the bakery from the start; more via claim()). */
   private readonly claimed = new Set<string>();
   /** AI strategy saved when a shop was claimed, to restore it on release. */
@@ -493,9 +514,63 @@ export class SoloSession {
     return true;
   }
 
+  // ── Foreman: standing orders the game runs for you each dawn ─────────────────
+
+  foremanOrders(): ForemanOrders {
+    return { ...this.foreman };
+  }
+
+  /** Update the standing orders. The Foreman acts on them at the next day. */
+  setForemanOrders(partial: Partial<ForemanOrders>): void {
+    const next = { ...this.foreman, ...partial };
+    next.wageCap = clamp(next.wageCap, WAGE_MIN, WAGE_MAX);
+    this.foreman = next;
+  }
+
+  /** The Foreman's recent notes, newest first. */
+  foremanNotes(limit = 6): ForemanNote[] {
+    return [...this.foremanLog].reverse().slice(0, limit);
+  }
+
+  private note(text: string): void {
+    this.foremanLog.push({ day: this.world.day + 1, text });
+  }
+
+  /** Run the standing orders on the player's bakery before the day unfolds. */
+  private runForeman(): void {
+    const o = this.foreman;
+    if (!o.matchWages && !o.autoHire) return;
+    const w = this.workshop;
+    if (w.bankrupt) return;
+
+    if (o.matchWages) {
+      let topRival = 0;
+      for (const other of this.world.workshops.values()) {
+        if (other.id === w.id || !other.open || other.bankrupt) continue;
+        if (other.wage > topRival) topRival = other.wage;
+      }
+      const target = Math.min(topRival, o.wageCap, WAGE_MAX);
+      if (w.workers.length > 0 && target > w.wage) {
+        const old = w.wage;
+        w.wage = target;
+        this.note(`Raised your wage from ${old} to ${target} to match the top rival and keep your workers.`);
+      }
+    }
+
+    if (o.autoHire && !w.bankrupt && w.workers.length < w.maxWorkers) {
+      const good = WORKSHOP_DEFS[w.type].output;
+      const unmet = this.world.unmetDemand[good] ?? 0;
+      const canAfford = this.world.ledger.get(w.id) >= w.wage * (w.workers.length + 1);
+      if (unmet > 0 && canAfford && this.hire()) {
+        this.note(`Hired a hand — demand for ${good} was going unmet and the wages are covered.`);
+      }
+    }
+  }
+
   /** Advance one game day. No-op once the season has ended. */
   step(): void {
     if (this.world.day >= this.totalDays) return;
+    this.runForeman();
     const before = new Map<string, number>();
     for (const id of this.claimed) before.set(id, this.world.ledger.get(id));
     const beforeCoins = this.world.ledger.get(this.playerWorkshopId);
@@ -581,6 +656,7 @@ export class SoloSession {
       wageReason: this.wageReason(w),
       reputation: Math.round(this.world.owners.get(w.ownerId)?.reputation ?? 0),
       reputationLabel: reputationLabel(this.world.owners.get(w.ownerId)?.reputation ?? 0),
+      foremanNote: w.id === this.playerWorkshopId ? (this.foremanLog.at(-1)?.text ?? null) : null,
       stock: Math.floor(w.outputStock),
       soldToday: Math.floor(w.soldToday),
       profitToday: isPrimary ? this.profitToday : (this.deltaByWs.get(w.id) ?? 0),

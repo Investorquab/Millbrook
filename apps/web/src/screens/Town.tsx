@@ -95,6 +95,14 @@ export function Town() {
   const [tab, setTab] = useState<"town" | "chat">("town");
   const [whyOpen, setWhyOpen] = useState(false);
   const [dismissed, setDismissed] = useState<string | null>(null);
+  const [foremanOpen, setForemanOpen] = useState(false);
+  const [orders, setOrders] = useState(() => session.foremanOrders());
+
+  // The Foreman runs these standing orders for you each dawn (plain code).
+  const setOrder = (partial: Partial<typeof orders>) => {
+    session.setForemanOrders(partial);
+    setOrders(session.foremanOrders());
+  };
 
   // The latest Game Master event, straight from the live season (M4).
   const gm = session.gmEvents(1)[0];
@@ -326,10 +334,70 @@ export function Town() {
             <button type="button" className="town__btn-solid" onClick={hire} disabled={!view.canHire}>
               {view.canHire ? "Hire a baker" : "Bakery is full"}
             </button>
-            <button type="button" className="town__btn-ghost">
+            <button
+              type="button"
+              className="town__btn-ghost"
+              aria-expanded={foremanOpen}
+              onClick={() => setForemanOpen((o) => !o)}
+            >
               Foreman's orders
             </button>
           </div>
+
+          {foremanOpen && (
+            <section className="town__foreman" aria-label="Foreman's standing orders">
+              <p className="town__foreman-intro">
+                Your Foreman runs these in plain code each dawn, so you don't have to watch every day.
+              </p>
+              <label className="town__foreman-row">
+                <input
+                  type="checkbox"
+                  checked={orders.matchWages}
+                  onChange={(e) => setOrder({ matchWages: e.target.checked })}
+                />
+                <span>
+                  Match rival wages to keep my workers
+                  <small>up to a cap, so no one poaches your bakers</small>
+                </span>
+              </label>
+              {orders.matchWages && (
+                <div className="town__foreman-cap">
+                  <span>Wage cap</span>
+                  <div className="town__stepper">
+                    <button
+                      type="button"
+                      aria-label="Lower the wage cap"
+                      onClick={() => setOrder({ wageCap: orders.wageCap - 1 })}
+                      disabled={orders.wageCap <= WAGE_MIN}
+                    >
+                      −
+                    </button>
+                    <span className="town__stepper-value">{orders.wageCap} a day</span>
+                    <button
+                      type="button"
+                      aria-label="Raise the wage cap"
+                      onClick={() => setOrder({ wageCap: orders.wageCap + 1 })}
+                      disabled={orders.wageCap >= WAGE_MAX}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              )}
+              <label className="town__foreman-row">
+                <input
+                  type="checkbox"
+                  checked={orders.autoHire}
+                  onChange={(e) => setOrder({ autoHire: e.target.checked })}
+                />
+                <span>
+                  Hire when demand for bread goes unmet
+                  <small>only while the wages are covered</small>
+                </span>
+              </label>
+              {view.foremanNote && <p className="town__foreman-note">“{view.foremanNote}”</p>}
+            </section>
+          )}
         </section>
 
         {/* Game Master event card — live from the season (M4). It shows the most

@@ -244,6 +244,61 @@ describe("SoloSession", () => {
     });
   });
 
+  describe("Foreman standing orders", () => {
+    it("is off by default and says nothing", () => {
+      const s = createSoloSession(42);
+      expect(s.foremanOrders()).toEqual({ matchWages: false, wageCap: 12, autoHire: false });
+      s.hire();
+      for (let d = 0; d < 5; d++) s.step();
+      expect(s.view().foremanNote).toBeNull();
+    });
+
+    it("matches a rival's higher wage up to the cap to keep workers", () => {
+      const s = createSoloSession(42);
+      s.hire();
+      s.setWage(6); // start low so a rival can out-bid us
+      s.setForemanOrders({ matchWages: true, wageCap: 10 });
+      // Force a rival to pay well above us.
+      const rival = [...s.world.workshops.values()].find((w) => w.id !== s.playerWorkshopId && w.open)!;
+      rival.wage = 11;
+      s.step();
+      const v = s.view();
+      // We matched up to the cap (10), not the rival's full 11.
+      expect(v.wage).toBe(10);
+      expect(v.foremanNote).toMatch(/match/i);
+    });
+
+    it("never pays above the wage cap", () => {
+      const s = createSoloSession(7);
+      s.hire();
+      s.setWage(8);
+      s.setForemanOrders({ matchWages: true, wageCap: 9 });
+      const rival = [...s.world.workshops.values()].find((w) => w.id !== s.playerWorkshopId && w.open)!;
+      rival.wage = 12;
+      for (let d = 0; d < 5; d++) s.step();
+      expect(s.view().wage).toBeLessThanOrEqual(9);
+    });
+
+    it("holds the 10,000-coin invariant with the Foreman running", () => {
+      const s = createSoloSession(99);
+      s.setForemanOrders({ matchWages: true, wageCap: 12, autoHire: true });
+      for (let d = 0; d < 28; d++) {
+        s.step();
+        s.world.ledger.assertInvariant(TOTAL_COINS);
+      }
+    });
+
+    it("is deterministic with the Foreman on (same seed → same season)", () => {
+      const run = () => {
+        const s = createSoloSession(5);
+        s.setForemanOrders({ matchWages: true, wageCap: 11, autoHire: true });
+        for (let d = 0; d < 20; d++) s.step();
+        return { wage: s.view().wage, coins: s.view().coins, notes: s.foremanNotes().length };
+      };
+      expect(run()).toEqual(run());
+    });
+  });
+
   describe("trades between shops", () => {
     it("moves coins buyer→seller and goods seller→buyer, holding the invariant", () => {
       const s = createSoloSession(42);

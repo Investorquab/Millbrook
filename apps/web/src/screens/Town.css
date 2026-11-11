@@ -336,6 +336,63 @@
   font: 600 15px var(--font-body);
 }
 
+/* Foreman standing orders */
+.town__foreman {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(24, 28, 34, 0.7);
+  border: 1px solid rgba(237, 230, 214, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.town__foreman-intro {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 14px;
+}
+.town__foreman-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 15px;
+}
+.town__foreman-row input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--wheat);
+  flex-shrink: 0;
+}
+.town__foreman-row span {
+  display: flex;
+  flex-direction: column;
+}
+.town__foreman-row small {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.town__foreman-cap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-left: 28px;
+  color: var(--text-soft);
+  font-size: 14px;
+}
+.town__foreman-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(224, 112, 58, 0.12);
+  color: var(--wheat-light);
+  font-size: 14px;
+  font-style: italic;
+}
+
 /* Decision card */
 .town__decision {
   box-sizing: border-box;

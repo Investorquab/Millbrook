@@ -38,6 +38,10 @@ Fast-forward, Scoreboard, Gazette. Rule tooltips explain every number.
 
 - Acceptance test passes: a new player signs in, hires a worker, sets a price and
   sees a sale within 60 seconds.
+- A **Foreman** runs standing orders for your shop in plain code each dawn — match
+  rival wages (up to a cap) to keep your workers, and hire when bread demand goes
+  unmet — and tells you what it did in plain words. (The on-chain Foreman key and
+  AI-written wording are roadmap.)
 - The season-end Scoreboard ranks owners by the goal card and shows each owner's
   **reputation** (−100 Ruthless … +100 Fair), which moves with wages against the
   town average, layoffs and strikes — and feeds back into the game: fair owners
@@ -155,7 +159,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture and
 
 - Deeper moderation tools; trade offers as timed decision cards with a default answer
 - Postgres persistence so a server restart loses nothing
-- Foreman standing orders and decision cards
+- The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
 - Ageing, death and inheritance; Tailor and Tavern; bankruptcy and auctions
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
