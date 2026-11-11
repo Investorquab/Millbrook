@@ -8,17 +8,19 @@ import { Proof } from "./screens/Proof";
 import { FastForward } from "./screens/FastForward";
 import { Gazette } from "./screens/Gazette";
 import { Scoreboard } from "./screens/Scoreboard";
+import { Room } from "./screens/Room";
+import { Join } from "./screens/Join";
 import { SoloProvider } from "./game/SoloProvider";
-import { Placeholder } from "./screens/Placeholder";
+import { RoomProvider } from "./game/RoomProvider";
 
 const router = createBrowserRouter([
   { path: "/", element: <Title /> },
   { path: "/signin", element: <SignIn /> },
   { path: "/hub", element: <Hub /> },
   { path: "/play", element: <Town /> },
-  { path: "/lobby", element: <Placeholder title="Room lobby" blurb="Share the code and invite link, fill the four workshops, pick speed and goal card, and start when friends join." /> },
-  { path: "/host", element: <Placeholder title="Host a room" blurb="Create a room, share a code and invite link, pick the speed and goal card, and start when friends join." /> },
-  { path: "/join", element: <Placeholder title="Join with a code" blurb="Enter a room code to land in the lobby and wait for the host to let you in." /> },
+  { path: "/room", element: <Room /> },
+  { path: "/lobby", element: <Room /> },
+  { path: "/join", element: <Join /> },
   { path: "/resident", element: <Resident /> },
   { path: "/proof", element: <Proof /> },
   { path: "/gazette", element: <Gazette /> },
@@ -29,7 +31,9 @@ const router = createBrowserRouter([
 export function App() {
   return (
     <SoloProvider>
-      <RouterProvider router={router} />
+      <RoomProvider>
+        <RouterProvider router={router} />
+      </RoomProvider>
     </SoloProvider>
   );
 }

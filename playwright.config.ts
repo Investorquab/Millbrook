@@ -29,10 +29,19 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: "pnpm --filter @millbrook/web dev",
-    url: "http://localhost:5173",
-    reuseExistingServer: true,
-    timeout: 60_000,
-  },
+  webServer: [
+    {
+      command: "pnpm --filter @millbrook/web dev",
+      url: "http://localhost:5173",
+      reuseExistingServer: true,
+      timeout: 60_000,
+    },
+    {
+      // The rooms game server (Socket.IO). The rooms e2e needs it on :8080.
+      command: "pnpm --filter @millbrook/server start",
+      url: "http://localhost:8080/health",
+      reuseExistingServer: true,
+      timeout: 60_000,
+    },
+  ],
 });

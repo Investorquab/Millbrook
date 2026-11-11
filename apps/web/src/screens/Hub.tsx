@@ -2,25 +2,34 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { color } from "../theme/tokens";
+import { useRoom } from "../game/RoomProvider";
 import "./Hub.css";
 
 /**
  * Home hub — ported from `design/screenshots/Hub.png`. The player's base: start
  * a solo season, read the league report, host or join a room, and see trophies.
  *
- * League status, the report and trophies are sample data here; in M3/M5 they
- * come from the server (league) and the contract (trophies). Copy and tokens
- * are verbatim from the design.
+ * Host/Join are wired to the live rooms server (M5) via {@link RoomProvider}.
+ * League status, the report and trophies are sample data; they come from the
+ * server and the contract as those land.
  */
+const PLAYER_NAME = "millhand";
+
 export function Hub() {
   const navigate = useNavigate();
+  const room = useRoom();
   const [code, setCode] = useState("");
+
+  function onHost() {
+    room.createRoom(PLAYER_NAME);
+    navigate("/room");
+  }
 
   function onJoin(e: FormEvent) {
     e.preventDefault();
     if (code.trim().length === 0) return;
-    // TODO(M5): resolve the room code with the server before entering the lobby.
-    navigate("/lobby");
+    room.joinRoom(code, PLAYER_NAME);
+    navigate("/room");
   }
 
   return (
@@ -85,9 +94,9 @@ export function Hub() {
               <h2>Host a room</h2>
               <p>Invite up to 3 friends. AI fills the empty shops.</p>
             </div>
-            <Link to="/lobby" className="hub__btn-linen">
+            <button type="button" className="hub__btn-linen" onClick={onHost}>
               Create room
-            </Link>
+            </button>
           </section>
 
           <section className="hub__panel hub__join">
