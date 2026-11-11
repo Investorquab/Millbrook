@@ -20,8 +20,10 @@ export interface Resident {
   id: string;
   name: string;
   trait: Trait;
-  /** Age in years. Residents age one year per game week (Phase-2 feature). */
+  /** Age in years. Residents age one year per game week when ageing is on. */
   age: number;
+  /** Retired from work (age ≥ 65): out of the labour force, living on savings. */
+  retired: boolean;
   /** Workshop id or the Co-op id, or null when unemployed. */
   employerId: string | null;
   /** Coins earned at the most recent dusk. */
@@ -140,6 +142,14 @@ export interface SeasonConfig {
    * unaffected; the solo game turns it on.
    */
   gameMaster?: boolean;
+  /**
+   * Age the town (Phase-2 "living town"): residents age a year per game week,
+   * retire at 65 to live on savings, and the very old pass away peacefully with
+   * their savings passing to an heir (minus a 10% estate tax to the Town Hall).
+   * Off by default so headless sims and determinism tests are unaffected; the
+   * solo game and rooms turn it on. The 10,000-coin total always holds.
+   */
+  ageing?: boolean;
 }
 
 /**

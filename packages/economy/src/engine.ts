@@ -53,6 +53,7 @@ import {
   REPUTATION_MAX,
   perceivedWage,
 } from "./rules.js";
+import { runAgeing } from "./ageing.js";
 import type { DayMetrics, Resident, Workshop, World } from "./types.js";
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ function tailorOpen(world: World): boolean {
 
 function unemployedIds(world: World): string[] {
   return aliveResidents(world)
-    .filter((r) => r.employerId === null)
+    .filter((r) => r.employerId === null && !r.retired)
     .map((r) => r.id);
 }
 
@@ -568,6 +569,7 @@ function endOfDay(world: World, totalSales: number): void {
       name: `Newcomer ${world.nextResidentNumber}`,
       trait: world.rng.pick(["thrifty", "loyal", "ambitious"]),
       age: world.rng.int(18, 50),
+      retired: false,
       employerId: null,
       lastWage: stipend,
       daysUnemployed: 0,
@@ -599,6 +601,11 @@ function endOfDay(world: World, totalSales: number): void {
   if (world.phase !== prevPhase) {
     pushFeed(world, "phase_change", `A new phase begins: ${world.phase}.`, { phase: world.phase });
   }
+
+  // The living town: age the residents, retire the old, pass on estates. A no-op
+  // unless ageing is on and today closes a game week; its transfers conserve, so
+  // the invariant check below still holds at exactly 10,000.
+  runAgeing(world);
 
   world.ledger.assertInvariant(TOTAL_COINS);
 }

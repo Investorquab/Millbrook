@@ -18,6 +18,8 @@ export const FEED_EVENT_KINDS = [
   "strike_end",
   "migration_in",
   "migration_out",
+  "retire",
+  "death",
   "bankruptcy",
   "benefit_paid",
   "public_works",

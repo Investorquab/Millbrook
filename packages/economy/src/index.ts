@@ -10,6 +10,13 @@ export { Ledger, type TransferRecord } from "./ledger.js";
 export { createWorld } from "./state.js";
 export { stepDay, runSeason, pushFeed } from "./engine.js";
 export {
+  runAgeing,
+  AGE_WEEK_DAYS,
+  RETIRE_AGE,
+  DEATH_AGE,
+  ESTATE_TAX_RATE,
+} from "./ageing.js";
+export {
   runGameMaster,
   readGmMetrics,
   deriveWeather,

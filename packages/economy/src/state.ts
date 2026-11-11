@@ -82,7 +82,12 @@ export function createWorld(config: SeasonConfig): World {
       id,
       name: RESIDENT_NAMES[i] ?? `Resident ${i}`,
       trait: TRAITS[i % TRAITS.length]!,
-      age: rng.int(18, 60),
+      // A realistic spread with a modest elder tail, so when ageing is on a few
+      // residents retire and the very oldest pass on within a season. Exactly one
+      // rng draw (like the old 18–60), so rng order — and every non-ageing run —
+      // is unchanged.
+      age: rng.int(18, 70),
+      retired: false,
       employerId: null,
       lastWage: 0,
       daysUnemployed: 0,
@@ -170,6 +175,7 @@ export function createWorld(config: SeasonConfig): World {
       openWorkshops,
       forceAllOwners: config.forceAllOwners ?? null,
       gameMaster: config.gameMaster ?? false,
+      ageing: config.ageing ?? false,
     },
     gm: {
       enabled: config.gameMaster ?? false,

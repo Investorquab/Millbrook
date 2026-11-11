@@ -209,10 +209,12 @@ export function employedCount(world: World): number {
 }
 
 export function unemploymentRate(world: World): number {
-  const alive = aliveResidents(world);
-  if (alive.length === 0) return 0;
-  const unemployed = alive.filter((r) => r.employerId === null).length;
-  return unemployed / alive.length;
+  // Retirees are out of the labour force, so they count toward neither the
+  // numerator nor the denominator.
+  const labour = aliveResidents(world).filter((r) => !r.retired);
+  if (labour.length === 0) return 0;
+  const unemployed = labour.filter((r) => r.employerId === null).length;
+  return unemployed / labour.length;
 }
 
 export function outputPerWorker(w: Workshop, def: WorkshopDef): number {
@@ -329,6 +331,8 @@ export function updateStrike(w: Workshop, world: World): Reasoned<boolean> {
 
 /** Would this resident leave town today? */
 export function shouldMigrateOut(resident: Resident, savings: number): Reasoned<boolean> {
+  // Retirees live on their savings; they don't leave town for lack of work.
+  if (resident.retired) return { value: false, reason: "Retired in Millbrook, living on savings." };
   if (
     resident.employerId === null &&
     resident.daysUnemployed >= MIGRATION_OUT_UNEMPLOYED_DAYS &&

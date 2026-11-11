@@ -86,6 +86,8 @@ export interface ResidentCard {
   trait: Trait;
   traitLabel: string;
   age: number;
+  /** Retired from work, living on savings (age ≥ 65 when ageing is on). */
+  retired: boolean;
   /** "Baker at your bakery", "Weaver at Fair Fern's weaver", "Looking for work"… */
   employerLabel: string;
   worksForPlayer: boolean;
@@ -363,6 +365,8 @@ export class SoloSession {
       // The solo game runs the Game Master (M4) by default; a caller can pass
       // gameMaster: false to turn it off.
       gameMaster: true,
+      // …and ages the town (retirements, estates) — the living-town layer.
+      ageing: true,
       ...config,
     });
     this.totalDays = this.world.config.days;
@@ -850,7 +854,9 @@ export class SoloSession {
     const rid = id ?? this.defaultResidentId();
     const r = this.world.residents.get(rid);
     if (!r) return null;
-    const { label, worksForPlayer } = this.employerLabel(r.employerId);
+    const emp = this.employerLabel(r.employerId);
+    const label = r.retired ? "Retired — living on savings" : emp.label;
+    const worksForPlayer = emp.worksForPlayer;
     const savings = this.world.ledger.get(r.id);
 
     const mood = r.hungryDays >= 3 ? "Struggling" : r.hungryDays >= 1 ? "Hungry" : savings < 20 ? "Getting by" : "Content";
@@ -877,6 +883,7 @@ export class SoloSession {
       trait: r.trait,
       traitLabel: TRAIT_LABEL[r.trait],
       age: r.age,
+      retired: r.retired,
       employerLabel: label,
       worksForPlayer,
       wage: r.lastWage,
@@ -926,9 +933,11 @@ export class SoloSession {
     const WEIGHT: Partial<Record<FeedEventKind, number>> = {
       strike_start: 6,
       bankruptcy: 6,
+      death: 6,
       public_works: 5,
       benefit_paid: 5,
       phase_change: 4,
+      retire: 3,
       wage_change: 3,
       migration_in: 2,
       migration_out: 2,
@@ -1139,6 +1148,10 @@ export class SoloSession {
     const comingsAndGoings: string[] = [];
     const arrivals = pick(["migration_in"]);
     const departures = pick(["migration_out"]);
+    const deaths = pick(["death"]);
+    const retirements = pick(["retire"]);
+    if (deaths.length) comingsAndGoings.push(deaths[0]!.text);
+    if (retirements.length) comingsAndGoings.push(retirements[0]!.text);
     if (arrivals.length) comingsAndGoings.push(arrivals[0]!.text);
     if (departures.length) comingsAndGoings.push(departures[0]!.text);
     if (comingsAndGoings.length === 0) comingsAndGoings.push("No one came or went this week. The town held at its usual size.");
