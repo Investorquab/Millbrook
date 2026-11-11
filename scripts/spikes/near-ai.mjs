@@ -84,6 +84,15 @@ async function main() {
   });
   if (!chatRes.ok) {
     console.error(`✗ chat completion failed: ${explainStatus(chatRes.status)}`);
+    // Surface the server's own message — a 402 can mean "unfunded" OR
+    // "no spending limit configured", which is a different dashboard step.
+    const detail = await chatRes.text().catch(() => "");
+    const msg = (() => {
+      try { return JSON.parse(detail)?.error?.message; } catch { return ""; }
+    })();
+    if (msg) console.error(`  server says: ${msg}`);
+    if (/spending limit|no_limit_configured/i.test(detail))
+      console.error("  → In the cloud.near.ai dashboard, set a spending limit / budget for this key (not just add credits).");
     process.exit(1);
   }
   const chat = await chatRes.json();
