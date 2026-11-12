@@ -29,6 +29,7 @@ export const WORKSHOPS: BuildingSpot[] = [
   { type: "tailor", pos: [-1.7, 4.4], rot: 0.2 },
   { type: "tavern", pos: [2.0, -4.3], rot: 2.9 },
   { type: "apothecary", pos: [4.9, 0.0], rot: -1.6 },
+  { type: "carpenter", pos: [-4.9, 0.6], rot: 1.6 },
 ];
 
 /** The square's well sits at the middle of town. */

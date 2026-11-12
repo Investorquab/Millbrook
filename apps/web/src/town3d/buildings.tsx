@@ -187,6 +187,17 @@ export function Workshop({ type, pos, rot, busy, bankrupt, isPlayer }: WorkshopP
           </mesh>
         </group>
       )}
+      {type === "carpenter" && (
+        /* a stack of sawn timber by the door */
+        <group position={[0.58, 0.32, 0.98]}>
+          {[0, 0.17, 0.34].map((y) => (
+            <mesh key={y} position={[0, y, 0]} rotation={[0, 0.3, 0]} castShadow>
+              <boxGeometry args={[0.7, 0.14, 0.26]} />
+              <meshStandardMaterial color={y === 0.17 ? diorama.timberDark : diorama.timber} flatShading />
+            </mesh>
+          ))}
+        </group>
+      )}
 
       {/* smoke from the chimney when the shop is working */}
       {busy && !bankrupt && (

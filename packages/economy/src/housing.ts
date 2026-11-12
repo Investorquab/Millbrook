@@ -18,11 +18,18 @@ import { pushFeed } from "./engine.js";
 export const RENT_PER_DAY = 1;
 /** What the Town Hall pays in construction wages to raise one new house. */
 export const HOUSE_BUILD_COST = 12;
+/** House parts (from the Carpenter) that make one house. */
+export const PARTS_PER_HOUSE = 5;
+/** With a Carpenter open, the Town Hall keeps this many spare houses ahead of
+ *  the population — so the Carpenter has steady sales and the town can grow. */
+export const CARPENTER_HOUSE_BUFFER = 8;
 
 /**
- * Collect rent, note who is homeless, and build a house if the town is short and
- * the Town Hall can pay for it. Called from {@link endOfDay} after wages, before
- * migration-out, so the homeless are more likely to leave this very day.
+ * Collect rent, note who is homeless, and build a house. Called from
+ * {@link endOfDay} after wages, before migration-out, so the homeless are more
+ * likely to leave this very day. When a Carpenter is open the house is built
+ * from its parts (the Town Hall buys them — real sales for the carpenter);
+ * otherwise the Town Hall builds directly, only under housing pressure.
  */
 export function runHousing(world: World): void {
   if (!world.config.housing) return;
@@ -46,18 +53,52 @@ export function runHousing(world: World): void {
       if (r.employerId === null) r.daysUnemployed += 1; // nudge toward leaving
       r.lastReason = "No home in Millbrook — thinking of moving on.";
     }
-
-    // 3) The Town Hall builds a house if it can afford the construction wages,
-    //    paid to idle residents (so building also puts people to work).
-    const builders = poorestFirst.filter((r) => r.employerId === null);
-    if (builders.length > 0 && world.ledger.get(TOWN_HALL_ID) >= HOUSE_BUILD_COST) {
-      payBuilders(world, builders, HOUSE_BUILD_COST);
-      world.houses += 1;
-      pushFeed(world, "public_works", `The Town Hall built a new house; the town now has ${world.houses}.`, {
-        houses: world.houses,
-      });
-    }
   }
+
+  // 3) Build a house.
+  buildHouse(world, residents, homeless);
+}
+
+/** Raise one house — from the Carpenter's parts if one trades, else directly. */
+function buildHouse(world: World, residents: Resident[], homeless: number): void {
+  const hall = world.ledger.get(TOWN_HALL_ID);
+  const carpenter = [...world.workshops.values()].find(
+    (w) => w.type === "carpenter" && w.open && !w.bankrupt,
+  );
+
+  if (carpenter) {
+    // The Town Hall buys parts from the carpenter and keeps a buffer ahead of
+    // the population (coins Town Hall → carpenter; the total never changes).
+    if (world.houses >= residents.length + CARPENTER_HOUSE_BUFFER) return;
+    if (carpenter.outputStock < PARTS_PER_HOUSE) return;
+    const cost = carpenter.price * PARTS_PER_HOUSE;
+    if (hall < cost) return;
+    const paid = world.ledger.payUpTo(TOWN_HALL_ID, carpenter.id, cost);
+    carpenter.outputStock -= PARTS_PER_HOUSE;
+    carpenter.soldToday += PARTS_PER_HOUSE;
+    carpenter.revenueToday += paid;
+    world.houses += 1;
+    pushFeed(
+      world,
+      "public_works",
+      `The Town Hall bought ${PARTS_PER_HOUSE} house parts from the carpenter and raised a new house; the town now has ${world.houses}.`,
+      { houses: world.houses },
+    );
+    return;
+  }
+
+  // No carpenter: the Town Hall builds directly only under housing pressure,
+  // paying idle residents the construction wages (byte-identical to before).
+  if (homeless <= 0 || hall < HOUSE_BUILD_COST) return;
+  const builders = [...residents]
+    .sort((a, b) => world.ledger.get(a.id) - world.ledger.get(b.id))
+    .filter((r) => r.employerId === null);
+  if (builders.length === 0) return;
+  payBuilders(world, builders, HOUSE_BUILD_COST);
+  world.houses += 1;
+  pushFeed(world, "public_works", `The Town Hall built a new house; the town now has ${world.houses}.`, {
+    houses: world.houses,
+  });
 }
 
 /** Split the construction wage across the available builders. */

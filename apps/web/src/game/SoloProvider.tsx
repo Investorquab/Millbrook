@@ -11,11 +11,12 @@ const DAY_MS = 1200;
  *  the Bakery); the seven-shop town adds the Apothecary (buys herbs from the
  *  Co-op, sells remedies — demand jumps in an epidemic). Owners are ordered so
  *  the supply-chain and specialist shops get able owners, never Greedy Gus. */
-export type TownSize = 4 | 6 | 7;
+export type TownSize = 4 | 6 | 7 | 8;
 const TOWN_WORKSHOPS: Record<TownSize, string[]> = {
   4: ["bakery", "weaver", "smithy", "brewery"],
   6: ["bakery", "smithy", "weaver", "tailor", "tavern", "brewery"],
   7: ["bakery", "smithy", "weaver", "tailor", "tavern", "brewery", "apothecary"],
+  8: ["bakery", "smithy", "weaver", "tailor", "tavern", "brewery", "apothecary", "carpenter"],
 };
 
 function makeSession(seed: number, size: TownSize, trade: WorkshopType): SoloSession {
