@@ -39,7 +39,7 @@ const moodColor: Record<string, string> = {
 
 /** A small icon for a feed line, chosen by event kind. */
 function FeedIcon({ kind }: { kind: string }) {
-  if (kind === "strike_start" || kind === "bankruptcy" || kind === "layoff" || kind === "theft") {
+  if (kind === "strike_start" || kind === "bankruptcy" || kind === "layoff" || kind === "theft" || kind === "fire") {
     return (
       <span className="town__feed-icon" style={{ background: "var(--madder)" }}>
         <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
@@ -94,7 +94,8 @@ function dataLine(key: string, value: string | number): string | null {
 }
 
 export function Town() {
-  const { view, session, running, play, pause, setPrice, setWage, hire, takeOverAuction, passAuction } = useSolo();
+  const { view, session, running, play, pause, setPrice, setWage, setInsured, hire, takeOverAuction, passAuction } =
+    useSolo();
   const [tab, setTab] = useState<"town" | "chat">("town");
   const [whyOpen, setWhyOpen] = useState(false);
   const [dismissed, setDismissed] = useState<string | null>(null);
@@ -455,6 +456,20 @@ export function Town() {
                 <span>
                   Hire when demand for bread goes unmet
                   <small>only while the wages are covered</small>
+                </span>
+              </label>
+              <label className="town__foreman-row">
+                <input
+                  type="checkbox"
+                  checked={view.insured}
+                  onChange={(e) => {
+                    playClick();
+                    setInsured(e.target.checked);
+                  }}
+                />
+                <span>
+                  Insure the bakery against fire
+                  <small>a small daily premium; the Co-op pool pays out if it burns</small>
                 </span>
               </label>
               {view.foremanNote && <p className="town__foreman-note">“{view.foremanNote}”</p>}

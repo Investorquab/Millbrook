@@ -174,6 +174,8 @@ export interface SoloView {
   canHire: boolean;
   onStrike: boolean;
   bankrupt: boolean;
+  /** Whether this shop is insured against fire. */
+  insured: boolean;
 
   feed: FeedLine[];
 }
@@ -398,6 +400,8 @@ export class SoloSession {
       elections: true,
       // …and petty theft bites when the town is left to struggle (goods only).
       theft: true,
+      // …and a workshop can catch fire (insure against it, or take the risk).
+      fire: true,
       ...config,
     });
     this.totalDays = this.world.config.days;
@@ -630,6 +634,11 @@ export class SoloSession {
 
   setWage(wage: number, workshopId?: string): void {
     this.resolveWorkshop(workshopId).wage = clamp(wage, WAGE_MIN, WAGE_MAX);
+  }
+
+  /** Insure a shop against fire (a small daily premium), or drop the cover. */
+  setInsured(insured: boolean, workshopId?: string): void {
+    this.resolveWorkshop(workshopId).insured = insured;
   }
 
   /** Hire one idle resident into a player shop. Returns false if it couldn't. */
@@ -893,6 +902,7 @@ export class SoloSession {
       canHire: !w.bankrupt && w.workers.length < w.maxWorkers,
       onStrike: w.strikeDays > 0,
       bankrupt: w.bankrupt,
+      insured: w.insured,
 
       feed,
     };

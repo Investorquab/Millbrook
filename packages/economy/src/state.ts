@@ -139,6 +139,7 @@ export function createWorld(config: SeasonConfig): World {
       daysBankrupt: 0,
       upForAuction: false,
       auctions: 0,
+      insured: false,
       daysShortOnWages: 0,
       soldToday: 0,
       producedToday: 0,
@@ -164,6 +165,8 @@ export function createWorld(config: SeasonConfig): World {
       workshopId: wid,
       reputation: 0,
     });
+    // Cautious owners (Fair, Steady) insure; the greedy and risky take the chance.
+    workshops.get(wid)!.insured = strategy === "fern" || strategy === "sam";
   });
 
   // ── Co-op and Town Hall ───────────────────────────────────────────────────
@@ -205,6 +208,7 @@ export function createWorld(config: SeasonConfig): World {
       auctions: config.auctions ?? false,
       elections: config.elections ?? false,
       theft: config.theft ?? false,
+      fire: config.fire ?? false,
     },
     gm: {
       enabled: config.gameMaster ?? false,

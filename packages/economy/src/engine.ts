@@ -57,6 +57,7 @@ import { runAgeing } from "./ageing.js";
 import { runAuctions } from "./auction.js";
 import { runElections, enforceMinimumWage } from "./elections.js";
 import { runTheft } from "./theft.js";
+import { runFire } from "./fire.js";
 import type { DayMetrics, Resident, Workshop, World } from "./types.js";
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -650,6 +651,9 @@ function endOfDay(world: World, totalSales: number): void {
 
   // Petty theft when the town is struggling — loses goods, never coins.
   runTheft(world);
+
+  // Fire and insurance — destroys goods; premiums/claims move coins shop↔pool.
+  runFire(world);
 
   world.ledger.assertInvariant(TOTAL_COINS);
 }

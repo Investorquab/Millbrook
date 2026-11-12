@@ -86,6 +86,11 @@ tooltips explain every number.
   bites — a little of each shop's stock goes missing overnight. Goods are lost,
   never coins, so the total stays 10,000; the only real fix is to get the town
   back to work.
+- A workshop can catch **fire** and lose its stock. **Insure** your shop (a small
+  daily premium into the Town Co-op's pool) and the pool pays a claim when fire
+  strikes, or take the risk. Fire destroys goods, never coins; premiums and
+  claims only move coins between the shop and the pool, so the total holds at
+  10,000. Cautious AI owners insure; the greedy and the risky chance it.
 - A workshop that **can't pay wages for three days goes bankrupt** — and its
   premises don't sit empty: they go to **auction**. Around mid-season an AI owner
   also retires and puts their shop up, so you reliably get the chance to **bid**:
@@ -215,7 +220,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- The Apothecary and remedy sales; hiring a guard to deter theft; carpenter and housing
+- The Apothecary and remedy sales; rent and housing; hiring a guard to deter theft
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---

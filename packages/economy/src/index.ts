@@ -32,6 +32,7 @@ export {
   COMFORTABLE_SAVINGS,
 } from "./elections.js";
 export { runTheft, THEFT_UNEMPLOYMENT, THEFT_RATE } from "./theft.js";
+export { runFire, INSURANCE_PREMIUM, FIRE_CHANCE } from "./fire.js";
 export {
   runGameMaster,
   readGmMetrics,

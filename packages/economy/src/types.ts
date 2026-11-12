@@ -87,6 +87,9 @@ export interface Workshop {
   upForAuction: boolean;
   /** How many times the premises have been re-let at auction (for the name). */
   auctions: number;
+  /** Insured against fire: pays a small daily premium to the Co-op's pool, and
+   *  is paid a claim from it if a fire takes the stock. */
+  insured: boolean;
   /** Days in a row the workshop could not pay full wages. */
   daysShortOnWages: number;
   /** Units sold / produced / coins taken today (reset each day). */
@@ -193,6 +196,14 @@ export interface SeasonConfig {
    * turns it on. A consequence of a town left to struggle, not a coin sink.
    */
   theft?: boolean;
+  /**
+   * Fire and insurance: a workshop can catch fire and lose its stock. Insured
+   * shops pay a small daily premium into the Town Co-op's insurance pool and are
+   * paid a claim from it when fire strikes. Goods are lost, never coins, and
+   * premiums/claims only move coins between the shop and the pool, so the
+   * 10,000-coin total is never affected. Off by default; the solo game turns on.
+   */
+  fire?: boolean;
 }
 
 /**
