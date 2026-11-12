@@ -76,7 +76,7 @@ export function SignIn() {
           <p className="signin__lede">
             {sent?.delivered
               ? `We sent a sign-in link to ${email}. Click it to finish — it works once and expires in 15 minutes.`
-              : `Your link is ready for ${email}. (Email delivery isn't configured here, so use the link below.)`}
+              : `Your sign-in link is ready below for ${email} — it works once and expires in 15 minutes.`}
           </p>
           {sent?.devLink && (
             <Link to={devPath(sent.devLink)} className="signin__submit signin__submit--link">

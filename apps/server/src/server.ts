@@ -109,12 +109,12 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
           return sendJson(res, 400, { error: (e as Error).message });
         }
         const delivered = link.link ? await deliverLink(link.link, link.email, link.username) : false;
-        // In production never leak the link in the response; in dev return it so
-        // the flow works without a configured email provider. Falls back to a
-        // same-origin path when PUBLIC_BASE_URL is unset.
-        const devLink = !isProd
-          ? link.link || `/auth/verify?token=${encodeURIComponent(link.token)}`
-          : undefined;
+        // Surface the link in the response when it was NOT emailed: always in dev,
+        // and in production only as a fallback when delivery failed (no provider
+        // configured, or a recipient the provider won't send to yet). A link that
+        // WAS emailed is never returned — the email is the only copy.
+        const devLink =
+          !isProd || !delivered ? link.link || `/auth/verify?token=${encodeURIComponent(link.token)}` : undefined;
         sendJson(res, 200, { ok: true, delivered, ...(devLink ? { devLink } : {}) });
       })();
       return;

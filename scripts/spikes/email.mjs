@@ -49,6 +49,16 @@ async function main() {
     process.exit(1);
   });
   if (res.status === 401) {
+    // A send-only ("restricted") key can't read /domains but CAN send email —
+    // that's fine for magic links. Distinguish it from a genuinely bad key.
+    const body = await res.json().catch(() => ({}));
+    if (body?.name === "restricted_api_key") {
+      console.log("✓ Resend key is valid (send-only / restricted) — it can send emails.");
+      console.log(`  EMAIL_FROM=${from || "(empty)"} — must be a verified-domain sender or onboarding@resend.dev.`);
+      console.log("  Note: in sandbox (onboarding@resend.dev) Resend only delivers to your own account email;");
+      console.log("  verify a domain at https://resend.com/domains to email anyone. (No message was sent.)");
+      process.exit(0);
+    }
     console.error("✗ Resend rejected the key (401) — recheck EMAIL_API_KEY.");
     process.exit(1);
   }
