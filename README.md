@@ -77,6 +77,9 @@ tooltips explain every number.
   who starts looking for work two game weeks later. Births are conservative and
   capped so a season can't run away, and the parent's small endowment only moves
   coins, so the total stays 10,000.
+- **Holidays and festivals**: a weekly market day and a mid-season harvest
+  festival lift the town's appetite to spend — more ale, meals and clothes sold.
+  Demand only: residents spend coins they already hold, so the total holds.
 - Residents **rent** their homes: a small daily rent comes out of their wage to
   the Town Hall (the public landlord). As the town grows past its **houses**, its
   poorest are left without a home and start to drift away — so the Town Hall
@@ -227,7 +230,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- The Apothecary and remedy sales; holidays and festivals
+- The Apothecary and remedy sales; sick pay during an epidemic
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---

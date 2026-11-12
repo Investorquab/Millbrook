@@ -214,6 +214,7 @@ export function createWorld(config: SeasonConfig): World {
       theft: config.theft ?? false,
       fire: config.fire ?? false,
       housing: config.housing ?? false,
+      festivals: config.festivals ?? false,
     },
     gm: {
       enabled: config.gameMaster ?? false,

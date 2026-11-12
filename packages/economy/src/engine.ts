@@ -59,6 +59,7 @@ import { runElections, enforceMinimumWage } from "./elections.js";
 import { runTheft } from "./theft.js";
 import { runFire } from "./fire.js";
 import { runHousing } from "./housing.js";
+import { runFestivals, festivalFactor } from "./festivals.js";
 import type { DayMetrics, Resident, Workshop, World } from "./types.js";
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -156,6 +157,9 @@ function dawn(world: World): void {
   runCoopHiring(world);
   runLabourMarket(world, targets);
   runPublicWorks(world);
+
+  // Announce a holiday if today is one (it lifts tonight's spending).
+  runFestivals(world);
 }
 
 /**
@@ -503,7 +507,7 @@ function night(world: World): { totalSales: number } {
     let discretionary =
       savings < SUBSISTENCE
         ? 0
-        : Math.floor((Math.max(0, savings - target) + baseFromWage) * demandFactor(world));
+        : Math.floor((Math.max(0, savings - target) + baseFromWage) * demandFactor(world) * festivalFactor(world));
 
     // 1) Bread — the daily need. A need may dip into savings below the target.
     const bread = buyGood(world, r, "bread", savings);

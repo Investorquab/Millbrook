@@ -34,6 +34,7 @@ export {
 export { runTheft, THEFT_UNEMPLOYMENT, THEFT_RATE } from "./theft.js";
 export { runFire, INSURANCE_PREMIUM, FIRE_CHANCE } from "./fire.js";
 export { runHousing, RENT_PER_DAY, HOUSE_BUILD_COST } from "./housing.js";
+export { runFestivals, festivalFactor, HARVEST_FESTIVAL_DAY, MARKET_DAY_BOOST, HARVEST_BOOST } from "./festivals.js";
 export {
   runGameMaster,
   readGmMetrics,

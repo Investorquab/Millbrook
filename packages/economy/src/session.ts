@@ -406,6 +406,8 @@ export class SoloSession {
       fire: true,
       // …and residents rent homes; the town builds houses as it grows.
       housing: true,
+      // …and holidays lift the town's spending (a market day, a harvest festival).
+      festivals: true,
       ...config,
     });
     this.totalDays = this.world.config.days;

@@ -26,6 +26,7 @@ export const FEED_EVENT_KINDS = [
   "theft",
   "fire",
   "insurance",
+  "festival",
   "benefit_paid",
   "public_works",
   "election",

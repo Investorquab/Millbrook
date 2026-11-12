@@ -48,7 +48,7 @@ function FeedIcon({ kind }: { kind: string }) {
       </span>
     );
   }
-  if (kind === "phase_change" || kind === "gm_event" || kind === "election") {
+  if (kind === "phase_change" || kind === "gm_event" || kind === "election" || kind === "festival") {
     return (
       <span
         className="town__feed-icon"

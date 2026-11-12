@@ -215,6 +215,13 @@ export interface SeasonConfig {
    * 10,000-coin total holds. Off by default; the solo game turns it on.
    */
   housing?: boolean;
+  /**
+   * Holidays and festivals: a weekly market day and a mid-season harvest
+   * festival lift the town's appetite to spend (especially on ale, meals and
+   * clothes). Demand only — residents spend coins they already hold at the
+   * shops, so the 10,000-coin total is unaffected. Off by default; solo on.
+   */
+  festivals?: boolean;
 }
 
 /**
