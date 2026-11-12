@@ -140,6 +140,7 @@ export function createWorld(config: SeasonConfig): World {
       upForAuction: false,
       auctions: 0,
       insured: false,
+      guarded: false,
       daysShortOnWages: 0,
       soldToday: 0,
       producedToday: 0,

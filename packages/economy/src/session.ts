@@ -176,6 +176,8 @@ export interface SoloView {
   bankrupt: boolean;
   /** Whether this shop is insured against fire. */
   insured: boolean;
+  /** Whether a guard is posted against theft. */
+  guarded: boolean;
 
   feed: FeedLine[];
 }
@@ -641,6 +643,12 @@ export class SoloSession {
     this.resolveWorkshop(workshopId).insured = insured;
   }
 
+  /** Post (or stand down) a guard: on a bad night a guarded shop pays the watch
+   *  and its stock is spared from theft. */
+  setGuard(guarded: boolean, workshopId?: string): void {
+    this.resolveWorkshop(workshopId).guarded = guarded;
+  }
+
   /** Hire one idle resident into a player shop. Returns false if it couldn't. */
   hire(workshopId?: string): boolean {
     const w = this.resolveWorkshop(workshopId);
@@ -903,6 +911,7 @@ export class SoloSession {
       onStrike: w.strikeDays > 0,
       bankrupt: w.bankrupt,
       insured: w.insured,
+      guarded: w.guarded,
 
       feed,
     };

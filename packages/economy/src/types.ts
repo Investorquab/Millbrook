@@ -90,6 +90,9 @@ export interface Workshop {
   /** Insured against fire: pays a small daily premium to the Co-op's pool, and
    *  is paid a claim from it if a fire takes the stock. */
   insured: boolean;
+  /** A guard is posted: on a bad night the shop pays a watch wage and its stock
+   *  is spared from theft. */
+  guarded: boolean;
   /** Days in a row the workshop could not pay full wages. */
   daysShortOnWages: number;
   /** Units sold / produced / coins taken today (reset each day). */

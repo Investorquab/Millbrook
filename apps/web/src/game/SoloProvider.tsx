@@ -31,6 +31,7 @@ export interface SoloController {
   setPrice: (n: number) => void;
   setWage: (n: number) => void;
   setInsured: (on: boolean) => void;
+  setGuard: (on: boolean) => void;
   hire: () => void;
   /** Bid on a failed rival's premises at auction (takes it over), or pass. */
   takeOverAuction: (workshopId: string) => void;
@@ -85,6 +86,14 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
   const setInsured = useCallback(
     (on: boolean) => {
       ref.current!.setInsured(on);
+      refresh();
+    },
+    [refresh],
+  );
+
+  const setGuard = useCallback(
+    (on: boolean) => {
+      ref.current!.setGuard(on);
       refresh();
     },
     [refresh],
@@ -158,6 +167,7 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
     setPrice,
     setWage,
     setInsured,
+    setGuard,
     hire,
     takeOverAuction,
     passAuction,

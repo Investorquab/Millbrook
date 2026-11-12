@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TOTAL_COINS } from "@millbrook/shared";
 import { createWorld } from "./state.js";
-import { runTheft, THEFT_RATE } from "./theft.js";
+import { runTheft, THEFT_RATE, GUARD_WAGE } from "./theft.js";
 import { unemploymentRate } from "./rules.js";
 
 function world(theft: boolean) {
@@ -50,6 +50,23 @@ describe("theft", () => {
     expect(w.feed.some((e) => e.kind === "theft")).toBe(true);
     // Coins are never touched — the invariant holds.
     expect(w.ledger.total()).toBe(coinsBefore);
+    w.ledger.assertInvariant(TOTAL_COINS);
+  });
+
+  it("a guarded shop pays the watch and keeps its stock, conserving the total", () => {
+    const w = world(true);
+    makeStruggle(w);
+    const shop = [...w.workshops.values()][0]!;
+    shop.outputStock = 100;
+    shop.guarded = true;
+    const shopBefore = w.ledger.get(shop.id);
+    const totalBefore = w.ledger.total();
+
+    runTheft(w);
+
+    expect(shop.outputStock).toBe(100); // stock spared
+    expect(w.ledger.get(shop.id)).toBe(shopBefore - GUARD_WAGE); // paid the watch
+    expect(w.ledger.total()).toBe(totalBefore); // coins stayed in town
     w.ledger.assertInvariant(TOTAL_COINS);
   });
 });
