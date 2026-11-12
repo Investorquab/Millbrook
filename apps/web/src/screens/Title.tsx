@@ -31,7 +31,7 @@ export function Title() {
           <Button to="/play" variant="primary" trailing={<PlayArrow />} ariaLabel="Play solo">
             Play solo
           </Button>
-          <Button to="/host">Host a room</Button>
+          <Button to="/hub">Host a room</Button>
           <Button to="/join">Join with a code</Button>
         </div>
       </main>
