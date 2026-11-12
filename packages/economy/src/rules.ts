@@ -372,11 +372,11 @@ export function migrationInCount(world: World, rng: Rng): Reasoned<number> {
 // ── Taxes (levied in aggregate at dusk; always an integer) ─────────────────
 
 /** The Town Hall's cut of a day's total payroll at one workshop. */
-export function payrollTax(totalPayroll: number): number {
-  return Math.floor(totalPayroll * WAGE_TAX_RATE);
+export function payrollTax(totalPayroll: number, rate: number = WAGE_TAX_RATE): number {
+  return Math.floor(totalPayroll * rate);
 }
 
 /** The Town Hall's cut of a day's total sales at one workshop. */
-export function salesTax(totalSales: number): number {
-  return Math.floor(totalSales * SALES_TAX_RATE);
+export function salesTax(totalSales: number, rate: number = SALES_TAX_RATE): number {
+  return Math.floor(totalSales * rate);
 }

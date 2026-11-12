@@ -24,6 +24,7 @@ import {
   STARTING_RESIDENTS,
   TOWN_HALL_START_COINS,
   WAGE_TAX_RATE,
+  UNEMPLOYMENT_BENEFIT,
   WORKSHOP_DEFS,
   WORKSHOP_POOL_COINS,
   BASE_WAGE,
@@ -169,7 +170,14 @@ export function createWorld(config: SeasonConfig): World {
     workshops,
     owners,
     coop,
-    townHall: { id: TOWN_HALL_ID, wageTaxRate: WAGE_TAX_RATE, salesTaxRate: SALES_TAX_RATE },
+    townHall: {
+      id: TOWN_HALL_ID,
+      wageTaxRate: WAGE_TAX_RATE,
+      salesTaxRate: SALES_TAX_RATE,
+      benefit: UNEMPLOYMENT_BENEFIT,
+      minimumWage: 0,
+      mayor: "none",
+    },
     openWorkshops,
     config: {
       seed: config.seed,
@@ -181,6 +189,7 @@ export function createWorld(config: SeasonConfig): World {
       gameMaster: config.gameMaster ?? false,
       ageing: config.ageing ?? false,
       auctions: config.auctions ?? false,
+      elections: config.elections ?? false,
     },
     gm: {
       enabled: config.gameMaster ?? false,

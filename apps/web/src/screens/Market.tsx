@@ -31,7 +31,7 @@ const STRATEGY: Record<string, { label: string; color: string; blurb: string }> 
 
 function feedTone(kind: string): string {
   if (kind === "strike_start" || kind === "bankruptcy" || kind === "layoff") return "var(--madder-text)";
-  if (kind === "phase_change" || kind === "gm_event") return "var(--wheat-light)";
+  if (kind === "phase_change" || kind === "gm_event" || kind === "election") return "var(--wheat-light)";
   if (kind === "hire" || kind === "job_change" || kind === "migration_in" || kind === "auction") return "var(--river-text)";
   if (kind === "trade" || kind === "birth") return "var(--meadow-text)";
   return "var(--text-secondary)";

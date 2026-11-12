@@ -34,7 +34,6 @@ import {
   PUBLIC_WORKS_WAGE,
   TARGET_SAVINGS_BY_TRAIT,
   TOWN_HALL_PUBLIC_WORKS_EMPLOYER,
-  UNEMPLOYMENT_BENEFIT,
   WORKSHOP_DEFS,
   aliveResidents,
   isDependentChild,
@@ -56,6 +55,7 @@ import {
 } from "./rules.js";
 import { runAgeing } from "./ageing.js";
 import { runAuctions } from "./auction.js";
+import { runElections, enforceMinimumWage } from "./elections.js";
 import type { DayMetrics, Resident, Workshop, World } from "./types.js";
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -128,6 +128,10 @@ function dawn(world: World): void {
     w.price = price.value;
     targets.set(w.id, Math.max(0, Math.min(workforce.value, w.maxWorkers)));
   }
+
+  // A caring Mayor's minimum wage lifts every shop to the floor before strikes
+  // and hiring react to the day's wages.
+  enforceMinimumWage(world);
 
   // Strikes, using the wages just set.
   for (const w of world.workshops.values()) {
@@ -255,9 +259,10 @@ function runPublicWorks(world: World): void {
   // benefit the still-jobless will draw at dusk. The slice shrinks as the
   // treasury does, so a crisis response tapers to a sustainable floor instead
   // of bankrupting the Town Hall — the treasury is a buffer, not a bottomless purse.
-  const reserveForBenefits = Math.max(0, pool.length - PUBLIC_WORKS_MAX_WORKERS) * UNEMPLOYMENT_BENEFIT;
+  const benefit = world.townHall.benefit;
+  const reserveForBenefits = Math.max(0, pool.length - PUBLIC_WORKS_MAX_WORKERS) * benefit;
   const budget = world.hallIncomeYesterday + Math.floor(treasury / 15) - reserveForBenefits;
-  const affordable = Math.floor(budget / Math.max(1, PUBLIC_WORKS_WAGE - UNEMPLOYMENT_BENEFIT));
+  const affordable = Math.floor(budget / Math.max(1, PUBLIC_WORKS_WAGE - benefit));
   const hireCount = Math.max(0, Math.min(pool.length, PUBLIC_WORKS_MAX_WORKERS, affordable));
   for (let i = 0; i < hireCount; i++) {
     const r = world.residents.get(pool[i]!)!;
@@ -393,8 +398,9 @@ function dusk(world: World): void {
       paidPayroll += paid;
       if (paid < w.wage) short = true;
     }
-    // Town Hall takes its cut of payroll and of the day's sales.
-    const tax = payrollTax(paidPayroll) + salesTax(w.revenueToday);
+    // Town Hall takes its cut of payroll and of the day's sales (the Mayor's rates).
+    const tax =
+      payrollTax(paidPayroll, world.townHall.wageTaxRate) + salesTax(w.revenueToday, world.townHall.salesTaxRate);
     world.hallIncomeToday += world.ledger.payUpTo(w.id, TOWN_HALL_ID, tax);
     w.daysShortOnWages = short ? w.daysShortOnWages + 1 : 0;
     if (w.daysShortOnWages >= 3) bankrupt(world, w);
@@ -409,7 +415,11 @@ function dusk(world: World): void {
     r.lastWage = paid;
     coopPayroll += paid;
   }
-  world.hallIncomeToday += world.ledger.payUpTo(world.coop.id, TOWN_HALL_ID, payrollTax(coopPayroll));
+  world.hallIncomeToday += world.ledger.payUpTo(
+    world.coop.id,
+    TOWN_HALL_ID,
+    payrollTax(coopPayroll, world.townHall.wageTaxRate),
+  );
 
   // Public-works wages and unemployment benefit, both from the Town Hall.
   let benefitPaid = false;
@@ -417,7 +427,7 @@ function dusk(world: World): void {
     if (r.employerId === TOWN_HALL_PUBLIC_WORKS_EMPLOYER) {
       r.lastWage = world.ledger.payUpTo(TOWN_HALL_ID, r.id, PUBLIC_WORKS_WAGE);
     } else if (r.employerId === null && world.config.safetyNet) {
-      const paid = world.ledger.payUpTo(TOWN_HALL_ID, r.id, UNEMPLOYMENT_BENEFIT);
+      const paid = world.ledger.payUpTo(TOWN_HALL_ID, r.id, world.townHall.benefit);
       r.lastWage = paid;
       if (paid > 0) benefitPaid = true;
     }
@@ -605,6 +615,9 @@ function endOfDay(world: World, totalSales: number): void {
   if (world.phase !== prevPhase) {
     pushFeed(world, "phase_change", `A new phase begins: ${world.phase}.`, { phase: world.phase });
   }
+
+  // The town governs itself: a phase-boundary election may reset tax/benefit policy.
+  runElections(world);
 
   // The living town: age the residents, retire the old, pass on estates. A no-op
   // unless ageing is on and today closes a game week; its transfers conserve, so

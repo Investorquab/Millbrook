@@ -25,6 +25,7 @@ export const FEED_EVENT_KINDS = [
   "auction",
   "benefit_paid",
   "public_works",
+  "election",
   "phase_change",
   "gm_event",
   "sale_summary",

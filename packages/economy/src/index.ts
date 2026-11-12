@@ -25,6 +25,13 @@ export {
   AUCTION_BID_WINDOW_DAYS,
 } from "./auction.js";
 export {
+  runElections,
+  enforceMinimumWage,
+  MAYOR_POLICY,
+  ELECTION_DAYS,
+  COMFORTABLE_SAVINGS,
+} from "./elections.js";
+export {
   runGameMaster,
   readGmMetrics,
   deriveWeather,

@@ -111,12 +111,20 @@ export interface Coop {
   revenueYesterday: number;
 }
 
+export type Mayor = "none" | "thrifty" | "caring";
+
 export interface TownHall {
   id: string;
   /** Fraction of each wage taken as tax at dusk. */
   wageTaxRate: number;
   /** Fraction of each sale taken as tax at night. */
   salesTaxRate: number;
+  /** Daily unemployment benefit the Town Hall pays. */
+  benefit: number;
+  /** Wage floor every shop must meet (0 = none); a caring Mayor can set one. */
+  minimumWage: number;
+  /** Who the town last elected (sets the policy above). */
+  mayor: Mayor;
 }
 
 export interface DayMetrics {
@@ -170,6 +178,14 @@ export interface SeasonConfig {
    * on. All coin moves conserve, so the 10,000-coin total holds.
    */
   auctions?: boolean;
+  /**
+   * Hold elections: at each phase boundary the residents elect a Mayor —
+   * thrifty (lower taxes) or caring (more benefits and a minimum wage) — voting
+   * by their own welfare. The winner sets the Town Hall's tax/benefit policy for
+   * the phase. Off by default (headless/determinism untouched); the solo game
+   * turns it on. Only rates move, never the 10,000-coin total.
+   */
+  elections?: boolean;
 }
 
 /**

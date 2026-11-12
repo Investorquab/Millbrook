@@ -68,6 +68,11 @@ tooltips explain every number.
   who starts looking for work two game weeks later. Births are conservative and
   capped so a season can't run away, and the parent's small endowment only moves
   coins, so the total stays 10,000.
+- The town also **governs itself**: at each phase boundary the residents hold an
+  **election**, each voting by their own welfare — the comfortable for a thrifty
+  Mayor (lower taxes), the struggling for a caring one (more benefits and a
+  minimum wage). The winner sets the Town Hall's tax and benefit policy for the
+  phase. Only rates change, never the 10,000-coin total.
 - A workshop that **can't pay wages for three days goes bankrupt** — and its
   premises don't sit empty: they go to **auction**. Around mid-season an AI owner
   also retires and puts their shop up, so you reliably get the chance to **bid**:
@@ -196,7 +201,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- Tailor and Tavern; goal cards for the new systems; elections and minimum wage
+- Tailor and Tavern; goal cards for the new systems; sickness and epidemics
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---

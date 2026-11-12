@@ -394,6 +394,8 @@ export class SoloSession {
       ageing: true,
       // …and re-lets bankrupt premises at auction, so trade keeps churning.
       auctions: true,
+      // …and holds elections each phase (tax/benefit policy, a minimum wage).
+      elections: true,
       ...config,
     });
     this.totalDays = this.world.config.days;
@@ -1030,6 +1032,7 @@ export class SoloSession {
       strike_start: 6,
       bankruptcy: 6,
       death: 6,
+      election: 6,
       auction: 5,
       public_works: 5,
       benefit_paid: 5,
@@ -1208,11 +1211,20 @@ export class SoloSession {
 
     const pick = (kinds: FeedEventKind[]) => inWeek.filter((e) => kinds.includes(e.kind));
 
-    // Lead story: the sharpest conflict of the week, else the busiest trade news.
+    // Lead story: an election tops the week, then the sharpest conflict, else trade.
+    const elections = pick(["election"]);
     const strikes = pick(["strike_start"]);
     const wageCuts = pick(["wage_change"]);
     let lead: GazetteStory;
-    if (strikes.length) {
+    if (elections.length) {
+      lead = {
+        heading: "Millbrook goes to the polls",
+        paragraphs: [
+          elections[0]!.text,
+          "Every resident voted by their own welfare — the comfortable for lower taxes, the struggling for benefits. The Town Hall's rates follow the result, but the town's 10,000 coins never leave town.",
+        ],
+      };
+    } else if (strikes.length) {
       lead = {
         heading: "Workers down tools over pay",
         paragraphs: [
