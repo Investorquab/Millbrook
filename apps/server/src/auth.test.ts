@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { AuthStore, TOKEN_TTL_MS, cleanUsername, magicLinkEmail } from "./auth.js";
+import {
+  AuthStore,
+  TOKEN_TTL_MS,
+  cleanUsername,
+  magicLinkEmail,
+  parseFrom,
+  pickEmailProvider,
+} from "./auth.js";
 
 /** A store with a controllable clock and a counter-based token generator. */
 function makeStore(startTime = 1_000_000) {
@@ -68,5 +75,18 @@ describe("username and email helpers", () => {
     expect(m.text).toContain("https://x/auth/verify?token=abc");
     expect(m.html).toContain("Ada");
     expect(m.subject).toMatch(/sign-in/i);
+  });
+});
+
+describe("email provider selection", () => {
+  it("picks the provider from the key shape", () => {
+    expect(pickEmailProvider("re_abc123")).toBe("resend");
+    expect(pickEmailProvider("SG.abc.def")).toBe("sendgrid");
+    expect(pickEmailProvider("xkeysib-abc123")).toBe("brevo");
+    expect(pickEmailProvider("unknown")).toBe("resend"); // safe default
+  });
+  it("parses a sender with or without a display name", () => {
+    expect(parseFrom("Millbrook <login@example.com>")).toEqual({ name: "Millbrook", email: "login@example.com" });
+    expect(parseFrom("login@example.com")).toEqual({ email: "login@example.com" });
   });
 });

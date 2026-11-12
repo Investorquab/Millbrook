@@ -12,7 +12,7 @@
  */
 
 import { createGameServer, type GameServerOptions } from "./server.js";
-import { AuthStore, makeResendSender } from "./auth.js";
+import { AuthStore, makeEmailSender, pickEmailProvider } from "./auth.js";
 
 const PORT = Number(process.env.PORT ?? 8080);
 const isProd = process.env.NODE_ENV === "production";
@@ -25,8 +25,8 @@ const opts: GameServerOptions = {
 const emailKey = process.env.EMAIL_API_KEY?.trim();
 const emailFrom = process.env.EMAIL_FROM?.trim();
 if (emailKey && emailFrom) {
-  opts.email = makeResendSender(emailKey, emailFrom);
-  console.log(`Email delivery: Resend, from ${emailFrom}`);
+  opts.email = makeEmailSender(emailKey, emailFrom);
+  console.log(`Email delivery: ${pickEmailProvider(emailKey)}, from ${emailFrom}`);
 } else {
   console.log("Email delivery: none configured — magic links print to this console (dev).");
 }

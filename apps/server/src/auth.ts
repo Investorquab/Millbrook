@@ -162,6 +162,90 @@ export function makeResendSender(apiKey: string, from: string): EmailSender {
   };
 }
 
+export type EmailProvider = "resend" | "sendgrid" | "brevo";
+
+/** Pick the email provider from the API key's shape. SendGrid keys start with
+ *  "SG.", Brevo with "xkeysib-", Resend with "re_" (the default). */
+export function pickEmailProvider(apiKey: string): EmailProvider {
+  if (apiKey.startsWith("SG.")) return "sendgrid";
+  if (apiKey.startsWith("xkeysib-")) return "brevo";
+  return "resend";
+}
+
+/** Split a "Name <email>" or bare "email" sender into its parts. */
+export function parseFrom(from: string): { email: string; name?: string } {
+  const m = from.match(/^\s*(.*?)\s*<\s*([^>]+?)\s*>\s*$/);
+  if (m) return { email: m[2]!, name: m[1] || undefined };
+  return { email: from.trim() };
+}
+
+/**
+ * Build an email sender for whatever provider the key belongs to. Resend needs a
+ * verified domain to reach arbitrary recipients; SendGrid and Brevo support
+ * single-sender verification (verify one address, e.g. your own, then email
+ * anyone) — handy for a free, domain-less setup.
+ */
+export function makeEmailSender(apiKey: string, from: string): EmailSender {
+  switch (pickEmailProvider(apiKey)) {
+    case "sendgrid":
+      return makeSendgridSender(apiKey, from);
+    case "brevo":
+      return makeBrevoSender(apiKey, from);
+    default:
+      return makeResendSender(apiKey, from);
+  }
+}
+
+/** SendGrid v3 mail/send. Free tier: 100/day, single-sender verification. */
+export function makeSendgridSender(apiKey: string, from: string): EmailSender {
+  const sender = parseFrom(from);
+  return async ({ to, subject, html, text }) => {
+    try {
+      const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+        method: "POST",
+        headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email: to }] }],
+          from: sender,
+          subject,
+          content: [
+            { type: "text/plain", value: text },
+            { type: "text/html", value: html },
+          ],
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        return { ok: false, info: `SendGrid HTTP ${res.status} ${body.slice(0, 180)}` };
+      }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, info: `SendGrid unreachable: ${(e as Error)?.message ?? e}` };
+    }
+  };
+}
+
+/** Brevo (Sendinblue) transactional email. Free tier: 300/day, verified sender. */
+export function makeBrevoSender(apiKey: string, from: string): EmailSender {
+  const sender = parseFrom(from);
+  return async ({ to, subject, html, text }) => {
+    try {
+      const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify({ sender, to: [{ email: to }], subject, htmlContent: html, textContent: text }),
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        return { ok: false, info: `Brevo HTTP ${res.status} ${body.slice(0, 180)}` };
+      }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, info: `Brevo unreachable: ${(e as Error)?.message ?? e}` };
+    }
+  };
+}
+
 /** The email body for a magic link — plain and unbranded, so it lands well. */
 export function magicLinkEmail(link: string, username: string): { subject: string; html: string; text: string } {
   const subject = "Your Millbrook sign-in link";
