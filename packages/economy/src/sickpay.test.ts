@@ -12,7 +12,14 @@ function staffedWorld(seed: number): World {
 }
 
 function pushEpidemic(w: World) {
-  w.gm.active.push({ id: "epidemic", remainingDays: 3, params: { outputMultiplier: 0.6 } });
+  w.gm.active.push({
+    id: "epidemic",
+    title: "A sickness spreads",
+    effect: "Sick workers miss shifts.",
+    startDay: w.day,
+    remainingDays: 3,
+    params: { outputMultiplier: 0.6 },
+  });
 }
 
 function firstStaffedShopId(w: World): string {

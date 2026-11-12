@@ -503,6 +503,9 @@ function night(world: World): { totalSales: number } {
   let totalSales = 0;
   const tOpen = tailorOpen(world);
   const mealOpen = workshopTypeOpen(world, "tavern");
+  const remedyOpen = workshopTypeOpen(world, "apothecary");
+  // Some residents are unwell on any day; far more during an epidemic.
+  const epidemicNow = world.gm.active.some((e) => e.id === "epidemic");
 
   for (const r of aliveResidents(world)) {
     const savings = world.ledger.get(r.id);
@@ -568,6 +571,20 @@ function night(world: World): { totalSales: number } {
         totalSales += meal.price;
         discretionary -= meal.price;
         r.lastReason = "Treated themselves to a meal at the tavern.";
+      }
+    }
+
+    // 6) A remedy from the Apothecary when unwell — rare on an ordinary day, far
+    //    more likely in an epidemic. A need, so it may dip below the spending cap.
+    if (remedyOpen) {
+      const unwell = world.rng.chance(epidemicNow ? 0.3 : 0.04);
+      if (unwell) {
+        const remedy = buyGood(world, r, "remedy", savings);
+        if (remedy.result === "bought") {
+          totalSales += remedy.price;
+          discretionary = Math.max(0, discretionary - remedy.price);
+          r.lastReason = epidemicNow ? "Bought a remedy — the sickness is going round." : "Bought a remedy from the apothecary.";
+        }
       }
     }
   }
