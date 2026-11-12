@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { SoloSession, type SoloView } from "@millbrook/economy";
+import type { WorkshopType } from "@millbrook/shared";
 
 /** How long a game day takes while the town is "playing" (ms). */
 const DAY_MS = 1200;
@@ -17,8 +18,16 @@ const TOWN_WORKSHOPS: Record<TownSize, string[]> = {
   7: ["bakery", "smithy", "weaver", "tailor", "tavern", "brewery", "apothecary"],
 };
 
-function makeSession(seed: number, size: TownSize): SoloSession {
-  return new SoloSession({ seed, days: 28, openWorkshops: TOWN_WORKSHOPS[size] as never });
+function makeSession(seed: number, size: TownSize, trade: WorkshopType): SoloSession {
+  const shops = TOWN_WORKSHOPS[size];
+  // The player's trade must be one the town opens; fall back to the bakery.
+  const playerTrade = (shops.includes(trade) ? trade : "bakery") as WorkshopType;
+  return new SoloSession({ seed, days: 28, openWorkshops: shops as never, playerTrade });
+}
+
+/** The trades a town of this size opens, for the Hub's trade picker. */
+export function tradesForTown(size: TownSize): WorkshopType[] {
+  return TOWN_WORKSHOPS[size] as WorkshopType[];
 }
 
 export interface SoloController {
@@ -44,6 +53,10 @@ export interface SoloController {
   townSize: TownSize;
   /** Start a fresh season with a chosen town size (resets the season). */
   setTownSize: (size: TownSize) => void;
+  /** The trade the player runs this season (bakery, weaver, smithy…). */
+  playerTrade: WorkshopType;
+  /** Start a fresh season running a chosen trade (resets the season). */
+  setPlayerTrade: (trade: WorkshopType) => void;
   /** Start a fresh season (optionally with a new seed). */
   newSeason: (seed?: number) => void;
 }
@@ -58,11 +71,12 @@ const SoloContext = createContext<SoloController | null>(null);
  */
 export function SoloProvider({ children, seed = 42 }: { children: ReactNode; seed?: number }) {
   const ref = useRef<SoloSession | null>(null);
-  if (ref.current === null) ref.current = makeSession(seed, 4);
+  if (ref.current === null) ref.current = makeSession(seed, 4, "bakery");
 
   const [view, setView] = useState<SoloView>(() => ref.current!.view());
   const [running, setRunning] = useState(false);
   const [townSize, setTownSizeState] = useState<TownSize>(4);
+  const [playerTrade, setPlayerTradeState] = useState<WorkshopType>("bakery");
 
   const refresh = useCallback(() => setView(ref.current!.view()), []);
 
@@ -137,21 +151,35 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
 
   const newSeason = useCallback(
     (nextSeed = seed) => {
-      ref.current = makeSession(nextSeed, townSize);
+      ref.current = makeSession(nextSeed, townSize, playerTrade);
       setRunning(false);
       refresh();
     },
-    [refresh, seed, townSize],
+    [refresh, seed, townSize, playerTrade],
   );
 
   const setTownSize = useCallback(
     (size: TownSize) => {
-      ref.current = makeSession(seed, size);
+      // Keep the chosen trade if the new town still opens it, else fall back.
+      const shops = tradesForTown(size);
+      const trade = shops.includes(playerTrade) ? playerTrade : "bakery";
+      ref.current = makeSession(seed, size, trade);
       setTownSizeState(size);
+      setPlayerTradeState(trade);
       setRunning(false);
       refresh();
     },
-    [refresh, seed],
+    [refresh, seed, playerTrade],
+  );
+
+  const setPlayerTrade = useCallback(
+    (trade: WorkshopType) => {
+      ref.current = makeSession(seed, townSize, trade);
+      setPlayerTradeState(trade);
+      setRunning(false);
+      refresh();
+    },
+    [refresh, seed, townSize],
   );
 
   // Advance a day on a timer while running; stop at the end of the season.
@@ -186,6 +214,8 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
     passAuction,
     townSize,
     setTownSize,
+    playerTrade,
+    setPlayerTrade,
     newSeason,
   };
 

@@ -5,6 +5,7 @@ import { useSolo } from "../game/SoloProvider";
 import { useTutorial } from "../game/useTutorial";
 import { TutorialCard } from "../components/Tutorial";
 import { faceFor } from "../game/faces";
+import { tradeWords } from "../game/tradeLabels";
 import { isMuted, playClick, playCoin, playEvent, toggleMuted } from "../game/sound";
 import "./Town.css";
 
@@ -102,6 +103,10 @@ export function Town() {
   const [foremanOpen, setForemanOpen] = useState(false);
   const [orders, setOrders] = useState(() => session.foremanOrders());
   const [muted, setMutedState] = useState(isMuted);
+  // The words for whatever trade the player runs, so nothing says "bakery/bread"
+  // unless they're the baker.
+  const t = tradeWords(view.workshopType);
+  const capShop = t.shop.charAt(0).toUpperCase() + t.shop.slice(1);
 
   // Guided first session — points at the live control for each step.
   const tour = useTutorial(view, running);
@@ -266,7 +271,7 @@ export function Town() {
               <path d="M7 1l6 11H1z" fill="none" stroke="#fff" strokeWidth="1.6" />
               <path d="M7 5v3.5M7 10v.5" stroke="#fff" strokeWidth="1.6" />
             </svg>
-            Your bakery is on strike
+            Your {t.shop} is on strike
           </span>
         )}
       </div>
@@ -274,13 +279,13 @@ export function Town() {
       {/* ── Bottom HUD ── */}
       <div className="town__hud">
         {/* Workshop */}
-        <section className="town__workshop" aria-label="Your bakery">
+        <section className="town__workshop" aria-label={`Your ${t.shop}`}>
           <div className="town__workshop-head">
-            <h2>Your bakery</h2>
+            <h2>Your {t.shop}</h2>
             <div className="town__crew">
               {view.workers.length === 0 ? (
                 <span className="town__reason" style={{ alignSelf: "center" }}>
-                  No bakers yet
+                  No {t.worker}s yet
                 </span>
               ) : (
                 view.workers.slice(0, 5).map((worker) => {
@@ -316,11 +321,11 @@ export function Town() {
 
           <div className="town__control">
             <div className="town__control-row">
-              <span>Bread price</span>
+              <span>{t.good} price</span>
               <div className="town__stepper" data-tour-target="price">
                 <button
                   type="button"
-                  aria-label="Lower the bread price"
+                  aria-label={`Lower the ${t.good.toLowerCase()} price`}
                   onClick={() => setPrice(view.price - 1)}
                   disabled={view.price <= PRICE_MIN}
                 >
@@ -329,7 +334,7 @@ export function Town() {
                 <span className="town__stepper-value">{view.price} coins</span>
                 <button
                   type="button"
-                  aria-label="Raise the bread price"
+                  aria-label={`Raise the ${t.good.toLowerCase()} price`}
                   onClick={() => setPrice(view.price + 1)}
                   disabled={view.price >= PRICE_MAX}
                 >
@@ -369,11 +374,11 @@ export function Town() {
           <div className="town__stats">
             <span>
               <span className="town__stats-label">Stock</span>
-              <b>{view.stock} loaves</b>
+              <b>{view.stock} {t.unit}</b>
             </span>
             <span>
               <span className="town__stats-label">Sold today</span>
-              <b>{view.soldToday} loaves</b>
+              <b>{view.soldToday} {t.unit}</b>
             </span>
             <span>
               <span className="town__stats-label">Profit today</span>
@@ -395,7 +400,7 @@ export function Town() {
               disabled={!view.canHire}
               data-tour-target="hire"
             >
-              {view.canHire ? "Hire a baker" : "Bakery is full"}
+              {view.canHire ? `Hire a ${t.worker}` : `${capShop} is full`}
             </button>
             <button
               type="button"
@@ -420,7 +425,7 @@ export function Town() {
                 />
                 <span>
                   Match rival wages to keep my workers
-                  <small>up to a cap, so no one poaches your bakers</small>
+                  <small>up to a cap, so no one poaches your {t.worker}s</small>
                 </span>
               </label>
               {orders.matchWages && (
@@ -454,7 +459,7 @@ export function Town() {
                   onChange={(e) => setOrder({ autoHire: e.target.checked })}
                 />
                 <span>
-                  Hire when demand for bread goes unmet
+                  Hire when demand for {t.good.toLowerCase()} goes unmet
                   <small>only while the wages are covered</small>
                 </span>
               </label>
@@ -468,7 +473,7 @@ export function Town() {
                   }}
                 />
                 <span>
-                  Insure the bakery against fire
+                  Insure the {t.shop} against fire
                   <small>a small daily premium; the Co-op pool pays out if it burns</small>
                 </span>
               </label>

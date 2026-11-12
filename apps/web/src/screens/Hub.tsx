@@ -3,8 +3,9 @@ import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { color } from "../theme/tokens";
 import { useRoom } from "../game/RoomProvider";
-import { useSolo } from "../game/SoloProvider";
+import { useSolo, tradesForTown } from "../game/SoloProvider";
 import { useAuth } from "../game/AuthProvider";
+import { TRADE_WORDS } from "../game/tradeLabels";
 import "./Hub.css";
 
 /**
@@ -18,7 +19,7 @@ import "./Hub.css";
 export function Hub() {
   const navigate = useNavigate();
   const room = useRoom();
-  const { session, townSize, setTownSize } = useSolo();
+  const { session, townSize, setTownSize, playerTrade, setPlayerTrade } = useSolo();
   const { username, isSignedIn, signOut } = useAuth();
   const [code, setCode] = useState("");
 
@@ -98,8 +99,8 @@ export function Hub() {
             <div className="hub__solo-copy">
               <h2>Play solo</h2>
               <p>
-                One season, about 20 minutes. Run a bakery against Gus, Fern and Rita, and fast-forward whenever you
-                like.
+                One season, about 20 minutes. Run your own shop against Gus, Fern and Rita, and fast-forward whenever
+                you like.
               </p>
               <div className="hub__goal" role="group" aria-label="Choose your town">
                 <span className="hub__goal-label">Your town</span>
@@ -136,6 +137,23 @@ export function Hub() {
                       ? "Adds a Tailor (buys cloth from the Weaver) and a Tavern (buys bread from the Bakery)."
                       : "The classic four: Bakery, Weaver, Smithy and Brewery."}
                 </span>
+              </div>
+              <div className="hub__goal" role="group" aria-label="Choose your trade">
+                <span className="hub__goal-label">Your trade</span>
+                <div className="hub__goal-chips">
+                  {tradesForTown(townSize).map((trade) => (
+                    <button
+                      type="button"
+                      key={trade}
+                      className={`hub__goal-chip${trade === playerTrade ? " is-active" : ""}`}
+                      aria-pressed={trade === playerTrade}
+                      onClick={() => setPlayerTrade(trade)}
+                    >
+                      {TRADE_WORDS[trade].good}
+                    </button>
+                  ))}
+                </div>
+                <span className="hub__goal-how">{TRADE_WORDS[playerTrade].note}</span>
               </div>
               <div className="hub__goal" role="group" aria-label="Choose your goal">
                 <span className="hub__goal-label">Your goal</span>

@@ -121,6 +121,18 @@ const ROLE_BY_TYPE: Record<WorkshopType, string> = {
   apothecary: "Apothecary",
 };
 
+/** The premises as a noun ("your bakery", "your tailor shop"). */
+const SHOP_NOUN: Record<WorkshopType, string> = {
+  bakery: "bakery",
+  weaver: "weaver",
+  smithy: "smithy",
+  brewery: "brewery",
+  tailor: "tailor shop",
+  tavern: "tavern",
+  carpenter: "carpentry workshop",
+  apothecary: "apothecary",
+};
+
 /** The Foreman's standing orders: plain-code rules it runs for you each dawn
  *  (GAME_DESIGN "The Foreman"). The optional AI-written wording is roadmap. */
 export interface ForemanOrders {
@@ -370,6 +382,8 @@ const GOOD_NOUN: Partial<Record<string, string>> = {
 export class SoloSession {
   readonly world: World;
   readonly playerWorkshopId: string;
+  /** The trade the player runs this season (bakery, weaver, smithy…). */
+  readonly playerTrade: WorkshopType;
   private readonly totalDays: number;
   private prevCoins: number;
   private prevUnemployment: number;
@@ -388,9 +402,10 @@ export class SoloSession {
   private readonly prevCoinsByWs = new Map<string, number>();
   private readonly deltaByWs = new Map<string, number>();
 
-  constructor(config: SeasonConfig) {
-    // A predictable solo town: the four Phase-1 workshops in a fixed order so
-    // the player always runs the bakery, with the AI owners on the rest.
+  constructor(config: SeasonConfig & { playerTrade?: WorkshopType }) {
+    // The player runs the trade they chose (the bakery by default, which keeps
+    // the classic solo town); the AI owners take the rest.
+    const { playerTrade = "bakery", ...worldConfig } = config;
     this.world = createWorld({
       openWorkshops: ["bakery", "weaver", "smithy", "brewery"],
       // The solo game runs the Game Master (M4) by default; a caller can pass
@@ -410,22 +425,29 @@ export class SoloSession {
       housing: true,
       // …and holidays lift the town's spending (a market day, a harvest festival).
       festivals: true,
-      ...config,
+      ...worldConfig,
     });
     this.totalDays = this.world.config.days;
 
-    // The first workshop (bakery) becomes the player's.
-    const bakery = [...this.world.workshops.values()].find((w) => w.type === "bakery");
-    if (!bakery) throw new Error("solo season has no bakery to run");
-    this.playerWorkshopId = bakery.id;
-    const owner = this.world.owners.get(bakery.ownerId);
+    // The workshop of the chosen trade becomes the player's (falling back to the
+    // bakery, then the first shop, if that trade isn't open this town).
+    const shop =
+      [...this.world.workshops.values()].find((w) => w.type === playerTrade) ??
+      [...this.world.workshops.values()].find((w) => w.type === "bakery") ??
+      [...this.world.workshops.values()][0];
+    if (!shop) throw new Error("solo season has no workshop for the player to run");
+    this.playerTrade = shop.type;
+    this.playerWorkshopId = shop.id;
+    const owner = this.world.owners.get(shop.ownerId);
     if (owner) {
       owner.kind = "player";
       owner.strategy = null;
       owner.name = "You";
     }
-    bakery.price = DEFAULT_PRICE;
-    bakery.wage = DEFAULT_WAGE;
+    // The baker starts a touch below the bread default (the classic solo feel);
+    // every other trade starts at its own default price. Wage is the base 8.
+    shop.price = shop.type === "bakery" ? DEFAULT_PRICE : WORKSHOP_DEFS[shop.type].defaultPrice;
+    shop.wage = DEFAULT_WAGE;
 
     // Record every coin move from here on so the Proof screen can trace a coin
     // through the town (Follow-a-coin). The seed balances above are not moves,
@@ -666,8 +688,7 @@ export class SoloSession {
     if (w.bankrupt || w.workers.length >= w.maxWorkers) return false;
     const idle = aliveResidents(this.world).find((r) => r.employerId === null);
     if (!idle) return false;
-    // The bakery (the solo/host shop) keeps its familiar "your bakery" wording.
-    const shop = w.id === this.playerWorkshopId ? "your bakery" : `your ${w.type}`;
+    const shop = `your ${SHOP_NOUN[w.type] ?? w.type}`;
     idle.employerId = w.id;
     idle.daysUnemployed = 0;
     idle.lastReason = `Hired at ${shop} for ${w.wage} a day.`;
@@ -982,7 +1003,8 @@ export class SoloSession {
     const w = this.world.workshops.get(employerId);
     if (!w) return { label: "Working in town", worksForPlayer: false };
     const role = ROLE_BY_TYPE[w.type];
-    if (w.id === this.playerWorkshopId) return { label: `${role} at your bakery`, worksForPlayer: true };
+    if (w.id === this.playerWorkshopId)
+      return { label: `${role} at your ${SHOP_NOUN[w.type] ?? w.type}`, worksForPlayer: true };
     const owner = this.world.owners.get(w.ownerId);
     return { label: `${role} at ${owner?.name ?? "a rival"}'s ${w.type}`, worksForPlayer: false };
   }

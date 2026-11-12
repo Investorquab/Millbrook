@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SoloView } from "@millbrook/economy";
+import { tradeWords, type TradeWords } from "./tradeLabels";
 
 /**
  * The guided first session. A five-beat coach-mark tour that walks a brand-new
@@ -32,58 +33,63 @@ interface Step {
 
 const STORAGE_KEY = "millbrook.tour.v1";
 
-const STEPS: Step[] = [
-  {
-    id: "welcome",
-    target: null,
-    manual: true,
-    cta: "Show me",
-    title: "Welcome to Millbrook",
-    body: "You run the town bakery. Its 30 residents are your workers and your only customers. Let's make your first sale.",
-  },
-  {
-    id: "hire",
-    target: "hire",
-    title: "Hire a baker",
-    body: "More bakers means more bread to sell. Hire one and watch your crew grow.",
-    hint: "Hire a baker to continue",
-    // Wait for an actual hire — the bakery may already start with a baker on
-    // the crew, so compare against the crew size when this step began.
-    done: (v, base) => v.workers.length > base.workers,
-  },
-  {
-    id: "price",
-    target: "price",
-    title: "Set a price the town can pay",
-    body: "Nudge the bread price. Too high and residents can't afford it; too low and you barely profit.",
-    hint: "Change the price to continue",
-    done: (v, base) => v.price !== base.price,
-  },
-  {
-    id: "play",
-    target: "play",
-    title: "Let the days roll",
-    body: "Press play to run the season. Each day residents earn wages and come to buy bread.",
-    hint: "Press play to continue",
-    done: (_v, _base, running) => running,
-  },
-  {
-    id: "sale",
-    target: null,
-    title: "Watch for your first sale",
-    body: "When a resident buys a loaf, gold flows to your bakery and “Sold today” ticks up.",
-    hint: "Waiting for the first sale…",
-    done: (v) => v.soldToday > 0,
-  },
-  {
-    id: "done",
-    target: null,
-    manual: true,
-    cta: "I've got it",
-    title: "You're running the town",
-    body: "Keep Millbrook fed and employed. Tap a resident to see why they chose as they did, and watch the Game Master react to the weather.",
-  },
-];
+/** The tour adapts to the trade the player chose (never "bakery/bread" unless
+ *  they're the baker). */
+function buildSteps(t: TradeWords): Step[] {
+  const good = t.good.toLowerCase();
+  return [
+    {
+      id: "welcome",
+      target: null,
+      manual: true,
+      cta: "Show me",
+      title: "Welcome to Millbrook",
+      body: `You run the town ${t.shop}. Its 30 residents are your workers and your only customers. Let's make your first sale.`,
+    },
+    {
+      id: "hire",
+      target: "hire",
+      title: `Hire a ${t.worker}`,
+      body: `More ${t.worker}s means more ${good} to sell. Hire one and watch your crew grow.`,
+      hint: `Hire a ${t.worker} to continue`,
+      // Wait for an actual hire — the shop may already start with a worker on
+      // the crew, so compare against the crew size when this step began.
+      done: (v, base) => v.workers.length > base.workers,
+    },
+    {
+      id: "price",
+      target: "price",
+      title: "Set a price the town can pay",
+      body: `Nudge the ${good} price. Too high and residents can't afford it; too low and you barely profit.`,
+      hint: "Change the price to continue",
+      done: (v, base) => v.price !== base.price,
+    },
+    {
+      id: "play",
+      target: "play",
+      title: "Let the days roll",
+      body: `Press play to run the season. Each day residents earn wages and come to buy ${good}.`,
+      hint: "Press play to continue",
+      done: (_v, _base, running) => running,
+    },
+    {
+      id: "sale",
+      target: null,
+      title: "Watch for your first sale",
+      body: `When a resident buys some ${good}, gold flows to your ${t.shop} and “Sold today” ticks up.`,
+      hint: "Waiting for the first sale…",
+      done: (v) => v.soldToday > 0,
+    },
+    {
+      id: "done",
+      target: null,
+      manual: true,
+      cta: "I've got it",
+      title: "You're running the town",
+      body: "Keep Millbrook fed and employed. Tap a resident to see why they chose as they did, and watch the Game Master react to the weather.",
+    },
+  ];
+}
 
 export interface Tour {
   active: boolean;
@@ -108,6 +114,9 @@ export function useTutorial(view: SoloView, running: boolean): Tour {
     }
   });
 
+  // Steps worded for the player's chosen trade.
+  const steps = useMemo(() => buildSteps(tradeWords(view.workshopType)), [view.workshopType]);
+
   // The baseline for the current step — e.g. the price when the price step
   // began, so "they changed it" is relative to where they started.
   const baseRef = useRef<Baseline>({ price: view.price, workers: view.workers.length });
@@ -128,7 +137,7 @@ export function useTutorial(view: SoloView, running: boolean): Tour {
 
   const next = useCallback(() => {
     setIndex((i) => {
-      if (i >= STEPS.length - 1) {
+      if (i >= steps.length - 1) {
         finish();
         return i;
       }
@@ -138,7 +147,7 @@ export function useTutorial(view: SoloView, running: boolean): Tour {
 
   const skip = useCallback(() => finish(), [finish]);
 
-  const step = STEPS[index]!;
+  const step = steps[index] ?? steps[steps.length - 1]!;
 
   // Auto-advance when the current step's condition is met, after a short beat so
   // the player sees the result of what they just did.
@@ -153,7 +162,7 @@ export function useTutorial(view: SoloView, running: boolean): Tour {
   return {
     active,
     index,
-    total: STEPS.length,
+    total: steps.length,
     step,
     target: active ? step.target : null,
     next,
