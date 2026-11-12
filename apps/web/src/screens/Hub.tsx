@@ -100,11 +100,21 @@ export function Hub() {
                   >
                     Full town (six)
                   </button>
+                  <button
+                    type="button"
+                    className={`hub__goal-chip${townSize === 7 ? " is-active" : ""}`}
+                    aria-pressed={townSize === 7}
+                    onClick={() => setTownSize(7)}
+                  >
+                    Seven (Apothecary)
+                  </button>
                 </div>
                 <span className="hub__goal-how">
-                  {townSize === 6
-                    ? "Adds a Tailor (buys cloth from the Weaver) and a Tavern (buys bread from the Bakery)."
-                    : "The classic four: Bakery, Weaver, Smithy and Brewery."}
+                  {townSize === 7
+                    ? "Adds an Apothecary (buys herbs from the Co-op, sells remedies — demand jumps in an epidemic), on top of the Tailor and Tavern."
+                    : townSize === 6
+                      ? "Adds a Tailor (buys cloth from the Weaver) and a Tavern (buys bread from the Bakery)."
+                      : "The classic four: Bakery, Weaver, Smithy and Brewery."}
                 </span>
               </div>
               <div className="hub__goal" role="group" aria-label="Choose your goal">

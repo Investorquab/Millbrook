@@ -44,6 +44,7 @@ export const tradeColor = {
   weaver: "#5e8c93",
   smithy: "#b23a48",
   brewery: "#8a6f3a",
+  apothecary: "#5fa36a",
   townhall: "#c8b273",
   coop: "#6e9b5a",
   mine: "#6b6b74",

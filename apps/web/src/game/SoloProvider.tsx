@@ -7,11 +7,14 @@ const DAY_MS = 1200;
 
 /** How many workshops the town opens. The classic town is four; the full town
  *  adds the Tailor (buys cloth from the Weaver) and the Tavern (buys bread from
- *  the Bakery). Owners are ordered so the supply-chain shops get able owners. */
-export type TownSize = 4 | 6;
+ *  the Bakery); the seven-shop town adds the Apothecary (buys herbs from the
+ *  Co-op, sells remedies — demand jumps in an epidemic). Owners are ordered so
+ *  the supply-chain and specialist shops get able owners, never Greedy Gus. */
+export type TownSize = 4 | 6 | 7;
 const TOWN_WORKSHOPS: Record<TownSize, string[]> = {
   4: ["bakery", "weaver", "smithy", "brewery"],
   6: ["bakery", "smithy", "weaver", "tailor", "tavern", "brewery"],
+  7: ["bakery", "smithy", "weaver", "tailor", "tavern", "brewery", "apothecary"],
 };
 
 function makeSession(seed: number, size: TownSize): SoloSession {
@@ -37,7 +40,7 @@ export interface SoloController {
   /** Bid on a failed rival's premises at auction (takes it over), or pass. */
   takeOverAuction: (workshopId: string) => void;
   passAuction: (workshopId: string) => void;
-  /** How many workshops the current town has (4 classic, 6 full town). */
+  /** How many workshops the current town has (4 classic, 6 full town, 7 with the Apothecary). */
   townSize: TownSize;
   /** Start a fresh season with a chosen town size (resets the season). */
   setTownSize: (size: TownSize) => void;

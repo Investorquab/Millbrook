@@ -22,6 +22,7 @@ const GOODS: Record<string, { good: string; color: string }> = {
   brewery: { good: "Ale", color: "#8a6f3a" },
   tailor: { good: "Clothes", color: "#7a6f9c" },
   tavern: { good: "Meals", color: "#b07d3a" },
+  apothecary: { good: "Remedies", color: "#5fa36a" },
 };
 
 const STRATEGY: Record<string, { label: string; color: string; blurb: string }> = {

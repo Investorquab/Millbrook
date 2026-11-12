@@ -49,11 +49,14 @@ tooltips explain every number.
   rival wages (up to a cap) to keep your workers, and hire when bread demand goes
   unmet — and tells you what it did in plain words. (The on-chain Foreman key and
   AI-written wording are roadmap.)
-- You **choose your town** on the Hub: the classic four shops, or a **full town
+- You **choose your town** on the Hub: the classic four shops, a **full town
   of six** that adds the **Tailor** (buys cloth from the Weaver to make clothes)
   and the **Tavern** (buys bread from the Bakery to make meals) — a real
-  inter-workshop supply chain, with the bigger town's owners ordered so those
-  supplier shops are well run. Every coin still stays in town, so the total holds.
+  inter-workshop supply chain — or a **seven-shop town** that also opens the
+  **Apothecary** (buys herbs from the Co-op and sells remedies, with demand
+  jumping during an epidemic). The bigger towns' owners are ordered so the
+  supplier and specialist shops are well run. Every coin still stays in town, so
+  the total holds.
 - You **choose your goal** on the Hub before a season — Tycoon (most profit),
   Biggest Employer, Fair Boss (highest wage while profitable), Speedrun (first to
   5,000) or Steadfast (highest standing with the town) — and the season-end
@@ -232,7 +235,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- The Apothecary and remedy sales (sick residents buy remedies in an epidemic)
+- The Carpenter and finished house parts (housing supply has rent today, no builder yet)
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---

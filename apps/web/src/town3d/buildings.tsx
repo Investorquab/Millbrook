@@ -165,6 +165,28 @@ export function Workshop({ type, pos, rot, busy, bankrupt, isPlayer }: WorkshopP
           <meshStandardMaterial color={accent} flatShading />
         </mesh>
       )}
+      {type === "apothecary" && (
+        /* a big green apothecary bottle by the door — body, neck and cork */
+        <group position={[0.62, 0.4, 0.95]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.17, 0.2, 0.44, 8]} />
+            <meshStandardMaterial
+              color={accent}
+              emissive={accent}
+              emissiveIntensity={busy ? 0.45 : 0.18}
+              flatShading
+            />
+          </mesh>
+          <mesh position={[0, 0.3, 0]}>
+            <cylinderGeometry args={[0.07, 0.1, 0.18, 8]} />
+            <meshStandardMaterial color={accent} flatShading />
+          </mesh>
+          <mesh position={[0, 0.43, 0]}>
+            <cylinderGeometry args={[0.08, 0.08, 0.08, 8]} />
+            <meshStandardMaterial color={diorama.timber} flatShading />
+          </mesh>
+        </group>
+      )}
 
       {/* smoke from the chimney when the shop is working */}
       {busy && !bankrupt && (
