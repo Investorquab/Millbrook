@@ -17,12 +17,16 @@ export interface BuildingSpot {
   rot: number;
 }
 
-/** The four Phase-1 workshops, placed around the central square. */
+/** The workshops, placed around the central square. The first four are the
+ *  classic town; the Tailor and Tavern appear only in a full (six-shop) town —
+ *  the scene renders a spot only when that workshop exists this season. */
 export const WORKSHOPS: BuildingSpot[] = [
   { type: "bakery", pos: [-3.1, 2.6], rot: 0.25 },
   { type: "weaver", pos: [3.2, 2.4], rot: -0.3 },
   { type: "smithy", pos: [3.4, -2.6], rot: -2.5 },
   { type: "brewery", pos: [-3.3, -2.5], rot: 2.6 },
+  { type: "tailor", pos: [-1.7, 4.4], rot: 0.2 },
+  { type: "tavern", pos: [2.0, -4.3], rot: 2.9 },
 ];
 
 /** The square's well sits at the middle of town. */

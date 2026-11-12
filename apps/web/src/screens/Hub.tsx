@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { color } from "../theme/tokens";
@@ -19,7 +19,7 @@ const PLAYER_NAME = "millhand";
 export function Hub() {
   const navigate = useNavigate();
   const room = useRoom();
-  const { session } = useSolo();
+  const { session, townSize, setTownSize } = useSolo();
   const [code, setCode] = useState("");
 
   // The goal the solo season is scored against — chosen here, read on the
@@ -31,6 +31,11 @@ export function Hub() {
     session.setGoalCard(id);
     setGoalId(id);
   }
+  // Re-apply the chosen goal whenever the session is rebuilt (e.g. town size
+  // changes), so the player's goal survives a reset.
+  useEffect(() => {
+    session.setGoalCard(goalId);
+  }, [session, goalId]);
 
   function onHost() {
     room.createRoom(PLAYER_NAME);
@@ -76,6 +81,32 @@ export function Hub() {
                 One season, about 20 minutes. Run a bakery against Gus, Fern and Rita, and fast-forward whenever you
                 like.
               </p>
+              <div className="hub__goal" role="group" aria-label="Choose your town">
+                <span className="hub__goal-label">Your town</span>
+                <div className="hub__goal-chips">
+                  <button
+                    type="button"
+                    className={`hub__goal-chip${townSize === 4 ? " is-active" : ""}`}
+                    aria-pressed={townSize === 4}
+                    onClick={() => setTownSize(4)}
+                  >
+                    Four shops
+                  </button>
+                  <button
+                    type="button"
+                    className={`hub__goal-chip${townSize === 6 ? " is-active" : ""}`}
+                    aria-pressed={townSize === 6}
+                    onClick={() => setTownSize(6)}
+                  >
+                    Full town (six)
+                  </button>
+                </div>
+                <span className="hub__goal-how">
+                  {townSize === 6
+                    ? "Adds a Tailor (buys cloth from the Weaver) and a Tavern (buys bread from the Bakery)."
+                    : "The classic four: Bakery, Weaver, Smithy and Brewery."}
+                </span>
+              </div>
               <div className="hub__goal" role="group" aria-label="Choose your goal">
                 <span className="hub__goal-label">Your goal</span>
                 <div className="hub__goal-chips">

@@ -1,9 +1,22 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { createSoloSession, type SoloSession, type SoloView } from "@millbrook/economy";
+import { SoloSession, type SoloView } from "@millbrook/economy";
 
 /** How long a game day takes while the town is "playing" (ms). */
 const DAY_MS = 1200;
+
+/** How many workshops the town opens. The classic town is four; the full town
+ *  adds the Tailor (buys cloth from the Weaver) and the Tavern (buys bread from
+ *  the Bakery). Owners are ordered so the supply-chain shops get able owners. */
+export type TownSize = 4 | 6;
+const TOWN_WORKSHOPS: Record<TownSize, string[]> = {
+  4: ["bakery", "weaver", "smithy", "brewery"],
+  6: ["bakery", "smithy", "weaver", "tailor", "tavern", "brewery"],
+};
+
+function makeSession(seed: number, size: TownSize): SoloSession {
+  return new SoloSession({ seed, days: 28, openWorkshops: TOWN_WORKSHOPS[size] as never });
+}
 
 export interface SoloController {
   /** The live view, refreshed on every change. */
@@ -21,6 +34,10 @@ export interface SoloController {
   /** Bid on a failed rival's premises at auction (takes it over), or pass. */
   takeOverAuction: (workshopId: string) => void;
   passAuction: (workshopId: string) => void;
+  /** How many workshops the current town has (4 classic, 6 full town). */
+  townSize: TownSize;
+  /** Start a fresh season with a chosen town size (resets the season). */
+  setTownSize: (size: TownSize) => void;
   /** Start a fresh season (optionally with a new seed). */
   newSeason: (seed?: number) => void;
 }
@@ -35,10 +52,11 @@ const SoloContext = createContext<SoloController | null>(null);
  */
 export function SoloProvider({ children, seed = 42 }: { children: ReactNode; seed?: number }) {
   const ref = useRef<SoloSession | null>(null);
-  if (ref.current === null) ref.current = createSoloSession(seed);
+  if (ref.current === null) ref.current = makeSession(seed, 4);
 
   const [view, setView] = useState<SoloView>(() => ref.current!.view());
   const [running, setRunning] = useState(false);
+  const [townSize, setTownSizeState] = useState<TownSize>(4);
 
   const refresh = useCallback(() => setView(ref.current!.view()), []);
 
@@ -89,7 +107,17 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
 
   const newSeason = useCallback(
     (nextSeed = seed) => {
-      ref.current = createSoloSession(nextSeed);
+      ref.current = makeSession(nextSeed, townSize);
+      setRunning(false);
+      refresh();
+    },
+    [refresh, seed, townSize],
+  );
+
+  const setTownSize = useCallback(
+    (size: TownSize) => {
+      ref.current = makeSession(seed, size);
+      setTownSizeState(size);
       setRunning(false);
       refresh();
     },
@@ -123,6 +151,8 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
     hire,
     takeOverAuction,
     passAuction,
+    townSize,
+    setTownSize,
     newSeason,
   };
 

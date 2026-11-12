@@ -20,6 +20,8 @@ const GOODS: Record<string, { good: string; color: string }> = {
   weaver: { good: "Cloth", color: "#5e8c93" },
   smithy: { good: "Tools", color: "#b23a48" },
   brewery: { good: "Ale", color: "#8a6f3a" },
+  tailor: { good: "Clothes", color: "#7a6f9c" },
+  tavern: { good: "Meals", color: "#b07d3a" },
 };
 
 const STRATEGY: Record<string, { label: string; color: string; blurb: string }> = {
@@ -93,8 +95,8 @@ export function Market() {
         <section aria-label="The workshops" className="market__shops">
           <h1 className="market__h1">The market</h1>
           <p className="market__lede">
-            Four workshops compete for the same thirty customers. You run the bakery; the others are AI owners, each
-            with a readable strategy. Watch prices, wages and crews shift as the season runs.
+            {shops.length} workshops compete for the same {session.population()} customers. You run the bakery; the
+            others are AI owners, each with a readable strategy. Watch prices, wages and crews shift as the season runs.
           </p>
           <div className="market__grid">
             {shops.map(({ slot, v, st }) => {

@@ -48,6 +48,9 @@ const RESIDENT_NAMES = [
 
 const TRAITS: Trait[] = ["thrifty", "loyal", "ambitious"];
 
+/** Distinct names for owners whose strategy already appears in a bigger town. */
+const EXTRA_OWNER_NAMES = ["Bram the Bold", "Cass Quickhand", "Odell Grey", "Petra Vane"];
+
 /** The default owner rotation for a mixed town (player slots replace these). */
 const DEFAULT_STRATEGY_ORDER: AiStrategyId[] = ["fern", "gus", "sam", "rita"];
 
@@ -106,6 +109,11 @@ export function createWorld(config: SeasonConfig): World {
   const workshops = new Map<string, Workshop>();
   const owners = new Map<string, Owner>();
   const pool = splitPool(WORKSHOP_POOL_COINS, openWorkshops.length);
+  // When a town opens more than four shops the four AI strategies repeat; give
+  // the repeats a distinct name so no two owners share one (the first four keep
+  // their canonical names, so the classic four-shop town is unchanged).
+  const usedNames = new Set<string>();
+  let extraNameIdx = 0;
 
   openWorkshops.forEach((type, i) => {
     const wid = `w${i}`;
@@ -142,9 +150,15 @@ export function createWorld(config: SeasonConfig): World {
     const strategy: AiStrategyId = config.forceAllOwners
       ? config.forceAllOwners
       : DEFAULT_STRATEGY_ORDER[i % DEFAULT_STRATEGY_ORDER.length]!;
+    let name = strategyName(strategy);
+    if (usedNames.has(name)) {
+      name = EXTRA_OWNER_NAMES[extraNameIdx % EXTRA_OWNER_NAMES.length]!;
+      extraNameIdx += 1;
+    }
+    usedNames.add(name);
     owners.set(oid, {
       id: oid,
-      name: strategyName(strategy),
+      name,
       kind: "ai",
       strategy,
       workshopId: wid,

@@ -52,7 +52,7 @@ function Buildings() {
 
   return (
     <group>
-      {WORKSHOPS.map((s) => {
+      {WORKSHOPS.filter((s) => state.has(s.type)).map((s) => {
         const st = state.get(s.type) ?? { busy: false, bankrupt: false };
         return (
           <Workshop
