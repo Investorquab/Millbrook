@@ -70,6 +70,13 @@ export function pushFeed(
   world.feed.push(data ? { day: world.day, kind, text, data } : { day: world.day, kind, text });
 }
 
+function workshopTypeOpen(world: World, type: Workshop["type"]): boolean {
+  for (const w of world.workshops.values()) {
+    if (w.type === type && w.open && !w.bankrupt) return true;
+  }
+  return false;
+}
+
 function tailorOpen(world: World): boolean {
   for (const w of world.workshops.values()) {
     if (w.type === "tailor" && w.open && !w.bankrupt) return true;
@@ -478,6 +485,7 @@ function night(world: World): { totalSales: number } {
   world.unmetDemand = {};
   let totalSales = 0;
   const tOpen = tailorOpen(world);
+  const mealOpen = workshopTypeOpen(world, "tavern");
 
   for (const r of aliveResidents(world)) {
     const savings = world.ledger.get(r.id);
@@ -534,6 +542,16 @@ function night(world: World): { totalSales: number } {
       totalSales += a.price;
       discretionary -= a.price;
       r.lastReason = "Bought an ale with coins above the rainy-day fund.";
+    }
+
+    // 5) A meal out at the Tavern — an occasional treat on a good day, if one is open.
+    if (mealOpen && discretionary > 0 && r.lastWage > 0) {
+      const meal = buyGood(world, r, "meal", discretionary);
+      if (meal.result === "bought") {
+        totalSales += meal.price;
+        discretionary -= meal.price;
+        r.lastReason = "Treated themselves to a meal at the tavern.";
+      }
     }
   }
   return { totalSales };
