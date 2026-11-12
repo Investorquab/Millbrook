@@ -1,9 +1,10 @@
 import { test } from "@playwright/test";
+import { signIn } from "./helpers";
 
 /** Capture the room lobby and the live room for the premium-game-ui review. */
 test("capture room screens", async ({ page, browser }, testInfo) => {
   const tag = testInfo.project.name;
-  await page.goto("/hub");
+  await signIn(page, "Ada");
   await page.getByRole("button", { name: "Create room" }).click();
   await page.locator(".room__code-value").waitFor();
   await page.screenshot({ path: `e2e/__screens__/room-lobby-${tag}.png`, fullPage: true });

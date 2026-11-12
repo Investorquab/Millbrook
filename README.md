@@ -150,6 +150,14 @@ reasoning and the source.
 - If the weather feed or the AI model is unavailable, it falls back to town metrics
   and a template, and **says so** — tested at both the simulation and enclave layers.
 
+### Sign-in (`apps/server` magic links)
+Passwordless, no wallet: enter an email and a username and the server emails a
+one-time link (Resend; without a key it logs the link to its console so the flow
+still works). Clicking it mints a session the browser keeps, and that username is
+your identity in rooms, chat and on scoreboards. Solo play stays guest-friendly;
+hosting or joining a room asks you to sign in first. Tokens are single-use,
+expire in 15 minutes, and are stored only as a hash.
+
 ### Rooms (`apps/server` + web client)
 A Socket.IO server with rooms: create, invite code, lobby, host start, and a live
 tick that advances the season. The web client (Host/Join screens) is wired to it:

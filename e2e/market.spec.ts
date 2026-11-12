@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { signIn } from "./helpers";
 
 /**
  * The Market screen surfaces the whole living economy: all four workshops (the
@@ -7,10 +8,8 @@ import { test, expect } from "@playwright/test";
  * in-app click (navigating by URL would reset the season).
  */
 test("the market shows all four shops and the town's money sums to 10,000", async ({ page }) => {
-  await page.goto("/signin");
-  await page.getByLabel("Email").fill("player@example.com");
-  await page.getByLabel("Username").fill("millhand");
-  await page.getByRole("button", { name: "Send login link" }).click();
+  test.setTimeout(45_000);
+  await signIn(page, "millhand");
   await page.getByRole("link", { name: /Start a season/ }).click();
   await page.waitForURL(/\/play$/);
   await page.getByRole("button", { name: "Skip tour" }).click();

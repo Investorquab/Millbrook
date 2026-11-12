@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { color } from "../theme/tokens";
 import { useRoom } from "../game/RoomProvider";
 import { useSolo } from "../game/SoloProvider";
+import { useAuth } from "../game/AuthProvider";
 import "./Hub.css";
 
 /**
@@ -14,12 +15,11 @@ import "./Hub.css";
  * League status, the report and trophies are sample data; they come from the
  * server and the contract as those land.
  */
-const PLAYER_NAME = "millhand";
-
 export function Hub() {
   const navigate = useNavigate();
   const room = useRoom();
   const { session, townSize, setTownSize } = useSolo();
+  const { username, isSignedIn, signOut } = useAuth();
   const [code, setCode] = useState("");
 
   // The goal the solo season is scored against — chosen here, read on the
@@ -38,14 +38,22 @@ export function Hub() {
   }, [session, goalId]);
 
   function onHost() {
-    room.createRoom(PLAYER_NAME);
+    if (!isSignedIn || !username) {
+      navigate("/signin");
+      return;
+    }
+    room.createRoom(username);
     navigate("/room");
   }
 
   function onJoin(e: FormEvent) {
     e.preventDefault();
     if (code.trim().length === 0) return;
-    room.joinRoom(code, PLAYER_NAME);
+    if (!isSignedIn || !username) {
+      navigate("/signin");
+      return;
+    }
+    room.joinRoom(code, username);
     navigate("/room");
   }
 
@@ -59,13 +67,25 @@ export function Hub() {
         <Link to="/" className="hub__wordmark">
           Millbrook
         </Link>
-        <div className="hub__account">
-          <span className="hub__avatar">M</span>
-          <span className="hub__account-text">
-            <span className="hub__account-name">millhand</span>
-            <span className="hub__account-rep">Fair employer, +42</span>
-          </span>
-        </div>
+        {isSignedIn && username ? (
+          <div className="hub__account">
+            <span className="hub__avatar">{username.charAt(0).toUpperCase()}</span>
+            <span className="hub__account-text">
+              <span className="hub__account-name">{username}</span>
+              <button type="button" className="hub__account-rep hub__signout" onClick={signOut}>
+                Sign out
+              </button>
+            </span>
+          </div>
+        ) : (
+          <Link to="/signin" className="hub__account">
+            <span className="hub__avatar">?</span>
+            <span className="hub__account-text">
+              <span className="hub__account-name">Guest</span>
+              <span className="hub__account-rep">Sign in to play rooms</span>
+            </span>
+          </Link>
+        )}
       </header>
 
       <main className="hub__main">

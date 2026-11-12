@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { signIn } from "./helpers";
 
 /**
  * Rooms over the live game server (Socket.IO on :8080, started by the Playwright
@@ -11,7 +12,7 @@ import { test, expect } from "@playwright/test";
  */
 test.describe("Rooms", () => {
   test("host creates a room, sees a live code, and starts the shared season", async ({ page }) => {
-    await page.goto("/hub");
+    await signIn(page, "Ada");
     await page.getByRole("button", { name: "Create room" }).click();
 
     // We land in the room as the host, with a real invite code from the server.
@@ -39,7 +40,7 @@ test.describe("Rooms", () => {
 
   test("a joiner claims a shop and runs it; the host sees them in that slot", async ({ page, browser }) => {
     // Host a room.
-    await page.goto("/hub");
+    await signIn(page, "Ada");
     await page.getByRole("button", { name: "Create room" }).click();
     await expect(page.getByText("You're the host")).toBeVisible({ timeout: 15000 });
     const code = ((await page.locator(".room__code-value").textContent()) ?? "").trim();
@@ -76,7 +77,7 @@ test.describe("Rooms", () => {
   });
 
   test("players chat and see each other's messages, plus join/claim notices", async ({ page, browser }) => {
-    await page.goto("/hub");
+    await signIn(page, "Ada");
     await page.getByRole("button", { name: "Create room" }).click();
     await expect(page.getByText("You're the host")).toBeVisible({ timeout: 15000 });
     const code = ((await page.locator(".room__code-value").textContent()) ?? "").trim();
@@ -113,7 +114,7 @@ test.describe("Rooms", () => {
   });
 
   test("a player posts a trade offer the others see, and can withdraw it", async ({ page, browser }) => {
-    await page.goto("/hub");
+    await signIn(page, "Ada");
     await page.getByRole("button", { name: "Create room" }).click();
     await expect(page.getByText("You're the host")).toBeVisible({ timeout: 15000 });
     const code = ((await page.locator(".room__code-value").textContent()) ?? "").trim();

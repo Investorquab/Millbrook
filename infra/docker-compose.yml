@@ -33,6 +33,10 @@ services:
     env_file:
       - ../.env
     environment:
+      # Production hides the dev magic-link from HTTP responses — links go by
+      # email only. EMAIL_API_KEY, EMAIL_FROM and PUBLIC_BASE_URL come from .env;
+      # set PUBLIC_BASE_URL to https://<your DOMAIN> so links resolve.
+      NODE_ENV: production
       PORT: 8080
       DATABASE_URL: postgres://millbrook:millbrook@db:5432/millbrook
     depends_on:

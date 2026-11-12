@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useRoom } from "../game/RoomProvider";
+import { useAuth } from "../game/AuthProvider";
 import "./Room.css";
 
 /**
@@ -12,8 +13,9 @@ export function Join() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const room = useRoom();
+  const { username } = useAuth();
   const [code, setCode] = useState((params.get("code") ?? "").toUpperCase());
-  const [name, setName] = useState("");
+  const [name, setName] = useState(username ?? "");
 
   function submit(e: FormEvent) {
     e.preventDefault();

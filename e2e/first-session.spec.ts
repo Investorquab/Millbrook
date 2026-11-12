@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { signIn } from "./helpers";
 
 /**
  * M2 acceptance — "a new player signs in, hires a worker, sets a price and sees
@@ -9,14 +10,10 @@ import { test, expect } from "@playwright/test";
 test("a new player signs in, hires, sets a price and sees a sale", async ({ page }) => {
   test.setTimeout(60_000);
 
-  // Sign in with an email and a username.
-  await page.goto("/signin");
-  await page.getByLabel("Email").fill("player@example.com");
-  await page.getByLabel("Username").fill("millhand");
-  await page.getByRole("button", { name: "Send login link" }).click();
+  // Sign in with the real magic-link flow, landing on the hub.
+  await signIn(page, "millhand");
 
-  // Land on the hub and start a solo season.
-  await expect(page).toHaveURL(/\/hub$/);
+  // Start a solo season.
   await page.getByRole("link", { name: /Start a season/ }).click();
   await expect(page).toHaveURL(/\/play$/);
 

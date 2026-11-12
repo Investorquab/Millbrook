@@ -74,6 +74,21 @@
 .hub__account-rep {
   font-size: 14px;
   color: var(--meadow-text);
+  text-align: left;
+}
+a.hub__account {
+  text-decoration: none;
+  color: inherit;
+}
+.hub__signout {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .hub__main {

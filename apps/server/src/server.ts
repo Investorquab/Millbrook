@@ -11,35 +11,131 @@ import { createServer as createHttp, type IncomingMessage, type ServerResponse }
 import { Server } from "socket.io";
 import { RoomManager, type Room } from "./rooms.js";
 import { ROOM_DAY_MS, type ClientToServer, type GameAction, type ServerToClient } from "./protocol.js";
+import { AuthStore, magicLinkEmail, type EmailSender } from "./auth.js";
 
 export interface GameServer {
   http: ReturnType<typeof createHttp>;
   io: Server<ClientToServer, ServerToClient>;
   rooms: RoomManager;
+  auth: AuthStore;
   /** Listen on a port (0 = ephemeral); resolves with the bound port. */
   listen: (port: number) => Promise<number>;
   close: () => Promise<void>;
 }
 
-export function createGameServer(opts: { dayMs?: number } = {}): GameServer {
+export interface GameServerOptions {
+  dayMs?: number;
+  /** Inject an auth store (tests); otherwise one is created from env. */
+  auth?: AuthStore;
+  /** How to deliver a magic link; omitted → log it to the console (dev). */
+  email?: EmailSender;
+  /** Production hides the dev link from HTTP responses; dev returns it so the
+   *  flow is testable without a working email provider. */
+  isProd?: boolean;
+}
+
+export function createGameServer(opts: GameServerOptions = {}): GameServer {
   const dayMs = opts.dayMs ?? ROOM_DAY_MS;
   const rooms = new RoomManager();
+  const auth = opts.auth ?? new AuthStore({ publicBaseUrl: process.env.PUBLIC_BASE_URL });
+  const email = opts.email;
+  const isProd = opts.isProd ?? false;
   const playing = new Set<string>();
 
+  const CORS = {
+    "access-control-allow-origin": "*",
+    "access-control-allow-methods": "GET, POST, OPTIONS",
+    "access-control-allow-headers": "content-type, authorization",
+  };
   const sendJson = (res: ServerResponse, status: number, body: unknown) => {
-    res.writeHead(status, { "content-type": "application/json", "access-control-allow-origin": "*" });
+    res.writeHead(status, { "content-type": "application/json", ...CORS });
     res.end(JSON.stringify(body));
   };
+  const readBody = (req: IncomingMessage): Promise<unknown> =>
+    new Promise((resolve) => {
+      let data = "";
+      req.on("data", (c) => {
+        data += c;
+        if (data.length > 10_000) req.destroy(); // cap: these payloads are tiny
+      });
+      req.on("end", () => {
+        try {
+          resolve(data ? JSON.parse(data) : {});
+        } catch {
+          resolve(null);
+        }
+      });
+      req.on("error", () => resolve(null));
+    });
+
+  /** Deliver a magic link by email, falling back to the server console. */
+  async function deliverLink(link: string, to: string, username: string): Promise<boolean> {
+    const body = magicLinkEmail(link, username);
+    if (email) {
+      const r = await email({ to, ...body });
+      if (r.ok) return true;
+      console.warn(`[auth] email send failed (${r.info ?? "unknown"}); link for ${to}: ${link}`);
+      return false;
+    }
+    console.log(`[auth] magic link for ${to}: ${link}`);
+    return false;
+  }
 
   const http = createHttp((req: IncomingMessage, res: ServerResponse) => {
-    if (req.method === "GET" && req.url === "/health") {
+    const url = req.url ?? "";
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, CORS);
+      res.end();
+      return;
+    }
+    if (req.method === "GET" && url === "/health") {
       sendJson(res, 200, { ok: true, rooms: rooms.size, uptime: process.uptime() });
       return;
     }
-    if (req.method === "GET" && req.url === "/rooms") {
+    if (req.method === "GET" && url === "/rooms") {
       sendJson(res, 200, { rooms: rooms.list() });
       return;
     }
+
+    // ── Magic-link sign-in ───────────────────────────────────────────────────
+    if (req.method === "POST" && url === "/api/auth/request") {
+      void (async () => {
+        const body = (await readBody(req)) as { email?: string; username?: string } | null;
+        if (!body) return sendJson(res, 400, { error: "Bad request." });
+        let link;
+        try {
+          link = auth.requestLink(body.email ?? "", body.username ?? "");
+        } catch (e) {
+          return sendJson(res, 400, { error: (e as Error).message });
+        }
+        const delivered = link.link ? await deliverLink(link.link, link.email, link.username) : false;
+        // In production never leak the link in the response; in dev return it so
+        // the flow works without a configured email provider. Falls back to a
+        // same-origin path when PUBLIC_BASE_URL is unset.
+        const devLink = !isProd
+          ? link.link || `/auth/verify?token=${encodeURIComponent(link.token)}`
+          : undefined;
+        sendJson(res, 200, { ok: true, delivered, ...(devLink ? { devLink } : {}) });
+      })();
+      return;
+    }
+    if (req.method === "POST" && url === "/api/auth/verify") {
+      void (async () => {
+        const body = (await readBody(req)) as { token?: string } | null;
+        const session = body?.token ? auth.verify(body.token) : null;
+        if (!session) return sendJson(res, 400, { error: "This link is invalid or has expired." });
+        sendJson(res, 200, { ok: true, ...session });
+      })();
+      return;
+    }
+    if (req.method === "GET" && url === "/api/auth/me") {
+      const token = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+      const session = auth.session(token);
+      if (!session) return sendJson(res, 401, { error: "Not signed in." });
+      sendJson(res, 200, { username: session.username, email: session.email });
+      return;
+    }
+
     sendJson(res, 404, { error: "not found" });
   });
 
@@ -58,17 +154,30 @@ export function createGameServer(opts: { dayMs?: number } = {}): GameServer {
     typeof roomId === "string" ? rooms.get(roomId) : undefined;
 
   io.on("connection", (socket) => {
+    // If the client presented a valid session, trust its username over whatever
+    // the room:create/join payload claims (so names can't be spoofed).
+    const session = auth.session(
+      typeof socket.handshake.auth?.sessionId === "string" ? socket.handshake.auth.sessionId : undefined,
+    );
+    if (session) {
+      socket.data.name = session.username;
+      socket.data.email = session.email;
+    }
+    const nameFrom = (claimed: string) => (session ? session.username : claimed);
+
     socket.on("room:create", ({ name, seed }) => {
-      socket.data.name = name;
-      const room = rooms.create(socket.id, name, seed);
+      const resolved = nameFrom(name);
+      socket.data.name = resolved;
+      const room = rooms.create(socket.id, resolved, seed);
       socket.data.roomId = room.id;
       void socket.join(room.id);
       broadcast(room);
     });
 
     socket.on("room:join", ({ code, name }) => {
-      socket.data.name = name;
-      const room = rooms.join(code, socket.id, name);
+      const resolved = nameFrom(name);
+      socket.data.name = resolved;
+      const room = rooms.join(code, socket.id, resolved);
       if (!room) {
         socket.emit("error", { message: `No open room with code ${code}.` });
         return;
@@ -79,7 +188,7 @@ export function createGameServer(opts: { dayMs?: number } = {}): GameServer {
       socket.emit("chat:history", room.chatHistory());
       socket.emit("trade:offers", room.openOffers());
       broadcast(room);
-      emitChat(room, room.note(`${name} joined the room.`));
+      emitChat(room, room.note(`${resolved} joined the room.`));
     });
 
     socket.on("room:claim", ({ type }) => {
@@ -203,6 +312,7 @@ export function createGameServer(opts: { dayMs?: number } = {}): GameServer {
     http,
     io,
     rooms,
+    auth,
     listen: (port) =>
       new Promise<number>((resolve) => {
         http.listen(port, () => {

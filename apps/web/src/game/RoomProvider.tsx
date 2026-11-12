@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useRef, useState } from "react"
 import type { ReactNode } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { SoloView, WorkshopSlot } from "@millbrook/economy";
+import { SERVER_URL } from "./serverUrl";
+import { useAuth } from "./AuthProvider";
 
 export type WorkshopType = WorkshopSlot["type"];
 
@@ -35,15 +37,6 @@ export interface TradeOffer {
  * socket), mirrors the room's lobby state and live view into React, and sends
  * the host's actions back. See apps/server/src/protocol.ts for the contract.
  */
-
-// Where the Socket.IO client connects. An explicit VITE_SERVER_URL always wins.
-// Otherwise: in dev the server runs on :8080 (the web is on :5173); in a
-// production build we connect SAME-ORIGIN ("") so Caddy proxies /socket.io to
-// the server on the deploy domain — no build-time URL needed for a one-domain
-// deploy.
-const SERVER_URL =
-  (import.meta.env.VITE_SERVER_URL as string | undefined) ??
-  (import.meta.env.DEV ? "http://localhost:8080" : "");
 
 export interface RoomPlayer {
   id: string;
@@ -101,6 +94,11 @@ export interface RoomController {
 const RoomContext = createContext<RoomController | null>(null);
 
 export function RoomProvider({ children }: { children: ReactNode }) {
+  const { session } = useAuth();
+  // Track the live session in a ref so the memoised socket factory always reads
+  // the current one without being recreated.
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
   const socketRef = useRef<Socket | null>(null);
   const [status, setStatus] = useState<RoomController["status"]>("idle");
   const [room, setRoom] = useState<RoomState | null>(null);
@@ -114,7 +112,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     if (socketRef.current) return socketRef.current;
     setStatus("connecting");
     // Empty SERVER_URL → connect to the current origin (production behind Caddy).
-    const opts = { transports: ["websocket"], forceNew: true };
+    // The session id (if signed in) lets the server trust our username.
+    const opts = {
+      transports: ["websocket"],
+      forceNew: true,
+      auth: { sessionId: sessionRef.current?.sessionId },
+    };
     const socket = SERVER_URL ? io(SERVER_URL, opts) : io(opts);
     socket.on("connect", () => {
       setMyId(socket.id ?? null);

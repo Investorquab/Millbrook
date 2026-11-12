@@ -59,8 +59,30 @@ curl https://yourdomain.com/health     # -> ok
 
 That's it. The site (3D town, solo play, Proof reading the live contract) and
 multiplayer rooms both run on that one domain — the web client talks to the
-server **same-origin**, and Caddy proxies `/socket.io`, `/health` and `/rooms`
-to it, so you do **not** need to set any server URL at build time.
+server **same-origin**, and Caddy proxies `/socket.io`, `/health`, `/rooms` and
+`/api/*` (the sign-in routes) to it, so you do **not** need to set any server URL
+at build time.
+
+## Sign-in email (magic links)
+
+Rooms require signing in; sign-in is a passwordless magic link. To send it by
+email, set two values in `.env` on the VPS:
+
+```bash
+EMAIL_API_KEY=re_...                 # a Resend API key (resend.com, free tier)
+EMAIL_FROM=onboarding@resend.dev     # or an address on a domain you verified in Resend
+PUBLIC_BASE_URL=https://yourdomain.com   # so the link in the email points back here
+```
+
+- `onboarding@resend.dev` is Resend's sandbox sender; it only delivers to the
+  email on your own Resend account. To email anyone, verify a domain in Resend
+  and use an address on it. A plain `gmail.com` address is **not** a valid
+  sender and Resend will reject it.
+- Verify the key first: `node scripts/spikes/email.mjs` (prints OK or the exact
+  fix; never prints the key).
+- **No key?** Sign-in still works: the server prints each magic link to its log
+  (`docker compose logs -f server`) instead of emailing it — fine for a demo,
+  not for real users.
 
 ## Updating a running deploy
 

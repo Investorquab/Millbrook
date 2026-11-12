@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Title } from "./screens/Title";
 import { SignIn } from "./screens/SignIn";
+import { AuthVerify } from "./screens/AuthVerify";
 import { Hub } from "./screens/Hub";
 import { Town } from "./screens/Town";
 import { Resident } from "./screens/Resident";
@@ -13,10 +14,12 @@ import { Room } from "./screens/Room";
 import { Join } from "./screens/Join";
 import { SoloProvider } from "./game/SoloProvider";
 import { RoomProvider } from "./game/RoomProvider";
+import { AuthProvider } from "./game/AuthProvider";
 
 const router = createBrowserRouter([
   { path: "/", element: <Title /> },
   { path: "/signin", element: <SignIn /> },
+  { path: "/auth/verify", element: <AuthVerify /> },
   { path: "/hub", element: <Hub /> },
   { path: "/play", element: <Town /> },
   { path: "/room", element: <Room /> },
@@ -32,10 +35,12 @@ const router = createBrowserRouter([
 
 export function App() {
   return (
-    <SoloProvider>
-      <RoomProvider>
-        <RouterProvider router={router} />
-      </RoomProvider>
-    </SoloProvider>
+    <AuthProvider>
+      <SoloProvider>
+        <RoomProvider>
+          <RouterProvider router={router} />
+        </RoomProvider>
+      </SoloProvider>
+    </AuthProvider>
   );
 }
