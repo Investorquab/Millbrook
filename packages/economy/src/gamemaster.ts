@@ -42,6 +42,7 @@ const SOLO_EVENT_IDS = new Set([
   "cotton_blight",
   "iron_shortage",
   "migration_wave",
+  "epidemic",
 ]);
 
 /** Metrics the Game Master reads, and surfaces on the "Why did this happen?" card. */
@@ -202,6 +203,15 @@ function buildChosen(world: World, def: GameMasterEvent, m: GmMetrics, weather: 
         active: base(days, { outputMultiplier: 0.8 }),
         reason: `${weatherNote} In the heat, every worker produces 20% less for ${days} days.`,
         data: data({ outputMultiplier: 0.8, days }),
+      };
+    }
+    case "epidemic": {
+      const days = capDays(world, 3, def.caps.maxDays);
+      return {
+        def, source: weather.source,
+        active: base(days, { outputMultiplier: 0.6 }),
+        reason: `A sickness spread through Millbrook; with workers off sick, every shop produces about 40% less for ${days} days.`,
+        data: data({ outputMultiplier: 0.6, days }),
       };
     }
     case "cotton_blight": {

@@ -76,6 +76,7 @@ export const GAME_MASTER_EVENTS: readonly GameMasterEvent[] = [
   { id: "migration_wave", title: "Migration wave", effect: "Five new residents arrive looking for work.", trigger: "doing_well", minPhaseDay: 0, caps: { maxDays: 1 } },
   { id: "bank_panic", title: "Bank panic", effect: "Loans are called in early.", trigger: "random", minPhaseDay: 20, caps: { maxDays: 1 } },
   { id: "union_forms", title: "Union forms", effect: "Workers in one trade bargain together.", trigger: "low_wages", minPhaseDay: 0, caps: { maxDays: 28 } },
+  { id: "epidemic", title: "A sickness spreads", effect: "Sick workers miss shifts; output falls for 3 days.", trigger: "random", minPhaseDay: 10, caps: { maxDays: 3 } },
 ] as const;
 
 /** Hard limits enforced regardless of the AI's choice. */

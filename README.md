@@ -115,7 +115,8 @@ on-chain with the audited total holding at exactly 10,000.
 ### The Game Master (`packages/economy`, `outlayer/game-master`)
 An AI that reads town metrics and a real **weather feed** (Open-Meteo, keyless) and
 fires one event a game week from a fixed catalog — drought, heatwave, festival,
-railway, tax inspector and more — always within hard caps the code enforces. The one
+railway, tax inspector, an epidemic that keeps sick workers off the job, and more —
+always within hard caps the code enforces. The one
 coin-moving event (the tax inspector) pays into the Town Co-op, so coins never leave
 the 10,000. Each decision carries a reasoning paragraph and a **receipt anchored on
 NEAR** (`record_receipt`). The Town's "Why did this happen?" card shows the data, the
@@ -209,7 +210,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- Tailor and Tavern; sickness and epidemics; hiring a guard to deter theft
+- Tailor and Tavern; the Apothecary and remedy sales; hiring a guard to deter theft
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---
