@@ -51,6 +51,9 @@ const TRAITS: Trait[] = ["thrifty", "loyal", "ambitious"];
 /** Distinct names for owners whose strategy already appears in a bigger town. */
 const EXTRA_OWNER_NAMES = ["Bram the Bold", "Cass Quickhand", "Odell Grey", "Petra Vane"];
 
+/** Spare houses the town starts with beyond its residents (rent & housing). */
+const HOUSE_BUFFER = 4;
+
 /** The default owner rotation for a mixed town (player slots replace these). */
 const DEFAULT_STRATEGY_ORDER: AiStrategyId[] = ["fern", "gus", "sam", "rita"];
 
@@ -210,6 +213,7 @@ export function createWorld(config: SeasonConfig): World {
       elections: config.elections ?? false,
       theft: config.theft ?? false,
       fire: config.fire ?? false,
+      housing: config.housing ?? false,
     },
     gm: {
       enabled: config.gameMaster ?? false,
@@ -225,6 +229,8 @@ export function createWorld(config: SeasonConfig): World {
     hallIncomeYesterday: 0,
     nextResidentNumber: STARTING_RESIDENTS,
     ownerRetired: false,
+    // Start with room to grow, so nobody is homeless until the town booms.
+    houses: STARTING_RESIDENTS + HOUSE_BUFFER,
   };
 
   assignInitialJobs(world, startUnemployment);

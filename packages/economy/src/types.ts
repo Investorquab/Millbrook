@@ -207,6 +207,14 @@ export interface SeasonConfig {
    * 10,000-coin total is never affected. Off by default; the solo game turns on.
    */
   fire?: boolean;
+  /**
+   * Rent and housing: residents pay a small daily rent to the Town Hall out of
+   * their wage, and a town that outgrows its houses leaves its poorest without a
+   * home — they drift away unless the Town Hall builds more (paying residents to
+   * build them). Only coins between residents and the Town Hall move, so the
+   * 10,000-coin total holds. Off by default; the solo game turns it on.
+   */
+  housing?: boolean;
 }
 
 /**
@@ -302,4 +310,6 @@ export interface World {
   nextResidentNumber: number;
   /** An AI owner has already retired this season (the once-a-season auction beat). */
   ownerRetired: boolean;
+  /** How many houses the town has — its housing capacity (rent & housing). */
+  houses: number;
 }

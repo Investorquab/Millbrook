@@ -77,6 +77,11 @@ tooltips explain every number.
   who starts looking for work two game weeks later. Births are conservative and
   capped so a season can't run away, and the parent's small endowment only moves
   coins, so the total stays 10,000.
+- Residents **rent** their homes: a small daily rent comes out of their wage to
+  the Town Hall (the public landlord). As the town grows past its **houses**, its
+  poorest are left without a home and start to drift away — so the Town Hall
+  **builds houses** under pressure, paying residents to raise them. Only coins
+  between residents and the Town Hall move, so the total holds at 10,000.
 - The town also **governs itself**: at each phase boundary the residents hold an
   **election**, each voting by their own welfare — the comfortable for a thrifty
   Mayor (lower taxes), the struggling for a caring one (more benefits and a
@@ -222,7 +227,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- The Apothecary and remedy sales; rent and housing; holidays and festivals
+- The Apothecary and remedy sales; holidays and festivals
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---

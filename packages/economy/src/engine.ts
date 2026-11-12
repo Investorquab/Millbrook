@@ -58,6 +58,7 @@ import { runAuctions } from "./auction.js";
 import { runElections, enforceMinimumWage } from "./elections.js";
 import { runTheft } from "./theft.js";
 import { runFire } from "./fire.js";
+import { runHousing } from "./housing.js";
 import type { DayMetrics, Resident, Workshop, World } from "./types.js";
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -566,6 +567,10 @@ function endOfDay(world: World, totalSales: number): void {
     if (r.employerId === null) r.daysUnemployed += 1;
     else r.daysUnemployed = 0;
   }
+
+  // Rent and housing — rent to the Town Hall, the homeless weigh toward leaving,
+  // and the Town Hall builds houses under pressure. Runs before migration-out.
+  runHousing(world);
 
   // Strikes wind down.
   for (const w of world.workshops.values()) {

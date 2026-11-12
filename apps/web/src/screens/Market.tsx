@@ -174,7 +174,9 @@ export function Market() {
             <div className="market__public-card">
               <span className="market__public-name">Residents hold</span>
               <b>{h.residents.toLocaleString()}</b>
-              <small>wages &amp; savings, {session.population()} people</small>
+              <small>
+                wages &amp; savings · {session.population()} people, {session.houses()} houses
+              </small>
             </div>
             <div className="market__public-card market__public-card--total">
               <span className="market__public-name">Town total</span>

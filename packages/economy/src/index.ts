@@ -33,6 +33,7 @@ export {
 } from "./elections.js";
 export { runTheft, THEFT_UNEMPLOYMENT, THEFT_RATE } from "./theft.js";
 export { runFire, INSURANCE_PREMIUM, FIRE_CHANCE } from "./fire.js";
+export { runHousing, RENT_PER_DAY, HOUSE_BUILD_COST } from "./housing.js";
 export {
   runGameMaster,
   readGmMetrics,

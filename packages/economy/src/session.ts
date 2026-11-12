@@ -404,6 +404,8 @@ export class SoloSession {
       theft: true,
       // …and a workshop can catch fire (insure against it, or take the risk).
       fire: true,
+      // …and residents rent homes; the town builds houses as it grows.
+      housing: true,
       ...config,
     });
     this.totalDays = this.world.config.days;
@@ -922,6 +924,11 @@ export class SoloSession {
   /** How many residents are alive right now (grows and shrinks with the season). */
   population(): number {
     return aliveResidents(this.world).length;
+  }
+
+  /** The town's housing capacity (grows as the Town Hall builds houses). */
+  houses(): number {
+    return this.world.houses;
   }
 
   holdings(): Holdings {

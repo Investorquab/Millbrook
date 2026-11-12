@@ -1,0 +1,75 @@
+/**
+ * Rent and housing (Phase-2). Residents pay a small daily rent to the Town Hall
+ * out of the wage they earned, a town that outgrows its houses leaves its
+ * poorest without a home (and the homeless drift away), and the Town Hall builds
+ * more houses when there is pressure — paying residents to build them.
+ *
+ * Opt-in via `config.housing` (off headless/determinism; the solo game turns it
+ * on). Only coins between residents and the Town Hall move, so the 10,000-coin
+ * total is never affected. Capacity (`world.houses`) grows with construction.
+ */
+
+import { TOWN_HALL_ID } from "@millbrook/shared";
+import type { Resident, World } from "./types.js";
+import { aliveResidents } from "./rules.js";
+import { pushFeed } from "./engine.js";
+
+/** Rent a housed resident pays each day they earned a wage. */
+export const RENT_PER_DAY = 1;
+/** What the Town Hall pays in construction wages to raise one new house. */
+export const HOUSE_BUILD_COST = 12;
+
+/**
+ * Collect rent, note who is homeless, and build a house if the town is short and
+ * the Town Hall can pay for it. Called from {@link endOfDay} after wages, before
+ * migration-out, so the homeless are more likely to leave this very day.
+ */
+export function runHousing(world: World): void {
+  if (!world.config.housing) return;
+
+  const residents = aliveResidents(world);
+
+  // 1) Rent, out of today's wage, to the Town Hall (the town's public landlord).
+  for (const r of residents) {
+    if (r.lastWage > 0) world.ledger.payUpTo(r.id, TOWN_HALL_ID, RENT_PER_DAY);
+  }
+
+  // 2) Homelessness: a town over capacity leaves its poorest without a home.
+  const homeless = Math.max(0, residents.length - world.houses);
+  if (homeless > 0) {
+    // Mark the poorest as homeless, so migration-out weighs on them today.
+    const poorestFirst = [...residents].sort(
+      (a, b) => world.ledger.get(a.id) - world.ledger.get(b.id),
+    );
+    for (let i = 0; i < homeless && i < poorestFirst.length; i++) {
+      const r = poorestFirst[i]!;
+      if (r.employerId === null) r.daysUnemployed += 1; // nudge toward leaving
+      r.lastReason = "No home in Millbrook — thinking of moving on.";
+    }
+
+    // 3) The Town Hall builds a house if it can afford the construction wages,
+    //    paid to idle residents (so building also puts people to work).
+    const builders = poorestFirst.filter((r) => r.employerId === null);
+    if (builders.length > 0 && world.ledger.get(TOWN_HALL_ID) >= HOUSE_BUILD_COST) {
+      payBuilders(world, builders, HOUSE_BUILD_COST);
+      world.houses += 1;
+      pushFeed(world, "public_works", `The Town Hall built a new house; the town now has ${world.houses}.`, {
+        houses: world.houses,
+      });
+    }
+  }
+}
+
+/** Split the construction wage across the available builders. */
+function payBuilders(world: World, builders: Resident[], budget: number): void {
+  const n = Math.min(builders.length, 3);
+  const each = Math.floor(budget / n);
+  let paid = 0;
+  for (let i = 0; i < n; i++) {
+    const got = world.ledger.payUpTo(TOWN_HALL_ID, builders[i]!.id, each);
+    builders[i]!.lastWage += got;
+    paid += got;
+  }
+  // Any rounding remainder stays with the Town Hall (nothing leaves town).
+  void paid;
+}
