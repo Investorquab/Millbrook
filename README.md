@@ -124,10 +124,19 @@ logic; a thin `#[near]` shell persists it on-chain.
 - Seeded to exactly 10,000 coins; **re-audited on-chain after every settlement**.
 - **Settlement is operator-only** and conserves by construction; an overdraw is
   refused.
-- **No mint, no burn, no owner/upgrade/migrate/pause** — the operator's only power is
-  conservation-preserving settlement.
-- Every move emits a NEP-297 `EVENT_JSON` so "Follow a coin" needs no indexer.
-- Verified live: seeded + audited at 10,000, and real settlements on the
+- **No mint, no burn, no owner/upgrade/migrate/pause** on the coins — the operator's
+  only power is conservation-preserving settlement.
+- **Goods are NEP-245 multi tokens.** One contract holds every item type (`bread`,
+  `cloth`, `tool`, …); each good is a `token_id`, balances are per account. It exposes
+  the standard surface — `mt_transfer` / `mt_batch_transfer` (1 yocto, caller-signed),
+  `mt_balance_of` / `mt_batch_balance_of`, `mt_supply` / `mt_batch_supply`, `mt_token`,
+  `mt_tokens`, `mt_tokens_for_owner`, `mt_metadata` — and emits NEP-245 `mt_mint` /
+  `mt_burn` / `mt_transfer` events. The game's own loop still moves goods via the
+  operator-batched `transfer_items`, so players never sign or pay gas. Goods are not
+  coins and never touch the 10,000 total.
+- Every coin move emits a NEP-297 `EVENT_JSON` so "Follow a coin" needs no indexer.
+- Verified live: seeded + audited at 10,000, real settlements, and the **NEP-245
+  interface exercised on-chain** (mint → standard views → a 1-yocto `mt_transfer`) on the
   [explorer](https://testnet.nearblocks.io/address/millbrook.testnet).
 
 ### Settlement (`apps/server`)

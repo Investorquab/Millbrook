@@ -150,6 +150,52 @@ pub fn transfer_item(
     Ok(())
 }
 
+/// The total quantity of one good held across every account — the NEP-245
+/// "supply" of that token id. `None` if the good has never appeared in the
+/// ledger (an unknown token), `Some(sum)` otherwise (which may be 0 once every
+/// holder has consumed theirs). Pure: a scan of the small item map.
+pub fn item_supply_opt(items: &Balances, good: &str) -> Option<u64> {
+    let suffix = format!("|{good}");
+    let mut found = false;
+    let mut sum: u64 = 0;
+    for (key, qty) in items.iter() {
+        if key.ends_with(&suffix) {
+            found = true;
+            sum = sum.saturating_add(*qty);
+        }
+    }
+    if found {
+        Some(sum)
+    } else {
+        None
+    }
+}
+
+/// Every distinct good (NEP-245 token id) that has ever appeared, sorted. Used
+/// to enumerate the token types the one contract holds.
+pub fn distinct_goods(items: &Balances) -> Vec<String> {
+    let mut goods: Vec<String> = items
+        .keys()
+        .filter_map(|k| k.split_once('|').map(|(_, good)| good.to_string()))
+        .collect();
+    goods.sort();
+    goods.dedup();
+    goods
+}
+
+/// The goods one account holds, as `(good, quantity)` pairs with a positive
+/// balance, sorted by good. Backs NEP-245 `mt_tokens_for_owner`.
+pub fn goods_of(items: &Balances, account: &str) -> Vec<(String, u64)> {
+    let prefix = format!("{account}|");
+    let mut held: Vec<(String, u64)> = items
+        .iter()
+        .filter(|(k, v)| **v > 0 && k.starts_with(&prefix))
+        .map(|(k, v)| (k[prefix.len()..].to_string(), *v))
+        .collect();
+    held.sort();
+    held
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // Unit tests — pure, no NEAR VM, no C/NASM toolchain
 // ════════════════════════════════════════════════════════════════════════════
@@ -277,5 +323,45 @@ mod tests {
         produce(&mut items, "w0", "bread", 2).unwrap();
         assert!(consume(&mut items, "w0", "bread", 3).is_err());
         assert!(transfer_item(&mut items, "w0", "r0", "bread", 5).is_err());
+    }
+
+    // ── NEP-245 helpers (supply, enumeration) ─────────────────────────────────
+
+    #[test]
+    fn item_supply_sums_across_holders_and_is_none_for_unknown() {
+        let mut items = Balances::new();
+        produce(&mut items, "w0", "bread", 10).unwrap();
+        produce(&mut items, "w1", "bread", 5).unwrap();
+        transfer_item(&mut items, "w0", "r0", "bread", 3).unwrap();
+        // Supply is conserved by a transfer: 10 + 5 = 15 across w0(7), w1(5), r0(3).
+        assert_eq!(item_supply_opt(&items, "bread"), Some(15));
+        // A good the ledger has never seen has no supply (null), not 0.
+        assert_eq!(item_supply_opt(&items, "cloth"), None);
+        // A consume lowers supply.
+        consume(&mut items, "r0", "bread", 3).unwrap();
+        assert_eq!(item_supply_opt(&items, "bread"), Some(12));
+    }
+
+    #[test]
+    fn supply_suffix_does_not_confuse_similar_good_names() {
+        let mut items = Balances::new();
+        produce(&mut items, "w0", "bread", 4).unwrap();
+        produce(&mut items, "w0", "gingerbread", 9).unwrap();
+        // "gingerbread" must not count toward "bread".
+        assert_eq!(item_supply_opt(&items, "bread"), Some(4));
+        assert_eq!(item_supply_opt(&items, "gingerbread"), Some(9));
+    }
+
+    #[test]
+    fn enumerates_distinct_goods_and_an_owner_holdings() {
+        let mut items = Balances::new();
+        produce(&mut items, "w0", "bread", 10).unwrap();
+        produce(&mut items, "w1", "cloth", 6).unwrap();
+        transfer_item(&mut items, "w0", "r0", "bread", 2).unwrap();
+        assert_eq!(distinct_goods(&items), vec!["bread".to_string(), "cloth".to_string()]);
+        assert_eq!(goods_of(&items, "r0"), vec![("bread".to_string(), 2)]);
+        // A consumed-to-zero holding drops out of an owner's list.
+        consume(&mut items, "r0", "bread", 2).unwrap();
+        assert!(goods_of(&items, "r0").is_empty());
     }
 }
