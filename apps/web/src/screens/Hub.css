@@ -148,6 +148,50 @@
   color: var(--text-soft);
   max-width: 440px;
 }
+.hub__goal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.hub__goal-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.hub__goal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.hub__goal-chip {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: rgba(237, 230, 214, 0.06);
+  color: var(--text-soft);
+  border: 1px solid rgba(237, 230, 214, 0.18);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.hub__goal-chip:hover {
+  border-color: rgba(217, 164, 65, 0.5);
+  color: var(--linen);
+}
+.hub__goal-chip.is-active {
+  background: rgba(217, 164, 65, 0.18);
+  border-color: var(--wheat);
+  color: var(--wheat-light);
+}
+.hub__goal-how {
+  font-size: 14px;
+  color: var(--text-secondary);
+  min-height: 1.2em;
+}
 
 .hub__side {
   display: flex;

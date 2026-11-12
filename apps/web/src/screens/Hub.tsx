@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { color } from "../theme/tokens";
 import { useRoom } from "../game/RoomProvider";
+import { useSolo } from "../game/SoloProvider";
 import "./Hub.css";
 
 /**
@@ -18,7 +19,18 @@ const PLAYER_NAME = "millhand";
 export function Hub() {
   const navigate = useNavigate();
   const room = useRoom();
+  const { session } = useSolo();
   const [code, setCode] = useState("");
+
+  // The goal the solo season is scored against — chosen here, read on the
+  // Scoreboard. Persists on the shared session across the in-app navigation.
+  const goals = session.goalCards();
+  const [goalId, setGoalId] = useState(() => session.goalCard().id);
+  const activeGoal = goals.find((g) => g.id === goalId) ?? goals[0]!;
+  function chooseGoal(id: string) {
+    session.setGoalCard(id);
+    setGoalId(id);
+  }
 
   function onHost() {
     room.createRoom(PLAYER_NAME);
@@ -64,6 +76,23 @@ export function Hub() {
                 One season, about 20 minutes. Run a bakery against Gus, Fern and Rita, and fast-forward whenever you
                 like.
               </p>
+              <div className="hub__goal" role="group" aria-label="Choose your goal">
+                <span className="hub__goal-label">Your goal</span>
+                <div className="hub__goal-chips">
+                  {goals.map((g) => (
+                    <button
+                      type="button"
+                      key={g.id}
+                      className={`hub__goal-chip${g.id === goalId ? " is-active" : ""}`}
+                      aria-pressed={g.id === goalId}
+                      onClick={() => chooseGoal(g.id)}
+                    >
+                      {g.name}
+                    </button>
+                  ))}
+                </div>
+                <span className="hub__goal-how">{activeGoal.howToWin}</span>
+              </div>
             </div>
             <Link to="/play" className="hub__cta">
               Start a season

@@ -49,6 +49,10 @@ tooltips explain every number.
   rival wages (up to a cap) to keep your workers, and hire when bread demand goes
   unmet — and tells you what it did in plain words. (The on-chain Foreman key and
   AI-written wording are roadmap.)
+- You **choose your goal** on the Hub before a season — Tycoon (most profit),
+  Biggest Employer, Fair Boss (highest wage while profitable), Speedrun (first to
+  5,000) or Steadfast (highest standing with the town) — and the season-end
+  Scoreboard ranks everyone by it.
 - The season-end Scoreboard ranks owners by the goal card and shows each owner's
   **reputation** (−100 Ruthless … +100 Fair), which moves with wages against the
   town average, layoffs and strikes — and feeds back into the game: fair owners
@@ -205,8 +209,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- Tailor and Tavern; goal cards for the new systems; sickness and epidemics;
-  hiring a guard to deter theft
+- Tailor and Tavern; sickness and epidemics; hiring a guard to deter theft
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---

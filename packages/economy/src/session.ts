@@ -1009,6 +1009,13 @@ export class SoloSession {
     return { id: card.id, name: card.name, howToWin: card.howToWin };
   }
 
+  /** The goal cards a solo player can choose between (the owner-ranked ones). */
+  goalCards(): GoalCardInfo[] {
+    return Object.values(GOAL_CARDS)
+      .filter((c) => c.scoreOwner)
+      .map((c) => ({ id: c.id, name: c.name, howToWin: c.howToWin }));
+  }
+
   /** Choose which goal card the season is scored against (defaults to Tycoon). */
   setGoalCard(id: string): void {
     if (GOAL_CARDS[id]) this.goalCardId = id;
@@ -1145,6 +1152,7 @@ export class SoloSession {
         biggest_employer: "Town Benefactor",
         fair_boss: "Fair Boss",
         speedrun: "Fast Mover",
+        steadfast: "Town's Favourite",
       };
       return { name: byCard[this.goalCardId] ?? "Market Leader", note };
     }

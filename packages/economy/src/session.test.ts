@@ -464,6 +464,29 @@ describe("SoloSession", () => {
     });
   });
 
+  describe("goal cards", () => {
+    it("lists selectable owner-ranked cards and ranks by the chosen one", () => {
+      const s = createSoloSession(42);
+      const cards = s.goalCards();
+      expect(cards.length).toBeGreaterThanOrEqual(4);
+      expect(cards.map((c) => c.id)).toContain("tycoon");
+      expect(cards.map((c) => c.id)).toContain("steadfast");
+      // Co-op (town-scored) cards aren't offered as solo goals.
+      expect(cards.map((c) => c.id)).not.toContain("town_hero");
+
+      for (let i = 0; i < 20; i++) s.step();
+      s.setGoalCard("biggest_employer");
+      const byWorkers = s.standings();
+      // The leader under "biggest employer" has the most workers.
+      expect(byWorkers[0]!.workers).toBe(Math.max(...byWorkers.map((r) => r.workers)));
+      expect(s.goalCard().id).toBe("biggest_employer");
+
+      s.setGoalCard("steadfast");
+      const byRep = s.standings();
+      expect(byRep[0]!.reputation).toBe(Math.max(...byRep.map((r) => r.reputation)));
+    });
+  });
+
   describe("trophy badges", () => {
     it("awards each dimension's badge to its single leader", () => {
       const s = createSoloSession(42);

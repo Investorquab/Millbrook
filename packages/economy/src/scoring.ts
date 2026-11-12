@@ -84,6 +84,16 @@ export const GOAL_CARDS: Record<string, GoalCard> = {
       return ownerScore(world, ownerId, coins, `${coins} coins${coins >= 5000 ? " — reached 5,000!" : ""}.`);
     },
   },
+  steadfast: {
+    id: "steadfast",
+    name: "Steadfast",
+    kind: "competitive",
+    howToWin: "Highest standing with the town on day 28.",
+    scoreOwner: (world, ownerId) => {
+      const rep = Math.round(world.owners.get(ownerId)!.reputation);
+      return ownerScore(world, ownerId, rep, `Reputation ${rep >= 0 ? "+" : ""}${rep}.`);
+    },
+  },
   town_hero: {
     id: "town_hero",
     name: "Town Hero",
