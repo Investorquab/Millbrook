@@ -631,3 +631,29 @@
   background: rgba(217, 164, 65, 0.2);
   color: var(--wheat);
 }
+
+/* ── Live 3D town band (room) ─────────────────────────────────────────────── */
+.room__scene {
+  position: relative;
+  height: 300px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #2a3340, #1b2026);
+  border: 1px solid rgba(237, 230, 214, 0.1);
+}
+.room__scene canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+.room__scene-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.6;
+}
+@media (max-width: 560px) {
+  .room__scene {
+    height: 220px;
+  }
+}

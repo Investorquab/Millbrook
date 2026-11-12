@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN } from "@millbrook/economy";
 import type { StandingRow, GmEventCard } from "@millbrook/economy";
 import { useRoom, type WorkshopType } from "../game/RoomProvider";
+import type { TownData } from "../town3d/townData";
 import "./Room.css";
+
+/** The 3D diorama, loaded only when a room needs it (three.js is a big chunk). */
+const TownScene = lazy(() => import("../town3d/TownScene").then((m) => ({ default: m.TownScene })));
 
 /** Keep in step with CHAT_MAX_LEN in apps/server/src/protocol.ts. */
 const CHAT_MAX_LEN = 240;
@@ -164,6 +168,8 @@ export function Room() {
           );
         })}
       </div>
+
+      <RoomScene />
 
       {!live && !ended ? (
         <div className="room__lobby">
@@ -437,6 +443,33 @@ function ChatPanel() {
         </button>
       </form>
     </section>
+  );
+}
+
+/** The shared 3D town, driven by the server's snapshot — the same diorama as
+ *  solo, so a room looks like the whole game. Falls back to the flat art while
+ *  the three.js chunk loads or before the first snapshot arrives. */
+function RoomScene() {
+  const room = useRoom();
+  const snap = room.town;
+  const townData: TownData | undefined = snap
+    ? {
+        ...snap,
+        playerWorkshopId:
+          snap.workshops.find((w) => w.type === room.myWorkshop)?.id ?? snap.workshops[0]?.id ?? "",
+      }
+    : undefined;
+
+  return (
+    <div className="room__scene" aria-hidden="true">
+      {townData ? (
+        <Suspense fallback={<img className="room__scene-fallback" src="/art/town.svg" alt="" />}>
+          <TownScene data={townData} />
+        </Suspense>
+      ) : (
+        <img className="room__scene-fallback" src="/art/town.svg" alt="" />
+      )}
+    </div>
   );
 }
 

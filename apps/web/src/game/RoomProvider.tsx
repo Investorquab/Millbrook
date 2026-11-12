@@ -63,6 +63,15 @@ export interface RoomState {
   gm: GmEventCard | null;
 }
 
+/** Compact shared-town state for the 3D scene (mirrors server TownSnapshot). */
+export interface RoomTownSnapshot {
+  workshops: { id: string; type: WorkshopType; busy: boolean; bankrupt: boolean }[];
+  owners: { strategy: string | null; workshopId: string }[];
+  residents: { id: string; employerId: string | null; reason: string }[];
+  soldToday: number;
+  day: number;
+}
+
 export type GameAction =
   | { type: "setPrice"; value: number }
   | { type: "setWage"; value: number }
@@ -77,6 +86,8 @@ export interface RoomController {
   isHost: boolean;
   /** The shop I run this room, if I've claimed one (host always runs the bakery). */
   myWorkshop: WorkshopType | null;
+  /** The shared town for the 3D scene, or null before the first tick. */
+  town: RoomTownSnapshot | null;
   messages: ChatMessage[];
   offers: TradeOffer[];
   createRoom: (name: string, seed?: number) => void;
@@ -111,6 +122,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [myId, setMyId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [offers, setOffers] = useState<TradeOffer[]>([]);
+  const [town, setTown] = useState<RoomTownSnapshot | null>(null);
 
   const ensureSocket = useCallback((): Socket => {
     if (socketRef.current) return socketRef.current;
@@ -135,6 +147,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     );
     socket.on("room:state", (state: RoomState) => setRoom(state));
     socket.on("game:view", (v: SoloView) => setView(v));
+    socket.on("game:town", (t: RoomTownSnapshot) => setTown(t));
     socket.on("chat:history", (msgs: ChatMessage[]) => setMessages(msgs));
     socket.on("chat:message", (msg: ChatMessage) => setMessages((prev) => [...prev, msg]));
     socket.on("trade:offers", (list: TradeOffer[]) => setOffers(list));
@@ -165,6 +178,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socketRef.current = null;
     setRoom(null);
     setView(null);
+    setTown(null);
     setMessages([]);
     setOffers([]);
     setStatus("idle");
@@ -184,6 +198,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     myId,
     isHost: !!room && !!myId && room.hostId === myId,
     myWorkshop: me?.workshopType ?? null,
+    town,
     messages,
     offers,
     createRoom,

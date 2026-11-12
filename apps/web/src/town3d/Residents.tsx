@@ -17,7 +17,7 @@ import { Html } from "@react-three/drei";
 import type { Group } from "three";
 import { COOP_ID, type WorkshopType } from "@millbrook/shared";
 import { rules } from "@millbrook/economy";
-import { useSolo } from "../game/SoloProvider";
+import { useTownData } from "./townData";
 import { diorama, tradeColor } from "./palette";
 import { COOP, HOUSES, MINE, TOWN_HALL, WELL, WORKSHOPS, type Vec2 } from "./layout";
 import "./Residents.css";
@@ -188,15 +188,12 @@ function Person({ waypoints, seed, outfit, owner, bubble }: FigureProps) {
 }
 
 export function Residents() {
-  const { session, view } = useSolo();
-  void view.day; // re-place as the season advances (employment can change)
+  const data = useTownData();
 
   const { owners, folk } = useMemo(() => {
-    const world = session.world;
-
     const byType = new Map<WorkshopType, Vec2>(WORKSHOPS.map((w) => [w.type, w.pos]));
     const shopAnchor = new Map<string, { pos: Vec2; type: WorkshopType }>();
-    for (const w of world.workshops.values()) {
+    for (const w of data.workshops) {
       const pos = byType.get(w.type);
       if (pos) shopAnchor.set(w.id, { pos, type: w.type });
     }
@@ -212,7 +209,7 @@ export function Residents() {
     };
 
     const owners: { key: OwnerKey; waypoints: [Vec2, Vec2]; outfit: string }[] = [];
-    for (const o of world.owners.values()) {
+    for (const o of data.owners) {
       if (!o.strategy) continue; // skip the player
       const shop = shopAnchor.get(o.workshopId);
       if (!shop) continue;
@@ -225,7 +222,7 @@ export function Residents() {
       });
     }
 
-    const alive = rules.aliveResidents(world).slice(0, MAX_FIGURES);
+    const alive = data.residents.slice(0, MAX_FIGURES);
     const folk = alive.map((r) => {
       const a = anchorFor(r.employerId);
       const home = HOUSES[Math.floor(hash01(r.id, 0) * HOUSES.length)]!.pos;
@@ -237,12 +234,12 @@ export function Residents() {
         id: r.id,
         waypoints: [work, rest] as [Vec2, Vec2],
         outfit: a.outfit,
-        reason: shortReason(r.lastReason),
+        reason: shortReason(r.reason),
       };
     });
 
     return { owners, folk };
-  }, [session, view.day]);
+  }, [data]);
 
   // A couple of residents murmur their reason at a time, cycling slowly so the
   // whole town gets a turn. Reasons come straight from the rules (`lastReason`).

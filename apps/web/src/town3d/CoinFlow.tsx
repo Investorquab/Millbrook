@@ -12,7 +12,7 @@
 import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Mesh } from "three";
-import { useSolo } from "../game/SoloProvider";
+import { useTownData } from "./townData";
 import { diorama } from "./palette";
 import { WORKSHOPS } from "./layout";
 
@@ -44,12 +44,12 @@ function bezier(a: Vec3, b: Vec3, apexY: number, u: number): Vec3 {
 }
 
 export function CoinFlow() {
-  const { view } = useSolo();
+  const data = useTownData();
   const slots = useRef<Slot[]>(
     Array.from({ length: POOL }, () => ({ active: false, delay: 0, t: 0, from: [0, 0, 0], to: [0, 0, 0], spin: 0 })),
   );
   const meshes = useRef<(Mesh | null)[]>([]);
-  const lastDay = useRef(view.day);
+  const lastDay = useRef(data.day);
 
   // The player's bakery and the "customer" approach, in world space.
   const bakery = WORKSHOPS.find((w) => w.type === "bakery")!.pos;
@@ -59,9 +59,9 @@ export function CoinFlow() {
   })();
 
   useEffect(() => {
-    if (view.day === lastDay.current) return;
-    lastDay.current = view.day;
-    const sold = view.soldToday;
+    if (data.day === lastDay.current) return;
+    lastDay.current = data.day;
+    const sold = data.soldToday;
     if (sold <= 0) return;
 
     const count = Math.max(1, Math.min(5, Math.round(sold)));
@@ -85,7 +85,7 @@ export function CoinFlow() {
       s.spin = 8 + Math.random() * 6;
       released++;
     }
-  }, [view.day, view.soldToday, bakery, toSquare]);
+  }, [data.day, data.soldToday, bakery, toSquare]);
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);

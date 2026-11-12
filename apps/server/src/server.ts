@@ -143,6 +143,8 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
 
   const broadcast = (room: Room) => {
     io.to(room.id).emit("room:state", room.state());
+    // The shared 3D town, once for the whole room.
+    io.to(room.id).emit("game:town", room.townSnapshot());
     // Each player sees their own shop; spectators (no claim) watch the bakery.
     for (const p of room.playerList) {
       io.to(p.id).emit("game:view", room.viewFor(p.workshopId));

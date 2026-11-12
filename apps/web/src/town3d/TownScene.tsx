@@ -12,7 +12,7 @@
 import { useEffect } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { useSolo } from "../game/SoloProvider";
+import { TownDataContext, useTownData, type TownData } from "./townData";
 import { diorama } from "./palette";
 import { Ground } from "./ground";
 import { Residents } from "./Residents";
@@ -42,13 +42,13 @@ function LookAt({ target }: { target: [number, number, number] }) {
 }
 
 function Buildings() {
-  const { view, session } = useSolo();
+  const data = useTownData();
   // Which shops are "busy" (sold today) / bankrupt, read live.
   const state = new Map<string, { busy: boolean; bankrupt: boolean }>();
-  for (const w of session.world.workshops.values()) {
-    state.set(w.type, { busy: w.soldToday > 0.5, bankrupt: w.bankrupt });
+  for (const w of data.workshops) {
+    state.set(w.type, { busy: w.busy, bankrupt: w.bankrupt });
   }
-  const playerType = session.world.workshops.get(session.playerWorkshopId)?.type;
+  const playerType = data.workshops.find((w) => w.id === data.playerWorkshopId)?.type;
 
   return (
     <group>
@@ -60,7 +60,7 @@ function Buildings() {
             type={s.type}
             pos={s.pos}
             rot={s.rot}
-            busy={st.busy || (s.type === "bakery" && view.soldToday > 0)}
+            busy={st.busy || (s.type === "bakery" && data.soldToday > 0)}
             bankrupt={st.bankrupt}
             isPlayer={s.type === playerType}
           />
@@ -80,7 +80,7 @@ function Buildings() {
   );
 }
 
-export function TownScene() {
+export function TownScene({ data }: { data?: TownData }) {
   return (
     <Canvas
       shadows
@@ -94,18 +94,22 @@ export function TownScene() {
         scene.background = new THREE.Color(diorama.fog);
       }}
     >
-      <LookAt target={[0, 1.1, 0.3]} />
-      <fog attach="fog" args={[diorama.fog, 20, 38]} />
+      {/* Solo passes nothing → children fall back to the live SoloProvider; a
+          room passes its snapshot here so the same scene renders the shared town. */}
+      <TownDataContext.Provider value={data ?? null}>
+        <LookAt target={[0, 1.1, 0.3]} />
+        <fog attach="fog" args={[diorama.fog, 20, 38]} />
 
-      {/* The moving sun, sky fill and lamp glow — a slow day→night cycle. */}
-      <DayNight />
-      {/* a faint warm rim from the opposite side, no shadows */}
-      <directionalLight position={[8, 4, -6]} intensity={0.3} color={diorama.skyLow} />
+        {/* The moving sun, sky fill and lamp glow — a slow day→night cycle. */}
+        <DayNight />
+        {/* a faint warm rim from the opposite side, no shadows */}
+        <directionalLight position={[8, 4, -6]} intensity={0.3} color={diorama.skyLow} />
 
-      <Ground />
-      <Buildings />
-      <Residents />
-      <CoinFlow />
+        <Ground />
+        <Buildings />
+        <Residents />
+        <CoinFlow />
+      </TownDataContext.Provider>
     </Canvas>
   );
 }

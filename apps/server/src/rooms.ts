@@ -13,6 +13,7 @@
 import { randomUUID } from "node:crypto";
 import {
   createSoloSession,
+  rules,
   type SoloSession,
   type SoloView,
   type WorkshopSlot,
@@ -20,7 +21,10 @@ import {
   type GmEventCard,
 } from "@millbrook/economy";
 import type { WorkshopType } from "@millbrook/shared";
-import { CHAT_MAX_LEN, type ChatMessage, type TradeOffer } from "./protocol.js";
+import { CHAT_MAX_LEN, type ChatMessage, type TradeOffer, type TownSnapshot } from "./protocol.js";
+
+/** Cap the walking figures sent to the 3D scene (matches the client). */
+const SNAPSHOT_FIGURES = 18;
 
 /** Keep the chat bounded so a long-lived room doesn't grow without end. */
 const CHAT_HISTORY = 100;
@@ -321,6 +325,27 @@ export class Room {
       totalDays: v.totalDays,
       standings: this.session.standings(),
       gm: this.session.gmEvents(1)[0] ?? null,
+    };
+  }
+
+  /** A compact snapshot of the shared town for the 3D diorama. */
+  townSnapshot(): TownSnapshot {
+    const w = this.session.world;
+    const v = this.session.view();
+    return {
+      workshops: [...w.workshops.values()].map((s) => ({
+        id: s.id,
+        type: s.type,
+        busy: s.soldToday > 0.5,
+        bankrupt: s.bankrupt,
+      })),
+      owners: [...w.owners.values()].map((o) => ({ strategy: o.strategy, workshopId: o.workshopId })),
+      residents: rules
+        .aliveResidents(w)
+        .slice(0, SNAPSHOT_FIGURES)
+        .map((r) => ({ id: r.id, employerId: r.employerId, reason: r.lastReason })),
+      soldToday: v.soldToday,
+      day: v.day,
     };
   }
 

@@ -55,10 +55,21 @@ export interface ClientToServer {
   "game:action": (payload: GameAction) => void;
 }
 
+/** Just enough town state for the 3D diorama to render a room's shared town. */
+export interface TownSnapshot {
+  workshops: { id: string; type: WorkshopType; busy: boolean; bankrupt: boolean }[];
+  owners: { strategy: string | null; workshopId: string }[];
+  residents: { id: string; employerId: string | null; reason: string }[];
+  soldToday: number;
+  day: number;
+}
+
 /** Server → client events. */
 export interface ServerToClient {
   "room:state": (state: RoomState) => void;
   "game:view": (view: SoloView) => void;
+  /** The shared town for the 3D scene, sent each tick while a room is live. */
+  "game:town": (snapshot: TownSnapshot) => void;
   "chat:message": (message: ChatMessage) => void;
   /** The recent backlog, sent to a client as it joins. */
   "chat:history": (messages: ChatMessage[]) => void;
