@@ -485,3 +485,149 @@
     font-size: 34px;
   }
 }
+
+/* ── Game Master card (live room) ─────────────────────────────────────────── */
+.room__gm {
+  background: rgba(47, 54, 64, 0.92);
+  border: 1px solid rgba(217, 164, 65, 0.4);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.room__gm-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.room__gm-tag {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--wheat);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.room__gm-day {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.room__gm-title {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+.room__gm-effect {
+  margin: 0;
+  color: var(--text-soft);
+}
+.room__gm-why {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(--wheat);
+  color: var(--millstone);
+  font-weight: 700;
+  cursor: pointer;
+}
+.room__gm-reason {
+  margin-top: 6px;
+  border-top: 1px solid rgba(237, 230, 214, 0.15);
+  padding-top: 8px;
+}
+.room__gm-reason p {
+  margin: 0 0 8px;
+  color: var(--text-soft);
+}
+.room__gm-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.room__gm-pill {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(237, 230, 214, 0.1);
+  color: var(--linen);
+}
+
+/* ── Season-end scoreboard (room) ─────────────────────────────────────────── */
+.room__scoreboard {
+  background: rgba(47, 54, 64, 0.92);
+  border: 1px solid rgba(237, 230, 214, 0.18);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+.room__scoreboard-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+}
+.room__scoreboard-winner {
+  margin: 4px 0 14px;
+  color: var(--wheat);
+  font-size: 16px;
+}
+.room__scoreboard-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.room__sb-row {
+  display: grid;
+  grid-template-columns: 28px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(36, 42, 50, 0.7);
+}
+.room__sb-row.is-you {
+  background: rgba(142, 192, 122, 0.18);
+  border: 1px solid rgba(142, 192, 122, 0.4);
+}
+.room__sb-row.is-winner .room__sb-rank {
+  color: var(--wheat);
+}
+.room__sb-rank {
+  font-weight: 800;
+  font-size: 18px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+.room__sb-name {
+  font-weight: 700;
+}
+.room__sb-you {
+  color: var(--meadow-text);
+  font-size: 13px;
+}
+.room__sb-shop {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.room__sb-profit {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.room__sb-badges {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.room__sb-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(217, 164, 65, 0.2);
+  color: var(--wheat);
+}

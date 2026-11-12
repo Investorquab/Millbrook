@@ -301,9 +301,21 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
         playing.delete(id);
         continue;
       }
+      const wasLive = room.status === "live";
       room.step();
+      // Game Master events post into the room chat as they happen, so the whole
+      // room reacts together (the design's "town events in chat").
+      for (const ev of room.drainNewGmEvents()) {
+        emitChat(room, room.note(`Game Master: ${ev.title} — ${ev.effect}`));
+      }
       broadcast(room);
-      if (room.view().ended) playing.delete(id);
+      if (room.view().ended) {
+        if (wasLive) {
+          const winner = room.state().standings[0];
+          if (winner) emitChat(room, room.note(`The season has ended. ${winner.name} tops the town.`));
+        }
+        playing.delete(id);
+      }
     }
   }, dayMs);
   tick.unref?.();

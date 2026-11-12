@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN } from "@millbrook/economy";
+import type { StandingRow, GmEventCard } from "@millbrook/economy";
 import { useRoom, type WorkshopType } from "../game/RoomProvider";
 import "./Room.css";
 
@@ -222,7 +223,7 @@ export function Room() {
           </div>
 
           {ended ? (
-            <p className="room__ended">The season has ended. Thanks for playing Millbrook.</p>
+            <RoomScoreboard standings={r.standings ?? []} myWorkshop={room.myWorkshop} />
           ) : (
             <div className="room__controls" aria-label="Your shop">
               {room.myWorkshop ? (
@@ -268,6 +269,8 @@ export function Room() {
               )}
             </div>
           )}
+
+          {!ended && r.gm && <GmCard gm={r.gm} />}
 
           {!ended && <TradePanel />}
 
@@ -433,6 +436,84 @@ function ChatPanel() {
           Send
         </button>
       </form>
+    </section>
+  );
+}
+
+/** The Game Master "Why did this happen?" card — the live event and its reason,
+ *  expandable, matching the solo HUD. */
+function GmCard({ gm }: { gm: GmEventCard }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="room__gm" aria-label="Game Master event">
+      <div className="room__gm-head">
+        <span className="room__gm-tag">
+          From the Game Master · {gm.source === "feed" ? "weather" : "town metrics"}
+          {gm.active ? " · in effect" : ""}
+        </span>
+        <span className="room__gm-day">Day {gm.day}</span>
+      </div>
+      <h3 className="room__gm-title">{gm.title}</h3>
+      <p className="room__gm-effect">{gm.effect}</p>
+      <button type="button" className="room__gm-why" onClick={() => setOpen((o) => !o)}>
+        {open ? "Hide" : "Why did this happen?"}
+      </button>
+      {open && (
+        <div className="room__gm-reason">
+          <p>{gm.reason}</p>
+          <div className="room__gm-pills">
+            {Object.entries(gm.data).map(([k, val]) => (
+              <span key={k} className="room__gm-pill">
+                {k}: {String(val)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** The season-end scoreboard inside a room: every owner ranked by the goal card,
+ *  the winner crowned, and the viewer's own shop marked "You". */
+function RoomScoreboard({ standings, myWorkshop }: { standings: StandingRow[]; myWorkshop: WorkshopType | null }) {
+  if (standings.length === 0) {
+    return <p className="room__ended">The season has ended. Thanks for playing Millbrook.</p>;
+  }
+  const winner = standings[0]!;
+  return (
+    <section className="room__scoreboard" aria-label="Final standings">
+      <div className="room__scoreboard-head">
+        <h2>Season over</h2>
+        <p className="room__scoreboard-winner">
+          🏆 <b>{winner.name}</b> wins — {winner.workshopType && shopName(winner.workshopType)}, {winner.profit.toLocaleString()} profit.
+        </p>
+      </div>
+      <ol className="room__scoreboard-rows">
+        {standings.map((row) => {
+          const mine = myWorkshop != null && row.workshopType === myWorkshop;
+          return (
+            <li key={row.ownerId} className={`room__sb-row${mine ? " is-you" : ""}${row.rank === 1 ? " is-winner" : ""}`}>
+              <span className="room__sb-rank">{row.rank}</span>
+              <span className="room__sb-name">
+                {row.name}
+                {mine && <span className="room__sb-you"> You</span>}
+              </span>
+              <span className="room__sb-shop">{shopName(row.workshopType)}</span>
+              <span className="room__sb-profit">{row.profit.toLocaleString()}</span>
+              {row.badges.length > 0 && (
+                <span className="room__sb-badges">
+                  {row.badges.map((b) => (
+                    <span key={b.id} className="room__sb-badge" title={b.note}>
+                      {b.label}
+                    </span>
+                  ))}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
     </section>
   );
 }

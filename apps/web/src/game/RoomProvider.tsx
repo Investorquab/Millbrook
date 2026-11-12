@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { io, type Socket } from "socket.io-client";
-import type { SoloView, WorkshopSlot } from "@millbrook/economy";
+import type { SoloView, WorkshopSlot, StandingRow, GmEventCard } from "@millbrook/economy";
 import { SERVER_URL } from "./serverUrl";
 import { useAuth } from "./AuthProvider";
 
@@ -57,6 +57,10 @@ export interface RoomState {
   seed: number;
   day: number;
   totalDays: number;
+  /** Ranked owner standings — a live leaderboard and the final scoreboard. */
+  standings: StandingRow[];
+  /** The latest Game Master event, for the "Why did this happen?" card. */
+  gm: GmEventCard | null;
 }
 
 export type GameAction =

@@ -11,7 +11,14 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { createSoloSession, type SoloSession, type SoloView, type WorkshopSlot } from "@millbrook/economy";
+import {
+  createSoloSession,
+  type SoloSession,
+  type SoloView,
+  type WorkshopSlot,
+  type StandingRow,
+  type GmEventCard,
+} from "@millbrook/economy";
 import type { WorkshopType } from "@millbrook/shared";
 import { CHAT_MAX_LEN, type ChatMessage, type TradeOffer } from "./protocol.js";
 
@@ -46,6 +53,11 @@ export interface RoomState {
   seed: number;
   day: number;
   totalDays: number;
+  /** Live owner standings (ranked) — a leaderboard during play and the final
+   *  scoreboard once the season ends. */
+  standings: StandingRow[];
+  /** The latest Game Master event, for the "Why did this happen?" card. */
+  gm: GmEventCard | null;
 }
 
 /** Unambiguous invite codes: no 0/O/1/I. */
@@ -67,6 +79,8 @@ export class Room {
   private readonly players = new Map<string, Player>();
   private readonly chatLog: ChatMessage[] = [];
   private readonly offers = new Map<string, TradeOffer>();
+  /** How many Game Master events have been posted to chat so far. */
+  private gmSeen = 0;
 
   constructor(id: string, code: string, hostId: string, hostName: string, seed: number) {
     this.id = id;
@@ -305,7 +319,19 @@ export class Room {
       seed: this.seed,
       day: v.day,
       totalDays: v.totalDays,
+      standings: this.session.standings(),
+      gm: this.session.gmEvents(1)[0] ?? null,
     };
+  }
+
+  /** Game Master events that have fired since the last call — so the server can
+   *  post them into the room chat as they happen, once each. `gmEvents` is
+   *  latest-first, so the new ones are at the front; return them oldest-first. */
+  drainNewGmEvents(): GmEventCard[] {
+    const all = this.session.gmEvents(100);
+    const newCount = all.length - this.gmSeen;
+    this.gmSeen = all.length;
+    return newCount > 0 ? all.slice(0, newCount).reverse() : [];
   }
 }
 
