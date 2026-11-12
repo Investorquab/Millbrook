@@ -144,6 +144,7 @@ export function createWorld(config: SeasonConfig): World {
       auctions: 0,
       insured: false,
       guarded: false,
+      sickPay: true,
       daysShortOnWages: 0,
       soldToday: 0,
       producedToday: 0,
@@ -169,8 +170,11 @@ export function createWorld(config: SeasonConfig): World {
       workshopId: wid,
       reputation: 0,
     });
-    // Cautious owners (Fair, Steady) insure; the greedy and risky take the chance.
-    workshops.get(wid)!.insured = strategy === "fern" || strategy === "sam";
+    // Cautious owners (Fair, Steady) insure and pay sick pay; the greedy and the
+    // risky take the chance and dock sick workers.
+    const cautious = strategy === "fern" || strategy === "sam";
+    workshops.get(wid)!.insured = cautious;
+    workshops.get(wid)!.sickPay = cautious;
   });
 
   // ── Co-op and Town Hall ───────────────────────────────────────────────────

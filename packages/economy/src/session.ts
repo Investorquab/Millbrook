@@ -178,6 +178,8 @@ export interface SoloView {
   insured: boolean;
   /** Whether a guard is posted against theft. */
   guarded: boolean;
+  /** Whether the shop pays full wages to sick workers during an epidemic. */
+  sickPay: boolean;
 
   feed: FeedLine[];
 }
@@ -653,6 +655,11 @@ export class SoloSession {
     this.resolveWorkshop(workshopId).guarded = guarded;
   }
 
+  /** Pay full wages to sick workers during an epidemic (goodwill), or dock them. */
+  setSickPay(sickPay: boolean, workshopId?: string): void {
+    this.resolveWorkshop(workshopId).sickPay = sickPay;
+  }
+
   /** Hire one idle resident into a player shop. Returns false if it couldn't. */
   hire(workshopId?: string): boolean {
     const w = this.resolveWorkshop(workshopId);
@@ -916,6 +923,7 @@ export class SoloSession {
       bankrupt: w.bankrupt,
       insured: w.insured,
       guarded: w.guarded,
+      sickPay: w.sickPay,
 
       feed,
     };

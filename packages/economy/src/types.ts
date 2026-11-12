@@ -93,6 +93,8 @@ export interface Workshop {
   /** A guard is posted: on a bad night the shop pays a watch wage and its stock
    *  is spared from theft. */
   guarded: boolean;
+  /** Pays full wages to sick workers during an epidemic (vs docking them). */
+  sickPay: boolean;
   /** Days in a row the workshop could not pay full wages. */
   daysShortOnWages: number;
   /** Units sold / produced / coins taken today (reset each day). */

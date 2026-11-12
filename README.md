@@ -136,7 +136,9 @@ on-chain with the audited total holding at exactly 10,000.
 An AI that reads town metrics and a real **weather feed** (Open-Meteo, keyless) and
 fires one event a game week from a fixed catalog — drought, heatwave, festival,
 railway, tax inspector, an epidemic that keeps sick workers off the job, and more —
-always within hard caps the code enforces. The one
+always within hard caps the code enforces. During an **epidemic** you choose
+whether to **pay sick workers in full** (goodwill with the town) or dock them
+(coins saved, standing lost). The one
 coin-moving event (the tax inspector) pays into the Town Co-op, so coins never leave
 the 10,000. Each decision carries a reasoning paragraph and a **receipt anchored on
 NEAR** (`record_receipt`). The Town's "Why did this happen?" card shows the data, the
@@ -230,7 +232,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- The Apothecary and remedy sales; sick pay during an epidemic
+- The Apothecary and remedy sales (sick residents buy remedies in an epidemic)
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---

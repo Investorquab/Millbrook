@@ -392,25 +392,36 @@ function runToolMarket(world: World): void {
 
 // ── Dusk: wages, benefits, settlement, bankruptcy ──────────────────────────
 
+/** Fraction of the wage a shop pays sick workers when it docks during an epidemic. */
+const SICK_DOCK = 0.6;
+
 function dusk(world: World): void {
   // Reset last wage; it is set below for anyone who earns today.
   for (const r of world.residents.values()) {
     if (r.alive) r.lastWage = 0;
   }
   world.hallIncomeToday = 0;
+  // During an epidemic, shops that don't pay sick pay dock the day's wages.
+  const epidemic = world.gm.active.some((e) => e.id === "epidemic");
 
   for (const w of world.workshops.values()) {
     if (!w.open || w.bankrupt) continue;
     if (w.strikeDays > 0) continue; // strikers neither work nor get paid
+    const wagePayable = epidemic && !w.sickPay ? Math.max(1, Math.floor(w.wage * SICK_DOCK)) : w.wage;
     let short = false;
     let paidPayroll = 0;
     for (const rid of w.workers) {
       const r = world.residents.get(rid);
       if (!r) continue;
-      const paid = world.ledger.payUpTo(w.id, rid, w.wage);
+      const paid = world.ledger.payUpTo(w.id, rid, wagePayable);
       r.lastWage = paid;
       paidPayroll += paid;
-      if (paid < w.wage) short = true;
+      if (paid < wagePayable) short = true;
+    }
+    // Sick pay earns goodwill; docking sick workers costs it.
+    if (epidemic && w.workers.length > 0) {
+      const owner = world.owners.get(w.ownerId);
+      if (owner) owner.reputation += w.sickPay ? 0.5 : -1.5;
     }
     // Town Hall takes its cut of payroll and of the day's sales (the Mayor's rates).
     const tax =

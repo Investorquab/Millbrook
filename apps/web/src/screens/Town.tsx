@@ -94,7 +94,7 @@ function dataLine(key: string, value: string | number): string | null {
 }
 
 export function Town() {
-  const { view, session, running, play, pause, setPrice, setWage, setInsured, setGuard, hire, takeOverAuction, passAuction } =
+  const { view, session, running, play, pause, setPrice, setWage, setInsured, setGuard, setSickPay, hire, takeOverAuction, passAuction } =
     useSolo();
   const [tab, setTab] = useState<"town" | "chat">("town");
   const [whyOpen, setWhyOpen] = useState(false);
@@ -484,6 +484,20 @@ export function Town() {
                 <span>
                   Post a guard against theft
                   <small>on a bad night (high unemployment) you pay the watch and keep your stock</small>
+                </span>
+              </label>
+              <label className="town__foreman-row">
+                <input
+                  type="checkbox"
+                  checked={view.sickPay}
+                  onChange={(e) => {
+                    playClick();
+                    setSickPay(e.target.checked);
+                  }}
+                />
+                <span>
+                  Pay sick workers in full during an epidemic
+                  <small>goodwill with the town; docking them saves coins but costs your standing</small>
                 </span>
               </label>
               {view.foremanNote && <p className="town__foreman-note">“{view.foremanNote}”</p>}
