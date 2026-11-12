@@ -31,6 +31,7 @@ export {
   ELECTION_DAYS,
   COMFORTABLE_SAVINGS,
 } from "./elections.js";
+export { runTheft, THEFT_UNEMPLOYMENT, THEFT_RATE } from "./theft.js";
 export {
   runGameMaster,
   readGmMetrics,

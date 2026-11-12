@@ -190,6 +190,7 @@ export function createWorld(config: SeasonConfig): World {
       ageing: config.ageing ?? false,
       auctions: config.auctions ?? false,
       elections: config.elections ?? false,
+      theft: config.theft ?? false,
     },
     gm: {
       enabled: config.gameMaster ?? false,

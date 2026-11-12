@@ -39,7 +39,7 @@ const moodColor: Record<string, string> = {
 
 /** A small icon for a feed line, chosen by event kind. */
 function FeedIcon({ kind }: { kind: string }) {
-  if (kind === "strike_start" || kind === "bankruptcy" || kind === "layoff") {
+  if (kind === "strike_start" || kind === "bankruptcy" || kind === "layoff" || kind === "theft") {
     return (
       <span className="town__feed-icon" style={{ background: "var(--madder)" }}>
         <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">

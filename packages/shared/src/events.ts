@@ -23,6 +23,7 @@ export const FEED_EVENT_KINDS = [
   "death",
   "bankruptcy",
   "auction",
+  "theft",
   "benefit_paid",
   "public_works",
   "election",

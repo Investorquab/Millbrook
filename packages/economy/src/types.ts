@@ -186,6 +186,13 @@ export interface SeasonConfig {
    * turns it on. Only rates move, never the 10,000-coin total.
    */
   elections?: boolean;
+  /**
+   * Petty theft: when unemployment runs high, goods start going missing from
+   * the shops — goods are lost, never coins, so the 10,000-coin total is
+   * untouched. Off by default (headless/determinism unaffected); the solo game
+   * turns it on. A consequence of a town left to struggle, not a coin sink.
+   */
+  theft?: boolean;
 }
 
 /**

@@ -396,6 +396,8 @@ export class SoloSession {
       auctions: true,
       // …and holds elections each phase (tax/benefit policy, a minimum wage).
       elections: true,
+      // …and petty theft bites when the town is left to struggle (goods only).
+      theft: true,
       ...config,
     });
     this.totalDays = this.world.config.days;
@@ -897,6 +899,11 @@ export class SoloSession {
   }
 
   // ── Proof: the town's coins, split by holder (always sums to 10,000) ────────
+
+  /** How many residents are alive right now (grows and shrinks with the season). */
+  population(): number {
+    return aliveResidents(this.world).length;
+  }
 
   holdings(): Holdings {
     const ledger = this.world.ledger;

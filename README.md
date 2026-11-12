@@ -73,6 +73,10 @@ tooltips explain every number.
   Mayor (lower taxes), the struggling for a caring one (more benefits and a
   minimum wage). The winner sets the Town Hall's tax and benefit policy for the
   phase. Only rates change, never the 10,000-coin total.
+- When a town is left to **struggle** (unemployment runs high), petty **theft**
+  bites — a little of each shop's stock goes missing overnight. Goods are lost,
+  never coins, so the total stays 10,000; the only real fix is to get the town
+  back to work.
 - A workshop that **can't pay wages for three days goes bankrupt** — and its
   premises don't sit empty: they go to **auction**. Around mid-season an AI owner
   also retires and puts their shop up, so you reliably get the chance to **bid**:
@@ -201,7 +205,8 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
-- Tailor and Tavern; goal cards for the new systems; sickness and epidemics
+- Tailor and Tavern; goal cards for the new systems; sickness and epidemics;
+  hiring a guard to deter theft
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
 ---

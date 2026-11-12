@@ -30,7 +30,7 @@ const STRATEGY: Record<string, { label: string; color: string; blurb: string }> 
 };
 
 function feedTone(kind: string): string {
-  if (kind === "strike_start" || kind === "bankruptcy" || kind === "layoff") return "var(--madder-text)";
+  if (kind === "strike_start" || kind === "bankruptcy" || kind === "layoff" || kind === "theft") return "var(--madder-text)";
   if (kind === "phase_change" || kind === "gm_event" || kind === "election") return "var(--wheat-light)";
   if (kind === "hire" || kind === "job_change" || kind === "migration_in" || kind === "auction") return "var(--river-text)";
   if (kind === "trade" || kind === "birth") return "var(--meadow-text)";
@@ -171,7 +171,7 @@ export function Market() {
             <div className="market__public-card">
               <span className="market__public-name">Residents hold</span>
               <b>{h.residents.toLocaleString()}</b>
-              <small>wages &amp; savings, 30 people</small>
+              <small>wages &amp; savings, {session.population()} people</small>
             </div>
             <div className="market__public-card market__public-card--total">
               <span className="market__public-name">Town total</span>

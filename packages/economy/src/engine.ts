@@ -56,6 +56,7 @@ import {
 import { runAgeing } from "./ageing.js";
 import { runAuctions } from "./auction.js";
 import { runElections, enforceMinimumWage } from "./elections.js";
+import { runTheft } from "./theft.js";
 import type { DayMetrics, Resident, Workshop, World } from "./types.js";
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -628,6 +629,9 @@ function endOfDay(world: World, totalSales: number): void {
   // so the town's trade churns instead of shrinking. Conserving, so the check
   // below still holds at exactly 10,000.
   runAuctions(world);
+
+  // Petty theft when the town is struggling — loses goods, never coins.
+  runTheft(world);
 
   world.ledger.assertInvariant(TOTAL_COINS);
 }
