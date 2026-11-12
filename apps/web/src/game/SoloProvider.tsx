@@ -50,6 +50,8 @@ export interface SoloController {
   /** Bid on a failed rival's premises at auction (takes it over), or pass. */
   takeOverAuction: (workshopId: string) => void;
   passAuction: (workshopId: string) => void;
+  /** Answer a decision card (wage demand, loan offer, …). */
+  decide: (decisionId: string, optionId: string) => void;
   /** How many workshops the current town has (4 classic, 6 full town, 7 with the Apothecary). */
   townSize: TownSize;
   /** Start a fresh season with a chosen town size (resets the season). */
@@ -147,6 +149,14 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
     [refresh],
   );
 
+  const decide = useCallback(
+    (id: string, optionId: string) => {
+      ref.current!.decide(id, optionId);
+      refresh();
+    },
+    [refresh],
+  );
+
   const play = useCallback(() => setRunning(true), []);
   const pause = useCallback(() => setRunning(false), []);
 
@@ -213,6 +223,7 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
     hire,
     takeOverAuction,
     passAuction,
+    decide,
     townSize,
     setTownSize,
     playerTrade,

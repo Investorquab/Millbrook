@@ -53,6 +53,7 @@ export interface ClientToServer {
   "game:play": () => void;
   "game:pause": () => void;
   "game:action": (payload: GameAction) => void;
+  "game:decide": (payload: { decisionId: string; optionId: string }) => void;
 }
 
 /** Just enough town state for the 3D diorama to render a room's shared town. */

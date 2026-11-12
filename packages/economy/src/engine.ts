@@ -57,6 +57,8 @@ import { runAgeing } from "./ageing.js";
 import { runAuctions } from "./auction.js";
 import { runElections, enforceMinimumWage } from "./elections.js";
 import { runTheft } from "./theft.js";
+import { runDecisions } from "./decisions.js";
+import { runLoans } from "./loans.js";
 import { runFire } from "./fire.js";
 import { runHousing } from "./housing.js";
 import { runFestivals, festivalFactor } from "./festivals.js";
@@ -691,6 +693,12 @@ function endOfDay(world: World, totalSales: number): void {
 
   // Fire and insurance — destroys goods; premiums/claims move coins shop↔pool.
   runFire(world);
+
+  // Loans: weekly interest/repayment to the Town Hall, and loan offers. Then
+  // decision cards: resolve any whose deadline passed, and raise new ones. Both
+  // only move coins between holders in town, so the invariant below still holds.
+  runLoans(world);
+  runDecisions(world);
 
   world.ledger.assertInvariant(TOTAL_COINS);
 }

@@ -23,6 +23,7 @@ import {
 import { createWorld } from "./state.js";
 import { pushFeed, stepDay } from "./engine.js";
 import { reletToAi, freshenPremises, AUCTION_STAKE } from "./auction.js";
+import { applyDecision } from "./decisions.js";
 import {
   TOWN_HALL_PUBLIC_WORKS_EMPLOYER,
   WORKSHOP_DEFS,
@@ -32,7 +33,7 @@ import {
   unemploymentRate,
 } from "./rules.js";
 import { GOAL_CARDS } from "./scoring.js";
-import type { AiStrategyId, SeasonConfig, Trait, Workshop, World } from "./types.js";
+import type { AiStrategyId, Decision, SeasonConfig, Trait, Workshop, World } from "./types.js";
 
 /** Player stepper bounds — the single source of truth the HUD imports too. */
 export const PRICE_MIN = 1;
@@ -192,6 +193,10 @@ export interface SoloView {
   guarded: boolean;
   /** Whether the shop pays full wages to sick workers during an epidemic. */
   sickPay: boolean;
+  /** Any loan this shop owes the Town Hall bank (0 if none). */
+  loan: number;
+  /** Pending decision cards for this shop (timed choices with a default). */
+  decisions: Decision[];
 
   feed: FeedLine[];
 }
@@ -425,6 +430,10 @@ export class SoloSession {
       housing: true,
       // …and holidays lift the town's spending (a market day, a harvest festival).
       festivals: true,
+      // …and puts timed decision cards (wage demands, loan offers) to the player,
+      // backed by a Town Hall bank.
+      decisions: true,
+      loans: true,
       ...worldConfig,
     });
     this.totalDays = this.world.config.days;
@@ -945,9 +954,22 @@ export class SoloSession {
       insured: w.insured,
       guarded: w.guarded,
       sickPay: w.sickPay,
+      loan: this.world.loans.get(w.id) ?? 0,
+      decisions: this.world.decisions.filter((d) => d.workshopId === w.id),
 
       feed,
     };
+  }
+
+  /** Answer a decision card — apply the chosen option. */
+  decide(decisionId: string, optionId: string): void {
+    applyDecision(this.world, decisionId, optionId);
+  }
+
+  /** Pending decision cards for the player's shop(s). */
+  pendingDecisions(workshopId?: string): Decision[] {
+    const ids = workshopId ? new Set([workshopId]) : this.claimed;
+    return this.world.decisions.filter((d) => ids.has(d.workshopId));
   }
 
   // ── Proof: the town's coins, split by holder (always sums to 10,000) ────────

@@ -277,6 +277,18 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
       broadcast(room);
     });
 
+    socket.on("game:decide", ({ decisionId, optionId }) => {
+      const room = roomOf(socket.data.roomId);
+      if (!room) return;
+      const workshopId = room.workshopOf(socket.id);
+      if (!workshopId) return;
+      // You can only answer decisions for your own shop.
+      const dec = room.session.world.decisions.find((d) => d.id === decisionId);
+      if (!dec || dec.workshopId !== workshopId) return;
+      room.session.decide(decisionId, optionId);
+      broadcast(room);
+    });
+
     socket.on("room:leave", () => leave());
     socket.on("disconnect", () => leave());
 

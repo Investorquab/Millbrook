@@ -104,6 +104,8 @@ export interface RoomController {
   setPrice: (n: number) => void;
   setWage: (n: number) => void;
   hire: () => void;
+  /** Answer a decision card on your shop. */
+  decide: (decisionId: string, optionId: string) => void;
 }
 
 const RoomContext = createContext<RoomController | null>(null);
@@ -218,6 +220,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setPrice: (n) => emit("game:action", { type: "setPrice", value: n } satisfies GameAction),
     setWage: (n) => emit("game:action", { type: "setWage", value: n } satisfies GameAction),
     hire: () => emit("game:action", { type: "hire" } satisfies GameAction),
+    decide: (decisionId, optionId) => emit("game:decide", { decisionId, optionId }),
   };
 
   return <RoomContext.Provider value={value}>{children}</RoomContext.Provider>;

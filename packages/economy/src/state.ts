@@ -219,6 +219,8 @@ export function createWorld(config: SeasonConfig): World {
       fire: config.fire ?? false,
       housing: config.housing ?? false,
       festivals: config.festivals ?? false,
+      decisions: config.decisions ?? false,
+      loans: config.loans ?? false,
     },
     gm: {
       enabled: config.gameMaster ?? false,
@@ -236,6 +238,8 @@ export function createWorld(config: SeasonConfig): World {
     ownerRetired: false,
     // Start with room to grow, so nobody is homeless until the town booms.
     houses: STARTING_RESIDENTS + HOUSE_BUFFER,
+    decisions: [],
+    loans: new Map(),
   };
 
   assignInitialJobs(world, startUnemployment);

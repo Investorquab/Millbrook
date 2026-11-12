@@ -170,6 +170,11 @@ export interface SeasonConfig {
    * unaffected; the solo game turns it on.
    */
   gameMaster?: boolean;
+  /** Raise timed decision cards (worker demands, loan offers, GM choices) for
+   *  human-controlled shops. Off by default; the solo game and rooms turn it on. */
+  decisions?: boolean;
+  /** Offer loans from the Town Hall bank (needs `decisions`). Off by default. */
+  loans?: boolean;
   /**
    * Age the town (Phase-2 "living town"): residents age a year per game week,
    * retire at 65 to live on savings, and the very old pass away peacefully with
@@ -288,6 +293,35 @@ export interface GameMasterRuntime {
   log: FiredGmEvent[];
 }
 
+/** One option on a decision card. */
+export interface DecisionOption {
+  id: string;
+  label: string;
+  detail?: string;
+}
+
+/**
+ * A timed choice put to a player (worker demand, loan offer, Game Master choice,
+ * …). If the player doesn't choose by `deadlineDay`, the engine applies
+ * `defaultOptionId`. Decisions are player-facing; the engine raises them for
+ * human-controlled shops only.
+ */
+export interface Decision {
+  id: string;
+  kind: "wage_demand" | "loan" | "gm_choice";
+  /** The workshop this decision is for (whose player should answer it). */
+  workshopId: string;
+  title: string;
+  body: string;
+  options: DecisionOption[];
+  /** Applied automatically once `deadlineDay` is reached. */
+  defaultOptionId: string;
+  /** Game day by which the player must choose. */
+  deadlineDay: number;
+  /** Opaque numbers the resolver needs (raise amount, loan size…). */
+  data: Record<string, number>;
+}
+
 export interface World {
   seed: number;
   day: number;
@@ -321,4 +355,8 @@ export interface World {
   ownerRetired: boolean;
   /** How many houses the town has — its housing capacity (rent & housing). */
   houses: number;
+  /** Pending player decision cards (timed choices with a default). */
+  decisions: Decision[];
+  /** Loans owed to the Town Hall bank, by workshop id → outstanding principal. */
+  loans: Map<string, number>;
 }

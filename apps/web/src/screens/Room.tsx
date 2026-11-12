@@ -5,6 +5,7 @@ import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN } from "@millbrook/economy";
 import type { StandingRow, GmEventCard } from "@millbrook/economy";
 import { useRoom, type WorkshopType } from "../game/RoomProvider";
 import type { TownData } from "../town3d/townData";
+import { DecisionCard } from "../components/DecisionCard";
 import "./Room.css";
 
 /** The 3D diorama, loaded only when a room needs it (three.js is a big chunk). */
@@ -274,6 +275,10 @@ export function Room() {
                 <p className="room__waiting">You're watching this season. Claim a shop from the lobby next time to run one.</p>
               )}
             </div>
+          )}
+
+          {!ended && v?.decisions && v.decisions.length > 0 && (
+            <DecisionCard decisions={v.decisions} onDecide={room.decide} />
           )}
 
           {!ended && r.gm && <GmCard gm={r.gm} />}

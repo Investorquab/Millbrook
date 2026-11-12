@@ -6,6 +6,7 @@ import { useTutorial } from "../game/useTutorial";
 import { TutorialCard } from "../components/Tutorial";
 import { faceFor } from "../game/faces";
 import { tradeWords } from "../game/tradeLabels";
+import { DecisionCard } from "../components/DecisionCard";
 import { isMuted, playClick, playCoin, playEvent, toggleMuted } from "../game/sound";
 import "./Town.css";
 
@@ -95,7 +96,7 @@ function dataLine(key: string, value: string | number): string | null {
 }
 
 export function Town() {
-  const { view, session, running, play, pause, setPrice, setWage, setInsured, setGuard, setSickPay, hire, takeOverAuction, passAuction } =
+  const { view, session, running, play, pause, setPrice, setWage, setInsured, setGuard, setSickPay, hire, takeOverAuction, passAuction, decide } =
     useSolo();
   const [tab, setTab] = useState<"town" | "chat">("town");
   const [whyOpen, setWhyOpen] = useState(false);
@@ -509,6 +510,11 @@ export function Town() {
             </section>
           )}
         </section>
+
+        {/* Timed decision cards — wage demands, loan offers, Game Master
+            choices. The first is shown; the engine applies the default if the
+            player lets the in-game deadline pass. */}
+        {view.decisions.length > 0 && <DecisionCard decisions={view.decisions} onDecide={decide} />}
 
         {/* Bankruptcy auction — a failed rival's premises are up for grabs. The
             player can stake coins to take them over and run a second shop, or
