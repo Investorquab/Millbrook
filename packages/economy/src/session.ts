@@ -33,6 +33,7 @@ import {
   unemploymentRate,
 } from "./rules.js";
 import { GOAL_CARDS } from "./scoring.js";
+import { initGoal, recordTrade } from "./goal.js";
 import type { AiStrategyId, Decision, SeasonConfig, Trait, Workshop, World } from "./types.js";
 
 /** Player stepper bounds — the single source of truth the HUD imports too. */
@@ -227,6 +228,10 @@ export interface GoalCardInfo {
   id: string;
   name: string;
   howToWin: string;
+  /** "competitive" | "coop" | "secret" — present on the list getters. */
+  kind?: string;
+  /** Minimum workshops the card needs (Supply King 6, Landlord 8). */
+  minTownSize?: number;
 }
 
 /** A badge an owner earned for leading the town in one dimension. */
@@ -271,6 +276,9 @@ export interface SeasonSummary {
   /** Comings-and-goings prose, from real migration/bankruptcy events. */
   townNote: string;
   trophy: { name: string; note: string } | null;
+  /** For a co-op goal card: whether the town met it, with an explanation.
+   *  Null for competitive/secret cards (which rank owners instead). */
+  townGoal: { met: boolean; detail: string } | null;
 }
 
 export interface GazettePriceRow {
@@ -409,10 +417,10 @@ export class SoloSession {
   private readonly prevCoinsByWs = new Map<string, number>();
   private readonly deltaByWs = new Map<string, number>();
 
-  constructor(config: SeasonConfig & { playerTrade?: WorkshopType }) {
+  constructor(config: SeasonConfig & { playerTrade?: WorkshopType; goalCard?: string }) {
     // The player runs the trade they chose (the bakery by default, which keeps
     // the classic solo town); the AI owners take the rest.
-    const { playerTrade = "bakery", ...worldConfig } = config;
+    const { playerTrade = "bakery", goalCard, ...worldConfig } = config;
     this.world = createWorld({
       openWorkshops: ["bakery", "weaver", "smithy", "brewery"],
       // The solo game runs the Game Master (M4) by default; a caller can pass
@@ -460,6 +468,16 @@ export class SoloSession {
     // every other trade starts at its own default price. Wage is the base 8.
     shop.price = shop.type === "bakery" ? DEFAULT_PRICE : WORKSHOP_DEFS[shop.type].defaultPrice;
     shop.wage = DEFAULT_WAGE;
+
+    // Attach the chosen goal card and apply its opening setup (day 0), now that
+    // the player's shop is marked. Setups conserve coins; they run before the
+    // Follow-a-coin journal is attached so they don't show up as gameplay moves.
+    if (goalCard && GOAL_CARDS[goalCard]) {
+      this.goalCardId = goalCard;
+      const card = GOAL_CARDS[goalCard]!;
+      if (card.setup) card.setup(this.world);
+      else initGoal(this.world, goalCard);
+    }
 
     // Record every coin move from here on so the Proof screen can trace a coin
     // through the town (Follow-a-coin). The seed balances above are not moves,
@@ -556,6 +574,7 @@ export class SoloSession {
     seller.soldToday += qty;
     seller.revenueToday += coins;
     if (good === "tool") buyer.tools += qty;
+    recordTrade(this.world, seller.id, buyer.id, coins);
     pushFeed(
       this.world,
       "trade",
@@ -1097,12 +1116,30 @@ export class SoloSession {
   goalCards(): GoalCardInfo[] {
     return Object.values(GOAL_CARDS)
       .filter((c) => c.scoreOwner)
-      .map((c) => ({ id: c.id, name: c.name, howToWin: c.howToWin }));
+      .map((c) => ({ id: c.id, name: c.name, howToWin: c.howToWin, kind: c.kind, minTownSize: c.minTownSize }));
   }
 
-  /** Choose which goal card the season is scored against (defaults to Tycoon). */
+  /** Every goal card, competitive and co-op (for the full picker/League host). */
+  allGoalCards(): GoalCardInfo[] {
+    return Object.values(GOAL_CARDS).map((c) => ({
+      id: c.id, name: c.name, howToWin: c.howToWin, kind: c.kind, minTownSize: c.minTownSize,
+    }));
+  }
+
+  /**
+   * Choose which goal card the season is scored against (defaults to Tycoon).
+   * Changing a card before the season starts (day 0) also applies its opening
+   * setup; once play has begun only the scoring changes. The SoloProvider rebuilds
+   * the session on a goal change, so a setup is never applied twice to one world.
+   */
   setGoalCard(id: string): void {
-    if (GOAL_CARDS[id]) this.goalCardId = id;
+    const card = GOAL_CARDS[id];
+    if (!card) return;
+    this.goalCardId = id;
+    if (this.world.day === 0 && this.world.metrics.length === 0 && this.world.goal?.cardId !== id) {
+      if (card.setup) card.setup(this.world);
+      else initGoal(this.world, id);
+    }
   }
 
   // ── Fast-forward: charts and the "what happened" list ───────────────────────
@@ -1237,6 +1274,17 @@ export class SoloSession {
         fair_boss: "Fair Boss",
         speedrun: "Fast Mover",
         steadfast: "Town's Favourite",
+        last_shop_standing: "Last Shop Standing",
+        monopoly: "Monopolist",
+        merchant_prince: "Merchant Prince",
+        underdog: "Underdog",
+        great_depression: "Comeback of the Year",
+        supply_king: "Supply King",
+        landlord: "Town Landlord",
+        election_year: "People's Choice",
+        last_will: "Rightful Heir",
+        ageing_town: "Elder Statesman",
+        hidden_agenda: "Secret Winner",
       };
       return { name: byCard[this.goalCardId] ?? "Market Leader", note };
     }
@@ -1251,16 +1299,31 @@ export class SoloSession {
     return null;
   }
 
+  /** For a co-op goal card, the town-wide outcome; null for competitive cards. */
+  townGoal(): { met: boolean; detail: string } | null {
+    const card = GOAL_CARDS[this.goalCardId];
+    if (!card?.scoreTown) return null;
+    const t = card.scoreTown(this.world);
+    return { met: t.met, detail: t.detail };
+  }
+
   /** Headline, standings position and town health for the Scoreboard. */
   seasonSummary(): SeasonSummary {
     const rows = this.standings();
     const player = rows.find((r) => r.isPlayer)!;
     const leader = rows[0]!;
     const goal = this.goalCard();
+    const townGoal = this.townGoal();
 
-    const headline = `You finished ${ORDINALS[player.rank - 1] ?? `#${player.rank}`}`;
+    const headline = townGoal
+      ? townGoal.met
+        ? `Millbrook met the goal: ${goal.name}`
+        : `Millbrook fell short on ${goal.name}`
+      : `You finished ${ORDINALS[player.rank - 1] ?? `#${player.rank}`}`;
     let blurb: string;
-    if (player.rank === 1) {
+    if (townGoal) {
+      blurb = townGoal.detail;
+    } else if (player.rank === 1) {
       blurb = `You topped Millbrook on ${goal.name.toLowerCase()}. ${player.detail}`;
     } else {
       const coinGap = leader.profit - player.profit;
@@ -1291,6 +1354,7 @@ export class SoloSession {
       coins: this.holdings().total,
       townNote,
       trophy: this.trophy(player.rank),
+      townGoal,
     };
   }
 

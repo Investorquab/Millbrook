@@ -19,11 +19,11 @@ const TOWN_WORKSHOPS: Record<TownSize, string[]> = {
   8: ["bakery", "smithy", "weaver", "tailor", "tavern", "brewery", "apothecary", "carpenter"],
 };
 
-function makeSession(seed: number, size: TownSize, trade: WorkshopType): SoloSession {
+function makeSession(seed: number, size: TownSize, trade: WorkshopType, goalCard = "tycoon"): SoloSession {
   const shops = TOWN_WORKSHOPS[size];
   // The player's trade must be one the town opens; fall back to the bakery.
   const playerTrade = (shops.includes(trade) ? trade : "bakery") as WorkshopType;
-  return new SoloSession({ seed, days: 28, openWorkshops: shops as never, playerTrade });
+  return new SoloSession({ seed, days: 28, openWorkshops: shops as never, playerTrade, goalCard });
 }
 
 /** The trades a town of this size opens, for the Hub's trade picker. */
@@ -60,6 +60,11 @@ export interface SoloController {
   playerTrade: WorkshopType;
   /** Start a fresh season running a chosen trade (resets the season). */
   setPlayerTrade: (trade: WorkshopType) => void;
+  /** The goal card the season is scored against. */
+  goalCard: string;
+  /** Start a fresh season scored against a chosen goal card (resets the season,
+   *  so a card's opening setup is applied cleanly from day 0). */
+  setGoalCard: (id: string) => void;
   /** Start a fresh season (optionally with a new seed). */
   newSeason: (seed?: number) => void;
 }
@@ -74,12 +79,13 @@ const SoloContext = createContext<SoloController | null>(null);
  */
 export function SoloProvider({ children, seed = 42 }: { children: ReactNode; seed?: number }) {
   const ref = useRef<SoloSession | null>(null);
-  if (ref.current === null) ref.current = makeSession(seed, 4, "bakery");
+  if (ref.current === null) ref.current = makeSession(seed, 4, "bakery", "tycoon");
 
   const [view, setView] = useState<SoloView>(() => ref.current!.view());
   const [running, setRunning] = useState(false);
   const [townSize, setTownSizeState] = useState<TownSize>(4);
   const [playerTrade, setPlayerTradeState] = useState<WorkshopType>("bakery");
+  const [goalCard, setGoalCardState] = useState<string>("tycoon");
 
   const refresh = useCallback(() => setView(ref.current!.view()), []);
 
@@ -162,11 +168,11 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
 
   const newSeason = useCallback(
     (nextSeed = seed) => {
-      ref.current = makeSession(nextSeed, townSize, playerTrade);
+      ref.current = makeSession(nextSeed, townSize, playerTrade, goalCard);
       setRunning(false);
       refresh();
     },
-    [refresh, seed, townSize, playerTrade],
+    [refresh, seed, townSize, playerTrade, goalCard],
   );
 
   const setTownSize = useCallback(
@@ -174,23 +180,35 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
       // Keep the chosen trade if the new town still opens it, else fall back.
       const shops = tradesForTown(size);
       const trade = shops.includes(playerTrade) ? playerTrade : "bakery";
-      ref.current = makeSession(seed, size, trade);
+      ref.current = makeSession(seed, size, trade, goalCard);
       setTownSizeState(size);
       setPlayerTradeState(trade);
       setRunning(false);
       refresh();
     },
-    [refresh, seed, playerTrade],
+    [refresh, seed, playerTrade, goalCard],
   );
 
   const setPlayerTrade = useCallback(
     (trade: WorkshopType) => {
-      ref.current = makeSession(seed, townSize, trade);
+      ref.current = makeSession(seed, townSize, trade, goalCard);
       setPlayerTradeState(trade);
       setRunning(false);
       refresh();
     },
-    [refresh, seed, townSize],
+    [refresh, seed, townSize, goalCard],
+  );
+
+  const setGoalCard = useCallback(
+    (id: string) => {
+      // Rebuild from a fresh world so the card's opening setup (Underdog's lop-
+      // sided purses, the Great Depression's layoffs) is applied cleanly once.
+      ref.current = makeSession(seed, townSize, playerTrade, id);
+      setGoalCardState(id);
+      setRunning(false);
+      refresh();
+    },
+    [refresh, seed, townSize, playerTrade],
   );
 
   // Advance a day on a timer while running; stop at the end of the season.
@@ -228,6 +246,8 @@ export function SoloProvider({ children, seed = 42 }: { children: ReactNode; see
     setTownSize,
     playerTrade,
     setPlayerTrade,
+    goalCard,
+    setGoalCard,
     newSeason,
   };
 

@@ -113,6 +113,33 @@ export interface Workshop {
   startingCoins: number;
 }
 
+/** Per-workshop running totals a goal card may score on (goal.ts). Only tracked
+ *  while a season has an active goal card; absent for headless sims. */
+export interface GoalTrack {
+  /** Coins this shop has traded with other owners (Merchant Prince). */
+  coinsTraded: number;
+  /** Units of its good this shop has sold all season (Supply King, Monopoly). */
+  soldTotal: number;
+  /** Consecutive days it has been the lead seller of its good (Monopoly). */
+  leadStreak: number;
+  leadStreakBest: number;
+  /** The first game day it reached full staff, or null (Great Depression). */
+  fullStaffDay: number | null;
+}
+
+/** The active goal card and the running state it needs to be scored. Set by the
+ *  SoloSession (and rooms); left undefined for headless sims, so goal tracking
+ *  is a no-op and determinism is untouched. */
+export interface GoalRuntime {
+  cardId: string;
+  /** Per-workshop running totals, keyed by workshop id. */
+  track: Map<string, GoalTrack>;
+  /** The workshop whose owner died for the Last Will card (set on day 7). */
+  lastWillWorkshopId?: string;
+  /** Guards the once-only day-triggered setups (deaths, epidemics, arrivals). */
+  fired: Set<string>;
+}
+
 export interface Coop {
   id: string;
   /** Current coin price of each raw good (GM events can move these). */
@@ -144,6 +171,8 @@ export interface DayMetrics {
   day: number;
   phase: Phase;
   population: number;
+  /** The town's housing capacity on this day (for the Housing Crisis card). */
+  houses: number;
   employed: number;
   unemployment: number;
   avgWage: number;
@@ -366,4 +395,7 @@ export interface World {
   decisions: Decision[];
   /** Loans owed to the Town Hall bank, by workshop id → outstanding principal. */
   loans: Map<string, number>;
+  /** The active goal card and its running trackers, or undefined for headless
+   *  sims (so goal scoring never touches determinism). */
+  goal?: GoalRuntime;
 }

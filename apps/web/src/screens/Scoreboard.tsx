@@ -32,6 +32,11 @@ export function Scoreboard() {
           </span>
           <h1>{summary.headline}</h1>
           <p>{summary.blurb}</p>
+          {summary.townGoal && (
+            <span className={`sb__town-goal${summary.townGoal.met ? " is-met" : ""}`}>
+              {summary.townGoal.met ? "Goal achieved" : "Goal missed"}
+            </span>
+          )}
         </header>
 
         <div className="sb__body">

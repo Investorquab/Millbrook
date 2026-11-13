@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { color } from "../theme/tokens";
@@ -19,24 +19,21 @@ import "./Hub.css";
 export function Hub() {
   const navigate = useNavigate();
   const room = useRoom();
-  const { session, townSize, setTownSize, playerTrade, setPlayerTrade } = useSolo();
+  const { session, townSize, setTownSize, playerTrade, setPlayerTrade, goalCard, setGoalCard } = useSolo();
   const { username, isSignedIn, signOut } = useAuth();
   const [code, setCode] = useState("");
 
   // The goal the solo season is scored against — chosen here, read on the
-  // Scoreboard. Persists on the shared session across the in-app navigation.
-  const goals = session.goalCards();
-  const [goalId, setGoalId] = useState(() => session.goalCard().id);
+  // Scoreboard. The provider rebuilds the season when the goal changes, so a
+  // card's opening setup is applied cleanly from day 0.
+  const goals = session.allGoalCards();
+  const goalId = goalCard;
   const activeGoal = goals.find((g) => g.id === goalId) ?? goals[0]!;
+  // Hide cards the current town is too small for (Supply King needs 6, Landlord 8).
+  const availableGoals = goals.filter((g) => !g.minTownSize || townSize >= g.minTownSize);
   function chooseGoal(id: string) {
-    session.setGoalCard(id);
-    setGoalId(id);
+    setGoalCard(id);
   }
-  // Re-apply the chosen goal whenever the session is rebuilt (e.g. town size
-  // changes), so the player's goal survives a reset.
-  useEffect(() => {
-    session.setGoalCard(goalId);
-  }, [session, goalId]);
 
   function onHost() {
     if (!isSignedIn || !username) {
@@ -168,7 +165,7 @@ export function Hub() {
               <div className="hub__goal" role="group" aria-label="Choose your goal">
                 <span className="hub__goal-label">Your goal</span>
                 <div className="hub__goal-chips">
-                  {goals.map((g) => (
+                  {availableGoals.map((g) => (
                     <button
                       type="button"
                       key={g.id}

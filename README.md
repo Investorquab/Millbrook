@@ -57,10 +57,17 @@ tooltips explain every number.
   jumping during an epidemic). The bigger towns' owners are ordered so the
   supplier and specialist shops are well run. Every coin still stays in town, so
   the total holds.
-- You **choose your goal** on the Hub before a season — Tycoon (most profit),
-  Biggest Employer, Fair Boss (highest wage while profitable), Speedrun (first to
-  5,000) or Steadfast (highest standing with the town) — and the season-end
-  Scoreboard ranks everyone by it.
+- You **choose your goal** on the Hub before a season — from the full set of 20
+  cards. Competitive ones rank the owners (Tycoon, Biggest Employer, Fair Boss,
+  Speedrun, Last Shop Standing, Monopoly, Merchant Prince, Underdog, Great
+  Depression, Supply King, Landlord, Election Year, Last Will, Ageing Town,
+  Hidden Agenda, plus the extra Steadfast); co-op ones score the whole town
+  (Town Hero, Boomtown, Public Works, Housing Crisis, Epidemic). Several change
+  the opening — Underdog starts you poor while the rivals start rich, the Great
+  Depression opens at 30% unemployment, Last Will kills off a rival on day 7 so
+  her shop goes to auction — and every setup still totals exactly 10,000 coins.
+  The season-end Scoreboard ranks everyone by a competitive card, or shows the
+  town's met/missed outcome for a co-op one.
 - The season-end Scoreboard ranks owners by the goal card and shows each owner's
   **reputation** (−100 Ruthless … +100 Fair), which moves with wages against the
   town average, layoffs and strikes — and feeds back into the game: fair owners

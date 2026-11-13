@@ -60,6 +60,7 @@ import { runTheft } from "./theft.js";
 import { runDecisions } from "./decisions.js";
 import { runLoans } from "./loans.js";
 import { runUnions } from "./unions.js";
+import { trackGoalDay } from "./goal.js";
 import { runFire } from "./fire.js";
 import { runHousing } from "./housing.js";
 import { runFestivals, festivalFactor } from "./festivals.js";
@@ -667,6 +668,9 @@ function endOfDay(world: World, totalSales: number): void {
 
   updateReputations(world);
   recordMetrics(world, totalSales);
+  // Advance the active goal card's running totals and fire any day-triggered
+  // scenario (a no-op without a goal, so headless determinism is untouched).
+  trackGoalDay(world);
 
   // Advance the day and note a phase change.
   const prevPhase: Phase = world.phase;
@@ -739,6 +743,7 @@ function recordMetrics(world: World, totalSales: number): void {
     day: world.day,
     phase: world.phase,
     population: alive.length,
+    houses: world.houses,
     employed: employed.length,
     unemployment: alive.length ? (alive.length - employed.length) / alive.length : 0,
     avgWage,
