@@ -1,216 +1,160 @@
+<div align="center">
+
 # Millbrook
 
-**A tiny town with a real economy, settled on NEAR.** Thirty residents are both your
-workers and your only customers. The town holds a fixed **10,000 coins** — enforced
-by a NEAR contract with no admin key and no way to mint — so every coin you earn came
-from someone else in town. Run a workshop against AI owners (or, soon, friends in a
-room) and try to thrive without wrecking the place.
+### A tiny town with a real economy, settled on NEAR.
 
-Built for the **NEAR hackathon — Games With Real Economies**.
+**Thirty residents are both your workers and your only customers.**
+The town holds a fixed **10,000 coins** — enforced by a NEAR contract with no admin
+key and no way to mint — so every coin you earn came from someone else in town.
+Cut wages and your own market shrinks. When every owner does it, a recession emerges
+that nobody scripted.
 
-- **Contract (live, NEAR testnet):** [`millbrook.testnet`](https://testnet.nearblocks.io/address/millbrook.testnet) — fixed 10,000-coin supply, auditable on-chain.
-- **Live demo:** **https://millbrook.185-7-81-139.sslip.io** — the full game: solo play (economy, Game Master, the live on-chain Proof read), passwordless sign-in, and **live multiplayer rooms** (host, share the code, friends join and each run a shop). A solo-only static mirror also runs at https://millbrook-phi.vercel.app.
-- **Video:** coming for submission.
+Built for the **NEAR Hackathon — Games With Real Economies** · *the economy is the gameplay.*
+
+**[▶ Play the live game](https://millbrook.185-7-81-139.sslip.io)** · **[🔗 Contract on NEAR testnet](https://testnet.nearblocks.io/address/millbrook.testnet)** · **[💻 Source](https://github.com/Investorquab/Millbrook)**
+
+</div>
+
+---
+
+## Why we built Millbrook
+
+Most "crypto games" bolt a token onto a game. We wanted the opposite: a game where the
+**economy is the whole point**, and the chain is simply what makes the economy
+impossible to fake.
+
+The oldest idea in economics is the **circular flow** — your wages are someone else's
+spending, and their spending is your income. Millbrook makes that literal and small
+enough to *feel*. The same thirty people are the labour and the demand. Underpay them
+and they can't buy your bread. There is no faucet and no sink: a NEAR contract holds
+exactly 10,000 coins and **rejects any settlement that doesn't still sum to 10,000**.
+That one rule turns a town-builder into a genuinely closed economy you can audit on a
+public explorer — and a game where the interesting failures (recessions, wage wars,
+bankruptcies) are emergent, not scripted.
+
+And the player should never have to think about any of that. No wallet, no seed phrase,
+no gas, no popups — just an email, a shop, and a town that reacts.
+
+---
+
+## The game loop (designed on paper first)
+
+| Cadence | What you do |
+| --- | --- |
+| **Every ~30 seconds** | Set a price, hire or fire a resident, read *why* someone just quit or bought (a plain-words tooltip from the rules), and watch a sale send a gold coin arcing from customer to shop. |
+| **Every ~5 minutes** (a season, live or fast-forwarded) | Respond to **Game Master** events (a drought, a festival, an epidemic), answer **decision cards** (a raise demand, a Town Hall loan), survive a rival's wage war, vote in an **election**, weather a fire or a strike — and watch town-wide unemployment and sales move in response. |
+| **Every session** | Pick your **town** (4–8 shops) and your **goal card** (20 of them), play a 28-day season against AI owners, or **host a room** and run shops with friends. Climb the **Scoreboard**, then open the **Proof** screen and follow a single coin through the whole town. |
+
+A **Fast-forward** screen simulates a week of trading in seconds so a judge can watch the
+economy move without waiting.
+
+---
+
+## How it meets the track
+
+> **Games With Real Economies** — *Build NPCs with wallets, player-owned markets and economies that evolve without a dev patch. Judged on the game loop, not the token — bonus if players never notice the chain. Lean on: Agent NPCs, social login, NEAR Intents, NEP-245.*
+
+| Track ask | In Millbrook | Status |
+| --- | --- | --- |
+| **NPCs with wallets** | Every resident, owner, the Co-op and the Town Hall holds an on-chain balance inside the contract (ids `r0…`, `w0…`, `coop`, `townhall`). AI owners (Greedy Gus, Fair Fern, Steady Sam, Risky Rita) each run a shop, set prices from their stock and the town's demand, and can go bankrupt. | ✅ Live |
+| **Agent NPCs** | The **Game Master** is an AI agent (NEAR AI Cloud) that reads real weather + town metrics and changes the world within hard caps the contract enforces — then anchors a signed receipt on NEAR. Merchant owners are rule-based agents whose reasoning shows in a tooltip. | ✅ Live |
+| **Social / email login** | Passwordless email magic-link sign-in. No seed phrase, no wallet popup, **no gas in the normal loop** — accounts are custodial testnet sub-accounts. | ✅ Live |
+| **NEP-245 multi tokens** | One contract holds **every item type** (`bread`, `cloth`, `tool`, …) as NEP-245 multi tokens, with the full standard surface and `mt_mint`/`mt_burn`/`mt_transfer` events. Exercised on-chain. | ✅ Live |
+| **Economy evolves without a dev patch** | Recessions, wage wars, unionisation, elections, ageing, births, bankruptcies and auctions are all **emergent** from `rules.ts` + the Game Master — no content scripting. | ✅ Live |
+| **Players never notice the chain** | No wallet, no gas, no signing in the game loop. The chain surfaces only on the optional **Proof** screen. | ✅ Live |
+| **NEAR Intents** | Not used — see [Honest notes](#honest-notes). The custodial, server-settled design means players never sign a transaction, so there's no in-loop intent to route. A candidate for a future wallet-optional mode. | ◻️ Roadmap |
+
+**Pricing rules live in one readable file:** [`packages/economy/src/rules.ts`](packages/economy/src/rules.ts). Every rule returns its reason as a short sentence for the tooltip.
+
+---
+
+## For judges — start here
+
+1. **Open [the live game](https://millbrook.185-7-81-139.sslip.io)** → *Play solo* → hire a worker, set a price, press play. You'll see a sale (and hear a coin) within a minute; a guided tour walks the loop.
+2. **Cause a recession:** slash your wage and **Fast-forward** a week — watch town unemployment rise and everyone's sales fall. Nobody scripted it.
+3. **Audit the money:** open **Proof**. It reads the **live** on-chain total from `millbrook.testnet` (10,000) and lets you **Follow a coin** hand-to-hand across the town.
+4. **See the AI act inside the rules:** play until a **Game Master** event fires, then click *"Why did this happen?"* for the data it read, its reasoning, and the on-chain receipt.
+5. **Play together:** on the Hub pick a 6-shop town + a goal card and **host a room**; share the code; a second browser joins and claims a shop; chat and send a trade offer.
+6. **Verify the contract** on the [explorer](https://testnet.nearblocks.io/address/millbrook.testnet): `audit_total` = 10,000, the NEP-245 views, and the NEP-297 settlement/receipt events. No `mint`, `burn`, `owner`, `upgrade` or `pause` method exists.
+
+A full **[5-minute walkthrough for judges is in `docs/DEMO.md`](docs/DEMO.md)**.
 
 ---
 
 ## What works today
 
-Everything in this list runs in this repo right now and is covered by tests.
+Everything below runs in this repo right now and is covered by tests (**157 economy + 64 server tests**, the 10,000-coin invariant checked across 100 seeds).
 
-### The economy (`packages/economy`)
-A pure, deterministic simulation — a seeded RNG, no clocks, no I/O. Thirty residents,
-the four Phase-1 workshops (Bakery, Weaver, Smithy, Brewery), a Town Co-op and a Town
-Hall. Residents work, get paid, shop, change jobs, strike and migrate; AI owners
-(Greedy Gus, Fair Fern, Steady Sam, Risky Rita) each run a readable strategy.
+### The economy — `packages/economy`
+A pure, deterministic simulation (seeded RNG, no clocks, no I/O). Thirty residents work,
+earn wages, shop, change jobs, strike and migrate; AI owners each run a readable
+strategy. **The 10,000-coin invariant holds after every tick, for 100 random seeds**;
+same seed → same season. A wage war causes a measurable recession, and the Town Hall
+safety net pulls a crashed town back under 20% unemployment within ~10 days.
 
-- The **10,000-coin invariant holds after every tick, for 100 random seeds**.
-- Same seed → same season (determinism is tested).
-- A wage war causes a measurable recession; the Town Hall safety net pulls a crashed
-  town back under 20% unemployment within 10 days.
-- `pnpm sim --seed 42 --days 28` prints a full season report.
+### The game — `apps/web` (React + React Three Fiber)
+A low-poly **mill town at dusk** on a slow day→night cycle whose shops react to the
+simulation, with residents who walk to work and float speech bubbles of their *real*
+reason, a **gold coin-flow** on every sale, and sound synthesized in code (no audio
+files). Highlights:
 
-### The game (`apps/web`)
-A React + React Three Fiber solo game: a low-poly mill town on a slow day → night
-cycle (golden dusk, then a lamp-lit night, then a bright day) whose shops react to
-the simulation, walking residents who float speech bubbles with their real reason
-(straight from the rules — "Bought today's bread", "Left the weaver for the smithy"),
-and a gold coin-flow on sales. Synthesized sound — a coin chime on sales, soft clicks
-and a Game Master cue (all made in code, no audio files) — with a mute toggle. Nine screens ported from the approved designs — Title,
-Sign-in, Hub, Town (3D HUD), Resident, Proof, Fast-forward, Scoreboard, Gazette. Rule
-tooltips explain every number.
+- **Choose your town:** 4 classic shops, **6** (adds Tailor + Tavern — a real cloth→clothes and bread→meals supply chain), **7** (Apothecary; remedy demand spikes in an epidemic) or **8** (Carpenter builds houses).
+- **Choose your goal:** 20 cards — competitive (Tycoon, Biggest Employer, Monopoly, Underdog, Great Depression, Last Will, …) and co-op (Town Hero, Boomtown, Public Works, Housing Crisis, Epidemic). Several change the opening; every setup still totals exactly 10,000.
+- **A living town:** residents **age**, **retire**, pass away with an **inheritance** (10% estate tax to the Town Hall), and have **children** in good times; the town holds **elections** that set tax and minimum-wage policy; shops **unionise** and **strike** when underpaid, can catch **fire** (and carry **insurance**), suffer **theft** when unemployment runs high (post a **guard**), and go **bankrupt** → **auction**, where you can bid for a second shop. *Every one of these only moves coins within town, so the total never leaves 10,000.*
+- **A Foreman** runs plain-code standing orders for your shop each dawn and reports what it did. **Decision cards** put raises and Town Hall **bank loans** to you with a default answer. A **Market** screen shows the whole town at a glance; a **Scoreboard** ranks owners by the goal card with **reputation** and **trophy badges**; the **Gazette** writes up the week.
+- **Follow a coin** (on **Proof**) traces one coin's actual path across the ledger — wage → bread → wheat → farm wage.
 
-- Acceptance test passes: a new player signs in, hires a worker, sets a price and
-  sees a sale within 60 seconds.
-- A **guided first session** walks a new player through that exact loop — hire → set
-  price → play → first sale — with a coach card and a highlight that follows the live
-  control, advancing as you act. It shows once and can be skipped.
-- A **Foreman** runs standing orders for your shop in plain code each dawn — match
-  rival wages (up to a cap) to keep your workers, and hire when bread demand goes
-  unmet — and tells you what it did in plain words. (The on-chain Foreman key and
-  AI-written wording are roadmap.)
-- You **choose your town** on the Hub: the classic four shops, a **full town
-  of six** that adds the **Tailor** (buys cloth from the Weaver to make clothes)
-  and the **Tavern** (buys bread from the Bakery to make meals) — a real
-  inter-workshop supply chain — or a **seven-shop town** that also opens the
-  **Apothecary** (buys herbs from the Co-op and sells remedies, with demand
-  jumping during an epidemic). The bigger towns' owners are ordered so the
-  supplier and specialist shops are well run. Every coin still stays in town, so
-  the total holds.
-- You **choose your goal** on the Hub before a season — from the full set of 20
-  cards. Competitive ones rank the owners (Tycoon, Biggest Employer, Fair Boss,
-  Speedrun, Last Shop Standing, Monopoly, Merchant Prince, Underdog, Great
-  Depression, Supply King, Landlord, Election Year, Last Will, Ageing Town,
-  Hidden Agenda, plus the extra Steadfast); co-op ones score the whole town
-  (Town Hero, Boomtown, Public Works, Housing Crisis, Epidemic). Several change
-  the opening — Underdog starts you poor while the rivals start rich, the Great
-  Depression opens at 30% unemployment, Last Will kills off a rival on day 7 so
-  her shop goes to auction — and every setup still totals exactly 10,000 coins.
-  The season-end Scoreboard ranks everyone by a competitive card, or shows the
-  town's met/missed outcome for a co-op one.
-- The season-end Scoreboard ranks owners by the goal card and shows each owner's
-  **reputation** (−100 Ruthless … +100 Fair), which moves with wages against the
-  town average, layoffs and strikes — and feeds back into the game: fair owners
-  draw and keep workers, ruthless ones lose them faster (pay is unchanged, so the
-  10,000-coin invariant holds). Each owner also earns **trophy badges** for the
-  dimension they lead — Top Earner, Biggest Employer, Fairest Boss, Best Payer.
-- A **Market** screen shows the whole town at a glance — all four workshops (yours
-  and the three AI rivals) with price, wage, crew, stock, sales, profit and standing,
-  the public purse, and a town-wide ledger — all live from the same season.
-- The town **ages**: residents grow a year older each game week, retire at 65 to
-  live on their savings, and the very old pass away peacefully — their savings
-  passing to an heir in town minus a 10% estate tax to the Town Hall (all to the
-  Town Hall with no heir). Every coin stays in town, so the total never leaves
-  10,000; retirements and deaths show up in the feed and the Gazette.
-- And the town **grows**: in a thriving, low-unemployment week a comfortable
-  resident has a child — a dependent (a mouth to feed, out of the labour force)
-  who starts looking for work two game weeks later. Births are conservative and
-  capped so a season can't run away, and the parent's small endowment only moves
-  coins, so the total stays 10,000.
-- **Holidays and festivals**: a weekly market day and a mid-season harvest
-  festival lift the town's appetite to spend — more ale, meals and clothes sold.
-  Demand only: residents spend coins they already hold, so the total holds.
-- Residents **rent** their homes: a small daily rent comes out of their wage to
-  the Town Hall (the public landlord). As the town grows past its **houses**, its
-  poorest are left without a home and start to drift away — so the Town Hall
-  **builds houses** under pressure, paying residents to raise them. Only coins
-  between residents and the Town Hall move, so the total holds at 10,000.
-- The town also **governs itself**: at each phase boundary the residents hold an
-  **election**, each voting by their own welfare — the comfortable for a thrifty
-  Mayor (lower taxes), the struggling for a caring one (more benefits and a
-  minimum wage). The winner sets the Town Hall's tax and benefit policy for the
-  phase. Only rates change, never the 10,000-coin total.
-- The town puts **decisions** to you as timed cards with a default answer: your
-  crew asks for a raise, or the **Town Hall bank** offers a loan to cover a lean
-  stretch (repaid weekly with interest). Leave a shop clearly **underpaid** for
-  several days and its workers **unionise** — and a unionised crew that stays
-  underpaid walks out on **strike** sooner than an unorganised one. Loans move
-  coins only between the shop and the Town Hall, and a strike simply stops work,
-  so the total still holds at 10,000.
-- When a town is left to **struggle** (unemployment runs high), petty **theft**
-  bites — a little of each shop's stock goes missing overnight. Goods are lost,
-  never coins, so the total stays 10,000; the only real fix is to get the town
-  back to work. You can **post a guard** at your shop: on a bad night you pay the
-  watch (coins that recirculate) and your stock is spared — the guard-vs-losses
-  decision from the design.
-- A workshop can catch **fire** and lose its stock. **Insure** your shop (a small
-  daily premium into the Town Co-op's pool) and the pool pays a claim when fire
-  strikes, or take the risk. Fire destroys goods, never coins; premiums and
-  claims only move coins between the shop and the pool, so the total holds at
-  10,000. Cautious AI owners insure; the greedy and the risky chance it.
-- A workshop that **can't pay wages for three days goes bankrupt** — and its
-  premises don't sit empty: they go to **auction**. Around mid-season an AI owner
-  also retires and puts their shop up, so you reliably get the chance to **bid**:
-  stake coins from your till to take over a second shop and run it, or let an AI
-  buyer have it. The former owner's estate is swept to the Town Hall, so the
-  town's 10,000 coins stay in town while its trade keeps churning. (A shop you
-  run is never auctioned out from under you.)
-- **Follow a coin** (on the Proof screen) traces one coin hand to hand through the
-  town — a wage becomes bread, bread becomes wheat, wheat becomes a farmer's wage —
-  reading real moves from the season's ledger; "trace another coin" picks a new path.
-  (On the static demo these are the deterministic sim's moves, which the server nets
-  into the day's on-chain settlement; per-transaction explorer links are roadmap.)
-- **Live on-chain settlement.** On the full (server) deploy, one live room settles
-  itself to the contract as it plays: each game day the server posts that room's
-  net, conserving transfers to `millbrook.testnet` with the operator key, so the
-  audited total stays exactly 10,000 and the settlement count climbs. The Proof
-  screen lists the most recent settlements with testnet explorer links. (Opt-in via
-  `SETTLE_ONCHAIN=1`; the contract holds one town's 10,000, so one room settles at a
-  time. Verified live: real settlements #4–#6 posted, total held at 10,000.)
-- **The Gazette** is written each game week from the town's real events. On the full
-  deploy, if a NEAR AI key is configured the model rewrites the lead story from those
-  same events (inventing nothing); otherwise the deterministic template edition shows.
+### Multiplayer rooms — `apps/server` + web client
+A Socket.IO server: create a room, share an invite code, friends join and **each claims
+and runs a shop** in the same shared 3D town. The host now also picks the **goal card
+and town size**, so a room is as deep as a solo game. Live **chat** and **trade offers**
+(goods for coins, always conserving the 10,000) run over the same socket. A room can be
+**Live** (plays out in minutes) or a scheduled **League** season with a morning report,
+*Ready-to-skip*, season rollover and **event-sourced persistence** (survives a restart
+with `DATABASE_URL`).
 
-### The chain (`contracts/millbrook`) — **live on testnet**
-A Rust (near-sdk) economy ledger. A pure `millbrook-ledger` core holds the invariant
-logic; a thin `#[near]` shell persists it on-chain.
+### Passwordless sign-in — `apps/server`
+Enter an email + username; the server sends a one-time magic link (or surfaces it
+on-screen in demo mode). Tokens are single-use, 15-minute, stored only as a hash. Solo
+play is guest-friendly; hosting or joining a room asks you to sign in first.
 
-- Seeded to exactly 10,000 coins; **re-audited on-chain after every settlement**.
-- **Settlement is operator-only** and conserves by construction; an overdraw is
-  refused.
-- **No mint, no burn, no owner/upgrade/migrate/pause** on the coins — the operator's
-  only power is conservation-preserving settlement.
-- **Goods are NEP-245 multi tokens.** One contract holds every item type (`bread`,
-  `cloth`, `tool`, …); each good is a `token_id`, balances are per account. It exposes
-  the standard surface — `mt_transfer` / `mt_batch_transfer` (1 yocto, caller-signed),
-  `mt_balance_of` / `mt_batch_balance_of`, `mt_supply` / `mt_batch_supply`, `mt_token`,
-  `mt_tokens`, `mt_tokens_for_owner`, `mt_metadata` — and emits NEP-245 `mt_mint` /
-  `mt_burn` / `mt_transfer` events. The game's own loop still moves goods via the
-  operator-batched `transfer_items`, so players never sign or pay gas. Goods are not
-  coins and never touch the 10,000 total.
-- Every coin move emits a NEP-297 `EVENT_JSON` so "Follow a coin" needs no indexer.
-- Verified live: seeded + audited at 10,000, real settlements, and the **NEP-245
-  interface exercised on-chain** (mint → standard views → a 1-yocto `mt_transfer`) on the
-  [explorer](https://testnet.nearblocks.io/address/millbrook.testnet).
+---
 
-### Settlement (`apps/server`)
-The server diffs the ledger each game day and posts the **net** transfers to the
-contract, recording each transaction hash. Verified live: two game days settled
-on-chain with the audited total holding at exactly 10,000.
+## On-chain: the NEAR stack
 
-### The Game Master (`packages/economy`, `outlayer/game-master`)
-An AI that reads town metrics and a real **weather feed** (Open-Meteo, keyless) and
-fires one event a game week from a fixed catalog — drought, heatwave, festival,
-railway, tax inspector, an epidemic that keeps sick workers off the job, and more —
-always within hard caps the code enforces. During an **epidemic** you choose
-whether to **pay sick workers in full** (goodwill with the town) or dock them
-(coins saved, standing lost). The one
-coin-moving event (the tax inspector) pays into the Town Co-op, so coins never leave
-the 10,000. Each decision carries a reasoning paragraph and a **receipt anchored on
-NEAR** (`record_receipt`). The Town's "Why did this happen?" card shows the data, the
-reasoning and the source.
+### The contract — `contracts/millbrook` (Rust / near-sdk), **live at [`millbrook.testnet`](https://testnet.nearblocks.io/address/millbrook.testnet)**
+A **two-crate** design: a pure `millbrook-ledger` core holds the invariant logic (unit-tested without a VM), and a thin `#[near]` shell persists it on-chain.
 
-- If the weather feed or the AI model is unavailable, it falls back to town metrics
-  and a template, and **says so** — tested at both the simulation and enclave layers.
+- **Fixed supply.** Seeded to exactly **10,000 coins** and **re-audited on-chain after every settlement** — a batch that doesn't sum to 10,000 is reverted.
+- **No privileged power.** **No mint, no burn, no owner, no upgrade, no migrate, no pause.** The operator's *only* ability is conservation-preserving settlement; an overdraw is refused.
+- **Goods are [NEP-245](https://nomicon.io/Standards/Tokens/MultiToken/Core) multi tokens.** One contract holds every item type; each good is a `token_id` with per-account balances. Full standard surface — `mt_transfer`/`mt_batch_transfer`, `mt_balance_of`/`mt_batch_balance_of`, `mt_supply`, `mt_token(s)`, `mt_tokens_for_owner`, `mt_metadata` — emitting `mt_mint`/`mt_burn`/`mt_transfer` events. Goods never touch the coin total.
+- **Auditable moves.** Every coin move emits a **[NEP-297](https://nomicon.io/Standards/EventsFormat)** `EVENT_JSON`, so *Follow a coin* needs no indexer; Game Master decisions anchor a `gm_receipt` the same way.
+- **Verified live:** seeded + audited at 10,000, real settlements posted, and the NEP-245 interface exercised on-chain (mint → standard views → a 1-yocto `mt_transfer`).
 
-### Sign-in (`apps/server` magic links)
-Passwordless, no wallet: enter an email and a username and the server emails a
-one-time link (Resend; without a key it logs the link to its console so the flow
-still works). Clicking it mints a session the browser keeps, and that username is
-your identity in rooms, chat and on scoreboards. Solo play stays guest-friendly;
-hosting or joining a room asks you to sign in first. Tokens are single-use,
-expire in 15 minutes, and are stored only as a hash.
+### NEAR tools & standards we used
+- **NEAR testnet** — the contract account `millbrook.testnet`, deployed and settled against live chain state.
+- **near-sdk (Rust)** — the contract, pinned and built to `wasm32-unknown-unknown`.
+- **NEP-245** (multi-token goods) and **NEP-297** (event format for settlements, mints and receipts).
+- **NEAR AI Cloud** — the Game Master's reasoning model (OpenAI-compatible), with a deterministic template fallback when no key is set.
+- **FastNEAR RPC** + **nearblocks** explorer — the browser's live `audit_total` read and the public audit trail.
+- **Open-Meteo** (keyless) — the real weather feed the Game Master reads.
+- **OutLayer** — an enclave job (`outlayer/game-master`) that runs the Game Master and produces a hash receipt (full TEE attestation is roadmap).
 
-### Rooms (`apps/server` + web client)
-A Socket.IO server with rooms: create, invite code, lobby, host start, and a live
-tick that advances the season. The web client (Host/Join screens) is wired to it:
-friends join by code, **each claims one of the four shops and runs it** (the host
-runs the bakery), and everyone watches the same shared town. AI owners fill any
-shop no one claims. **Room chat** with who's-here and join/claim notices runs over
-the same socket (lines trimmed and length-capped). Players also post **trade offers**
-— "N of my good for P coins" to the room or a named player — which another player
-accepts; coins move buyer→seller and goods seller→buyer (tools lift the buyer's
-output), always conserving the town's 10,000 coins. HTTP `/health` and `/rooms`.
+### What's on-chain, what's off-chain, and why
+The simulation runs for speed (in the browser for solo, on the server for rooms), and
+**money settles to the contract as net daily transfers** that must still total 10,000.
+NPC balances live *inside* the contract under their own ids rather than as 30+ separate
+accounts — a deliberate trade-off (still on-chain and auditable, far cheaper on testnet),
+stated plainly. Player accounts are **custodial** testnet sub-accounts, which is what
+lets email login work with no wallet. **Testnet only** — no real value moves.
 
-A room can be **Live** (plays out in minutes — watch it tick) or a **League** season,
-which advances a day on a schedule so people drop in across the week. A League room
-keeps running while empty (the Foreman and decision defaults carry your shop), gives
-a returning player a **morning report** of what they missed, lets everyone present
-press **Ready to skip** to advance at once, and **rolls into a fresh season** at day 28.
-League rooms are **persisted** (event-sourced: a room is saved as its seed plus the
-ordered log of deterministic moves, replayed on boot), so with `DATABASE_URL` set they
-**survive a server restart**; without it they live in memory. The `infra/` stack (Node
-server + Postgres 16 + Caddy) is ready for a VPS.
+> **On live settlement:** solo play is the deterministic sim in your browser, and the
+> Proof screen reads the live on-chain total. **Automatic daily settlement of a running
+> room** to the chain is **opt-in** (`SETTLE_ONCHAIN=1` with operator creds); because the
+> contract holds one town's 10,000, one room settles at a time. It's verified working
+> (settlements #4–#6 posted, total held at 10,000) but **off by default** on the public
+> demo, so the explorer's settlement count only climbs when it's enabled.
 
 ---
 
@@ -238,53 +182,33 @@ pnpm --filter @millbrook/web build
 docker compose -f infra/docker-compose.yml up -d
 ```
 
-Copy `.env.example` to `.env` and fill what you need. **Nothing here needs a paid key
-to run** — the weather feed is keyless, and the Game Master, login and enclave all have
-fallbacks. See [`docs/SETUP.md`](docs/SETUP.md).
-
----
-
-## What's on-chain, what's off-chain, and why
-
-The simulation runs on the server for speed; **money settles to NEAR once per game
-day**. The contract refuses any batch that would change the 10,000 total, so the
-economy is provably closed.
-
-- **NPC balances live inside the contract**, under their own ids (`r0`…, `w0`…,
-  `coop`, `townhall`), not as separate accounts. Creating 30+ real accounts per room
-  is slow and burns testnet tokens; balances inside the contract are still on-chain
-  and auditable, and every transfer emits an event with a transaction hash. This is a
-  deliberate trade-off, stated plainly.
-- **Player accounts are custodial** testnet sub-accounts held by the server, which is
-  what lets email-style login work with no wallet. **Testnet only.**
-
-New here? [`docs/DEMO.md`](docs/DEMO.md) is a **5-minute walkthrough for judges**.
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
-[`docs/GAME_RULES.md`](docs/GAME_RULES.md) for the economy rules, and
-[`docs/DEPLOY.md`](docs/DEPLOY.md) to put it on a VPS with a live URL.
+Copy `.env.example` to `.env` and fill what you need. **Nothing here needs a paid key to
+run** — the weather feed is keyless and the Game Master, login and enclave all have
+fallbacks. See [`docs/SETUP.md`](docs/SETUP.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
+[`docs/GAME_RULES.md`](docs/GAME_RULES.md) and [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ---
 
 ## Honest notes
 
-- **Testnet only.** No real value moves. Mainnet is used only for a prize-payout
-  account, if required by the submission form.
-- **Custodial accounts.** The server holds player keys so there's no wallet step.
-- **Fallbacks are on by default.** Without a NEAR AI Cloud key or an OutLayer enclave
-  account, the Game Master runs on town metrics with template reasoning and an
-  unattested (but still hash-verifiable) receipt, and the UI says so.
-- **Rooms are early.** Each player claims and runs one of the four shops in a shared
-  town, can chat, and can trade goods for coins. Live rooms are in-memory; League
-  rooms persist to Postgres when `DATABASE_URL` is set (and to memory otherwise).
+- **Testnet only.** No real value moves; mainnet is used only for a prize-payout account if the form requires one.
+- **Custodial accounts.** The server holds player keys so there's no wallet step — the right trade-off for "players never notice the chain," not for self-custody.
+- **Fallbacks are on by default.** Without a NEAR AI key or an OutLayer enclave account, the Game Master runs on town metrics with template reasoning and a hash-verifiable (but un-attested) receipt, and the UI says so.
+- **On-chain room settlement is opt-in** and off on the public demo (see above).
+- **No NEAR Intents (yet).** The in-loop experience is deliberately signature-free, so there's no intent to route today; it's a natural fit for a future wallet-optional / cross-chain deposit mode.
 
 ---
 
-## Roadmap
+## The future of Millbrook
 
-- Deeper moderation tools; trade offers as timed decision cards with a default answer
-- The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
-- The Carpenter and finished house parts (housing supply has rent today, no builder yet)
-- Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
+Millbrook is a sandbox for *real* economic systems, and there's a lot of road ahead:
+
+- **Players never notice the chain, but can opt in.** A wallet-optional mode where a player can self-custody, deposit via **NEAR Intents**, and carry their coins and reputation between towns.
+- **The Foreman as a true agent.** Give each shop's Foreman its own on-chain NEAR account (a function-call key) so it can act autonomously within limits — an **Agent Economy** where the NPCs trade, borrow and hire on-chain.
+- **Many towns, one world.** Multiple contracts (one 10,000-coin town each) connected by trade routes, so goods and migrants flow between economies — and a league table across towns.
+- **Deeper Game Master.** A full TEE-attested enclave decision per dusk, with the hardware quote on-chain, and richer world events the model composes from the catalog.
+- **Live multiplayer by default.** Postgres-backed persistent League seasons running continuously, with per-transaction explorer links and an in-app audit feed.
+- **Moderation, cosmetics and a real player economy** on top of the goods ledger (shop skins, town banners) — all as NEP-245 items, all inside the fixed supply.
 
 ---
 
@@ -292,16 +216,21 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 
 ```
 apps/web              React + Vite + R3F: the 3D town and the HUD
-apps/server           Node 22 + TypeScript: rooms, settlement, (soon) chat and the Game Master
+apps/server           Node 22 + TypeScript: rooms, chat, trades, settlement, the Game Master hook
 packages/economy      The pure, deterministic simulation — all rules in src/rules.ts
 packages/shared       Shared types, the goods/workshop catalog and the event catalog
-contracts/millbrook   Rust: the fixed-10,000-coin ledger (ledger core + #[near] shell)
+contracts/millbrook   Rust: the fixed-10,000-coin ledger (ledger core + #[near] shell, NEP-245 goods)
 outlayer/game-master  The Game Master enclave job: weather + NEAR AI + receipt
 infra/                docker-compose (server, Postgres, Caddy) and the Caddyfile
 scripts/              Spikes, deploy + settlement + receipt scripts, check-public
 design/               The approved screens, screenshots and original CC0 art
-docs/                 SETUP, ARCHITECTURE, GAME_RULES
+docs/                 SETUP, ARCHITECTURE, GAME_RULES, DEMO, DEPLOY
 ```
 
-All original art is CC0; every asset and font is listed with its license in
-[`LICENSES.md`](LICENSES.md).
+All original art is CC0; every asset and font is listed with its license in [`LICENSES.md`](LICENSES.md).
+
+<div align="center">
+
+**Millbrook** — a town with a real economy. Built on NEAR.
+
+</div>
