@@ -26,6 +26,8 @@ coverage/
 playwright-report/
 test-results/
 e2e/__screens__/
+e2e/__audit__/
+e2e/__break__/
 
 # Claude Code personal settings (project skills in .claude/skills are committed)
 .claude/settings.local.json
