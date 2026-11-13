@@ -93,6 +93,13 @@ tooltips explain every number.
   Mayor (lower taxes), the struggling for a caring one (more benefits and a
   minimum wage). The winner sets the Town Hall's tax and benefit policy for the
   phase. Only rates change, never the 10,000-coin total.
+- The town puts **decisions** to you as timed cards with a default answer: your
+  crew asks for a raise, or the **Town Hall bank** offers a loan to cover a lean
+  stretch (repaid weekly with interest). Leave a shop clearly **underpaid** for
+  several days and its workers **unionise** — and a unionised crew that stays
+  underpaid walks out on **strike** sooner than an unorganised one. Loans move
+  coins only between the shop and the Town Hall, and a strike simply stops work,
+  so the total still holds at 10,000.
 - When a town is left to **struggle** (unemployment runs high), petty **theft**
   bites — a little of each shop's stock goes missing overnight. Goods are lost,
   never coins, so the total stays 10,000; the only real fix is to get the town

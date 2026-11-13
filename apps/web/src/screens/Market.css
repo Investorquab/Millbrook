@@ -178,6 +178,10 @@
   color: var(--wheat-light);
   background: rgba(217, 164, 65, 0.16);
 }
+.market__flag--union {
+  color: var(--river-text);
+  background: rgba(94, 140, 147, 0.18);
+}
 .market__rows {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;

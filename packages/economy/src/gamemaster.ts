@@ -26,11 +26,12 @@ import {
 } from "@millbrook/shared";
 import type { Rng } from "./rng.js";
 import { townAverageWage, unemploymentRate } from "./rules.js";
+import { formUnion, lowestPaidShop } from "./unions.js";
 import type { ActiveGmEvent, FiredGmEvent, WeatherReading, World } from "./types.js";
 
 /** The events the Game Master actually runs in solo mode. `bank_panic` (needs
- *  loans) and `union_forms` (needs collective bargaining) stay in the catalog
- *  but are not yet wired, so the GM never picks them here. */
+ *  loans) stays in the catalog but is not yet wired, so the GM never picks it
+ *  here; `union_forms` is wired below and fires only when wages run low. */
 const SOLO_EVENT_IDS = new Set([
   "drought",
   "bumper_harvest",
@@ -43,6 +44,7 @@ const SOLO_EVENT_IDS = new Set([
   "iron_shortage",
   "migration_wave",
   "epidemic",
+  "union_forms",
 ]);
 
 /** Metrics the Game Master reads, and surfaces on the "Why did this happen?" card. */
@@ -136,6 +138,8 @@ function eligibleEvents(world: World, m: GmMetrics, weather: WeatherReading): Ga
     (e) =>
       SOLO_EVENT_IDS.has(e.id) &&
       world.day >= e.minPhaseDay &&
+      // `union_forms` only makes sense when collective bargaining is switched on.
+      (e.id !== "union_forms" || world.config.unions === true) &&
       triggerActive(e.trigger, m, weather),
   );
 }
@@ -279,6 +283,19 @@ function buildChosen(world: World, def: GameMasterEvent, m: GmMetrics, weather: 
         reason: `The leader holds ${m.leaderCoins} coins, so the tax inspector takes 10% from the richest owner into the Town Co-op (the coins stay in Millbrook).`,
         data: data({ leaderCoins: m.leaderCoins }),
         oneTime: (w) => taxInspector(w),
+      };
+    }
+    case "union_forms": {
+      return {
+        def, source: weather.source,
+        active: base(1, {}),
+        reason: `Wages average only ${m.avgWage.toFixed(1)}, so the lowest-paid trade organises a union to bargain together for fair pay.`,
+        data: data({ avgWage: Number(m.avgWage.toFixed(2)) }),
+        oneTime: (w) => {
+          const target = lowestPaidShop(w);
+          if (target) formUnion(w, target);
+          return { organised: target ?? "none" };
+        },
       };
     }
     default:

@@ -80,6 +80,11 @@ export interface Workshop {
   daysUnderpaid: number;
   /** Days of strike remaining (0 = working). */
   strikeDays: number;
+  /** Consecutive days this shop has paid clearly below the town average — when
+   *  it runs long enough the workers form a union (unions.ts). */
+  unionDays: number;
+  /** Whether this shop's workers have organised into a union. */
+  unionised: boolean;
   bankrupt: boolean;
   /** Days spent bankrupt, counting up to the auction that re-lets the premises. */
   daysBankrupt: number;
@@ -175,6 +180,8 @@ export interface SeasonConfig {
   decisions?: boolean;
   /** Offer loans from the Town Hall bank (needs `decisions`). Off by default. */
   loans?: boolean;
+  /** Let underpaid workers form unions and bargain together. Off by default. */
+  unions?: boolean;
   /**
    * Age the town (Phase-2 "living town"): residents age a year per game week,
    * retire at 65 to live on savings, and the very old pass away peacefully with

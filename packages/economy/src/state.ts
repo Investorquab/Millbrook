@@ -138,6 +138,8 @@ export function createWorld(config: SeasonConfig): World {
       tools: 0,
       daysUnderpaid: 0,
       strikeDays: 0,
+      unionDays: 0,
+      unionised: false,
       bankrupt: false,
       daysBankrupt: 0,
       upForAuction: false,
@@ -221,6 +223,7 @@ export function createWorld(config: SeasonConfig): World {
       festivals: config.festivals ?? false,
       decisions: config.decisions ?? false,
       loans: config.loans ?? false,
+      unions: config.unions ?? false,
     },
     gm: {
       enabled: config.gameMaster ?? false,

@@ -59,12 +59,15 @@ function maybeWageDemand(world: World): void {
     const raise = Math.min(WAGE_MAX - w.wage, Math.ceil(avg - w.wage));
     if (raise <= 0) continue;
     const crew = w.workers.length > 0 ? "Your crew is" : "Workers say no job here is";
+    const union = w.unionised;
     world.decisions.push({
       id: `wage_${w.id}_${world.day}`,
       kind: "wage_demand",
       workshopId: w.id,
-      title: "Workers want a raise",
-      body: `${crew} paid ${w.wage} a day — below the town's ${avg.toFixed(0)}. Give a ${raise}-coin raise to attract and keep workers, or hold firm and risk strikes and empty benches.`,
+      title: union ? "The union demands a raise" : "Workers want a raise",
+      body: union
+        ? `Your unionised crew is paid ${w.wage} a day — below the town's ${avg.toFixed(0)}. Meet their ${raise}-coin demand, or they'll strike.`
+        : `${crew} paid ${w.wage} a day — below the town's ${avg.toFixed(0)}. Give a ${raise}-coin raise to attract and keep workers, or hold firm and risk strikes and empty benches.`,
       options: [
         { id: "accept", label: `Give the raise (+${raise})`, detail: `Wage rises to ${w.wage + raise} a day.` },
         { id: "refuse", label: "Hold firm", detail: "Workers may strike or leave if wages stay low." },

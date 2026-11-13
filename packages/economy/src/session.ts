@@ -186,6 +186,8 @@ export interface SoloView {
   maxWorkers: number;
   canHire: boolean;
   onStrike: boolean;
+  /** Whether this shop's workers have organised into a union over low pay. */
+  unionised: boolean;
   bankrupt: boolean;
   /** Whether this shop is insured against fire. */
   insured: boolean;
@@ -431,9 +433,10 @@ export class SoloSession {
       // …and holidays lift the town's spending (a market day, a harvest festival).
       festivals: true,
       // …and puts timed decision cards (wage demands, loan offers) to the player,
-      // backed by a Town Hall bank.
+      // backed by a Town Hall bank, with unions that organise over low pay.
       decisions: true,
       loans: true,
+      unions: true,
       ...worldConfig,
     });
     this.totalDays = this.world.config.days;
@@ -950,6 +953,7 @@ export class SoloSession {
       maxWorkers: w.maxWorkers,
       canHire: !w.bankrupt && w.workers.length < w.maxWorkers,
       onStrike: w.strikeDays > 0,
+      unionised: w.unionised,
       bankrupt: w.bankrupt,
       insured: w.insured,
       guarded: w.guarded,

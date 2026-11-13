@@ -213,6 +213,21 @@
   font-size: 14px;
 }
 
+.town__union {
+  position: absolute;
+  left: 30%;
+  top: 31%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: var(--river);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
 /* ── Bottom HUD row ────────────────────────────────────────── */
 .town__hud {
   position: absolute;

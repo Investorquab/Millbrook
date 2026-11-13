@@ -123,6 +123,9 @@ export function Market() {
                     </span>
                     {v.bankrupt && <span className="market__flag market__flag--bust">Bankrupt</span>}
                     {v.onStrike && !v.bankrupt && <span className="market__flag market__flag--strike">On strike</span>}
+                    {v.unionised && !v.onStrike && !v.bankrupt && (
+                      <span className="market__flag market__flag--union">Unionised</span>
+                    )}
                   </div>
                   <div className="market__rows">
                     <span>

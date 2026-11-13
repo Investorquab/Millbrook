@@ -59,6 +59,7 @@ import { runElections, enforceMinimumWage } from "./elections.js";
 import { runTheft } from "./theft.js";
 import { runDecisions } from "./decisions.js";
 import { runLoans } from "./loans.js";
+import { runUnions } from "./unions.js";
 import { runFire } from "./fire.js";
 import { runHousing } from "./housing.js";
 import { runFestivals, festivalFactor } from "./festivals.js";
@@ -694,9 +695,11 @@ function endOfDay(world: World, totalSales: number): void {
   // Fire and insurance — destroys goods; premiums/claims move coins shop↔pool.
   runFire(world);
 
-  // Loans: weekly interest/repayment to the Town Hall, and loan offers. Then
-  // decision cards: resolve any whose deadline passed, and raise new ones. Both
-  // only move coins between holders in town, so the invariant below still holds.
+  // Unions: track low-wage streaks, organise, and strike over low pay. Then
+  // loans (weekly interest/repayment + offers) and decision cards (resolve
+  // expired, raise new). All move coins only between holders, so the invariant
+  // below still holds at exactly 10,000.
+  runUnions(world);
   runLoans(world);
   runDecisions(world);
 

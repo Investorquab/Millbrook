@@ -275,6 +275,14 @@ export function Town() {
             Your {t.shop} is on strike
           </span>
         )}
+        {view.unionised && !view.onStrike && (
+          <span className="town__union">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+              <path d="M2 12h10M4 12V6M10 12V6M3 6h8L7 2z" fill="none" stroke="#fff" strokeWidth="1.4" strokeLinejoin="round" />
+            </svg>
+            Your crew has unionised
+          </span>
+        )}
       </div>
 
       {/* ── Bottom HUD ── */}
