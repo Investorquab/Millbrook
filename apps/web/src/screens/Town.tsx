@@ -250,6 +250,9 @@ export function Town() {
         <Link to="/market" className="town__pill">
           Market
         </Link>
+        <Link to="/resident" className="town__pill">
+          Residents
+        </Link>
         <Link to="/gazette" className="town__pill">
           Gazette
         </Link>

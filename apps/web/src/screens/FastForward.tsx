@@ -71,10 +71,10 @@ function Chart({ days, values, color, yMin, yMax, yTicks, formatTick, markers = 
           </>
         )}
       </g>
-      {markers.map(({ day }) => {
+      {markers.map(({ day }, i) => {
         const mx = markerX(day);
         return mx === null ? null : (
-          <path key={`g${day}`} d={`M${mx.toFixed(1)} ${TOP}V${BOT}`} stroke="#B9B2A4" strokeWidth="1" strokeDasharray="3 3" />
+          <path key={`g${day}-${i}`} d={`M${mx.toFixed(1)} ${TOP}V${BOT}`} stroke="#B9B2A4" strokeWidth="1" strokeDasharray="3 3" />
         );
       })}
       {values.length > 0 && (
@@ -84,10 +84,10 @@ function Chart({ days, values, color, yMin, yMax, yTicks, formatTick, markers = 
         </>
       )}
       <g fontFamily="Barlow, sans-serif" fontSize="12" fontWeight="700" textAnchor="middle">
-        {markers.map(({ day, n: num }) => {
+        {markers.map(({ day, n: num }, i) => {
           const mx = markerX(day);
           return mx === null ? null : (
-            <g key={`m${day}`}>
+            <g key={`m${day}-${i}`}>
               <circle cx={mx} cy={TOP - 8} r="9" fill="#EDE6D6" />
               <text x={mx} y={TOP - 4} fill="#2F3640">
                 {num}
