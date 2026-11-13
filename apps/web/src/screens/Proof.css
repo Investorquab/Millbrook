@@ -468,3 +468,25 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Recent on-chain settlements (full multiplayer deploy only; empty on static). */
+.proof__settlements {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+.proof__settlements-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--river-text, #3d5c61);
+  margin-bottom: 6px;
+}
+.proof__settlements ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}

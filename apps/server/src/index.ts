@@ -11,8 +11,12 @@
  * this console so the flow still works in development.
  */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createGameServer, type GameServerOptions } from "./server.js";
 import { AuthStore, makeEmailSender, pickEmailProvider } from "./auth.js";
+import { SettlementService, nearConfigFromEnv } from "./settlement-service.js";
 
 const PORT = Number(process.env.PORT ?? 8080);
 const isProd = process.env.NODE_ENV === "production";
@@ -33,6 +37,30 @@ if (emailKey && emailFrom) {
 if (!process.env.PUBLIC_BASE_URL) {
   console.log("PUBLIC_BASE_URL is unset — set it to the web origin so links resolve (e.g. https://your-domain).");
 }
+
+// Live on-chain settlement (Step 3.5): opt-in via SETTLE_ONCHAIN=1 + NEAR creds.
+// Falls back to the repo .env for local dev; on the VPS the creds come from env.
+const readRepoEnv = (): Record<string, string> => {
+  try {
+    const root = join(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "..");
+    const text = readFileSync(join(root, ".env"), "utf8");
+    const out: Record<string, string> = {};
+    for (const line of text.split("\n")) {
+      const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+      if (m) out[m[1]!] = m[2]!.trim();
+    }
+    return out;
+  } catch {
+    return {};
+  }
+};
+const settlement = new SettlementService(nearConfigFromEnv(readRepoEnv));
+opts.settlement = settlement;
+console.log(
+  settlement.enabled
+    ? "On-chain settlement: ON — the first live room settles to the contract as it plays."
+    : "On-chain settlement: off (set SETTLE_ONCHAIN=1 with NEAR operator creds to enable).",
+);
 
 const server = createGameServer(opts);
 server.listen(PORT).then((port) => {

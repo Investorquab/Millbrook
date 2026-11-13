@@ -3,7 +3,17 @@ import { Link } from "react-router-dom";
 import { useSolo } from "../game/SoloProvider";
 import { color } from "../theme/tokens";
 import { CONTRACT_ID, EXPLORER, readChainAudit } from "../game/chain";
+import { apiUrl } from "../game/serverUrl";
 import "./Proof.css";
+
+const TX_EXPLORER = "https://testnet.nearblocks.io/txns/";
+
+interface SettlementRow {
+  day: number;
+  txHash: string;
+  transfers: number;
+  settlementIndex: number;
+}
 
 /**
  * Proof — ported from `design/screenshots/Proof.png`. The left panel is live and
@@ -45,6 +55,23 @@ export function Proof() {
     readChainAudit()
       .then((r) => alive && setChain({ status: "ok", ...r }))
       .catch(() => alive && setChain({ status: "offline" }));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // When a server is reachable (the full multiplayer deploy), show the live
+  // game's most recent on-chain settlements with their explorer links. On the
+  // static solo deploy there's no server, so this stays quietly empty.
+  const [settlements, setSettlements] = useState<SettlementRow[]>([]);
+  useEffect(() => {
+    let alive = true;
+    fetch(apiUrl("/settlements"))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { enabled?: boolean; recent?: SettlementRow[] } | null) => {
+        if (alive && j?.enabled && j.recent?.length) setSettlements(j.recent.slice(0, 5));
+      })
+      .catch(() => {});
     return () => {
       alive = false;
     };
@@ -106,6 +133,22 @@ export function Proof() {
               </span>
             )}
           </div>
+
+          {settlements.length > 0 && (
+            <div className="proof__settlements">
+              <span className="proof__settlements-title">Recent settlements on-chain</span>
+              <ul>
+                {settlements.map((s) => (
+                  <li key={s.txHash}>
+                    <a className="proof__link" href={`${TX_EXPLORER}${s.txHash}`} target="_blank" rel="noreferrer">
+                      Settlement #{s.settlementIndex} ↗
+                    </a>{" "}
+                    — {s.transfers} transfer{s.transfers === 1 ? "" : "s"} (day {s.day})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div>
             <div

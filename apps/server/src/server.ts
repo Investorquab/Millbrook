@@ -12,6 +12,7 @@ import { Server } from "socket.io";
 import { RoomManager, type Room } from "./rooms.js";
 import { ROOM_DAY_MS, type ClientToServer, type GameAction, type ServerToClient } from "./protocol.js";
 import { AuthStore, magicLinkEmail, type EmailSender } from "./auth.js";
+import { SettlementService } from "./settlement-service.js";
 
 export interface GameServer {
   http: ReturnType<typeof createHttp>;
@@ -32,6 +33,8 @@ export interface GameServerOptions {
   /** Production hides the dev link from HTTP responses; dev returns it so the
    *  flow is testable without a working email provider. */
   isProd?: boolean;
+  /** Live on-chain settlement (Step 3.5); a disabled no-op one is used if omitted. */
+  settlement?: SettlementService;
 }
 
 export function createGameServer(opts: GameServerOptions = {}): GameServer {
@@ -40,6 +43,7 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
   const auth = opts.auth ?? new AuthStore({ publicBaseUrl: process.env.PUBLIC_BASE_URL });
   const email = opts.email;
   const isProd = opts.isProd ?? false;
+  const settlement = opts.settlement ?? new SettlementService(null);
   const playing = new Set<string>();
 
   const CORS = {
@@ -94,6 +98,11 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
     }
     if (req.method === "GET" && url === "/rooms") {
       sendJson(res, 200, { rooms: rooms.list() });
+      return;
+    }
+    // Recent on-chain settlements, for the Proof panel's explorer links.
+    if (req.method === "GET" && url === "/settlements") {
+      sendJson(res, 200, settlement.status());
       return;
     }
 
@@ -254,6 +263,10 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
       }
       if (room.start()) {
         playing.add(room.id);
+        // The first live room mirrors itself to the chain for the season.
+        if (settlement.claim(room)) {
+          emitChat(room, room.note("This season is settling on-chain as it plays."));
+        }
         broadcast(room);
         emitChat(room, room.note("The season has begun."));
       }
@@ -299,8 +312,10 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
       const room = rooms.leaveAll(socket.id);
       void socket.leave(roomId);
       socket.data.roomId = undefined;
-      if (!room) playing.delete(roomId);
-      else {
+      if (!room) {
+        playing.delete(roomId);
+        settlement.release(roomId); // the room is gone; free the on-chain lease
+      } else {
         broadcast(room);
         emitChat(room, room.note(`${name ?? "A player"} left the room.`));
       }
@@ -323,10 +338,16 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
         emitChat(room, room.note(`Game Master: ${ev.title} — ${ev.effect}`));
       }
       broadcast(room);
+      // Mirror the leased room's net change to the chain (throttled, async).
+      if (settlement.isSettling(room.id)) void settlement.settleDay(room);
       if (room.view().ended) {
         if (wasLive) {
           const winner = room.state().standings[0];
           if (winner) emitChat(room, room.note(`The season has ended. ${winner.name} tops the town.`));
+        }
+        // A final settle of the season's remaining net change, then free the lease.
+        if (settlement.isSettling(room.id)) {
+          void settlement.settleDay(room, true).finally(() => settlement.release(room.id));
         }
         playing.delete(id);
       }
