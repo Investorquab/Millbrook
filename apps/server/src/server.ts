@@ -9,11 +9,12 @@
 
 import { createServer as createHttp, type IncomingMessage, type ServerResponse } from "node:http";
 import { Server } from "socket.io";
-import { RoomManager, type Room } from "./rooms.js";
+import { RoomManager, Room } from "./rooms.js";
 import { ROOM_DAY_MS, type ClientToServer, type GameAction, type ServerToClient } from "./protocol.js";
 import { AuthStore, magicLinkEmail, type EmailSender } from "./auth.js";
 import { SettlementService } from "./settlement-service.js";
 import { writeGazetteWithAi, type AiConfig } from "./gazette-ai.js";
+import { MemoryRoomStore, type RoomStore } from "./persistence.js";
 
 export interface GameServer {
   http: ReturnType<typeof createHttp>;
@@ -38,6 +39,8 @@ export interface GameServerOptions {
   settlement?: SettlementService;
   /** NEAR AI config for the Gazette (Step 3.4); omitted → template only. */
   ai?: AiConfig | null;
+  /** Room persistence (Step 5); an in-memory store is used if omitted. */
+  store?: RoomStore;
 }
 
 export function createGameServer(opts: GameServerOptions = {}): GameServer {
@@ -48,7 +51,13 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
   const isProd = opts.isProd ?? false;
   const settlement = opts.settlement ?? new SettlementService(null);
   const ai = opts.ai ?? null;
+  const store = opts.store ?? new MemoryRoomStore();
   const playing = new Set<string>();
+
+  // Persist League rooms so a restart loses nothing; Live rooms are ephemeral.
+  const save = (room: Room): void => {
+    if (room.speed === "league") void store.save(room.snapshot()).catch((e) => console.warn("[store] save:", (e as Error).message));
+  };
 
   const CORS = {
     "access-control-allow-origin": "*",
@@ -206,13 +215,18 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
     }
     const nameFrom = (claimed: string) => (session ? session.username : claimed);
 
-    socket.on("room:create", ({ name, seed }) => {
+    socket.on("room:create", ({ name, seed, speed, tickEveryMs }) => {
       const resolved = nameFrom(name);
       socket.data.name = resolved;
-      const room = rooms.create(socket.id, resolved, seed);
+      const room = rooms.create(socket.id, resolved, seed, {
+        speed: speed === "league" ? "league" : "live",
+        tickEveryMs,
+      });
       socket.data.roomId = room.id;
       void socket.join(room.id);
+      room.markSeen(socket.id);
       broadcast(room);
+      save(room);
     });
 
     socket.on("room:join", ({ code, name }) => {
@@ -228,8 +242,23 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
       // Hand the newcomer the recent chat and open offers, then announce them.
       socket.emit("chat:history", room.chatHistory());
       socket.emit("trade:offers", room.openOffers());
+      // League: if they'd seen this room before, tell them what they missed.
+      const report = room.morningReportFor(socket.id);
+      if (report) socket.emit("morning:report", report);
+      room.markSeen(socket.id);
       broadcast(room);
       emitChat(room, room.note(`${resolved} joined the room.`));
+      save(room);
+    });
+
+    socket.on("room:ready", () => {
+      const room = roomOf(socket.data.roomId);
+      if (!room || room.speed !== "league" || room.status !== "live") return;
+      if (room.markReady(socket.id)) {
+        // Everyone present wants to skip ahead — advance a day now.
+        advanceLeagueDay(room);
+      }
+      broadcast(room);
     });
 
     socket.on("room:claim", ({ type }) => {
@@ -238,6 +267,7 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
       if (room.claim(socket.id, type)) {
         broadcast(room);
         emitChat(room, room.note(`${socket.data.name ?? "A player"} is running the ${type}.`));
+        save(room);
       } else socket.emit("error", { message: `The ${type} is already taken.` });
     });
 
@@ -273,6 +303,7 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
       }
       emitOffers(room);
       broadcast(room);
+      save(room);
       if (res.offer) {
         emitChat(room, room.note(`${room.nameOf(socket.id) ?? "A player"} accepted ${res.offer.fromName}'s offer: ${res.offer.qty} ${res.offer.good} for ${res.offer.coins} coins.`));
       }
@@ -292,13 +323,19 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
         return;
       }
       if (room.start()) {
-        playing.add(room.id);
+        // Live rooms tick fast in the loop below; League rooms advance on their
+        // own schedule (handled by advanceLeagueDay), so they stay out of `playing`.
+        if (room.speed !== "league") playing.add(room.id);
         // The first live room mirrors itself to the chain for the season.
         if (settlement.claim(room)) {
           emitChat(room, room.note("This season is settling on-chain as it plays."));
         }
         broadcast(room);
         emitChat(room, room.note("The season has begun."));
+        if (room.speed === "league") {
+          emitChat(room, room.note("League season: a day passes on a schedule — or sooner if everyone's Ready."));
+        }
+        save(room);
       }
     });
 
@@ -328,8 +365,9 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
       // You can only answer decisions for your own shop.
       const dec = room.session.world.decisions.find((d) => d.id === decisionId);
       if (!dec || dec.workshopId !== workshopId) return;
-      room.session.decide(decisionId, optionId);
+      room.decide(decisionId, optionId);
       broadcast(room);
+      save(room);
     });
 
     socket.on("room:leave", () => leave());
@@ -339,6 +377,9 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
       const roomId = socket.data.roomId as string | undefined;
       if (!roomId) return;
       const name = socket.data.name as string | undefined;
+      // League: note where this player left, so their next visit gets a report.
+      const before = roomOf(roomId);
+      if (before?.speed === "league") before.markSeen(socket.id);
       const room = rooms.leaveAll(socket.id);
       void socket.leave(roomId);
       socket.data.roomId = undefined;
@@ -348,12 +389,42 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
       } else {
         broadcast(room);
         emitChat(room, room.note(`${name ?? "A player"} left the room.`));
+        save(room);
       }
     }
   });
 
-  // The tick: advance every live room one game day.
+  // Advance a League room one game day: step, post events, settle, reschedule,
+  // and roll into a fresh season at the season's close.
+  function advanceLeagueDay(room: Room): void {
+    if (room.status !== "live") return;
+    room.step();
+    for (const ev of room.drainNewGmEvents()) {
+      emitChat(room, room.note(`Game Master: ${ev.title} — ${ev.effect}`));
+    }
+    if (settlement.isSettling(room.id)) void settlement.settleDay(room);
+    if (room.view().ended) {
+      const winner = room.state().standings[0];
+      if (winner) emitChat(room, room.note(`Season ${room.seasonNumber} has ended. ${winner.name} tops the town.`));
+      if (settlement.isSettling(room.id)) void settlement.settleDay(room, true).finally(() => settlement.release(room.id));
+      // Open a fresh season (back to the lobby) so the League continues.
+      if (room.rollSeason()) {
+        emitChat(room, room.note(`A new season opens in Millbrook — Season ${room.seasonNumber}. Claim a shop and start when ready.`));
+      }
+    } else {
+      room.scheduleNextTick();
+    }
+    broadcast(room);
+    save(room);
+  }
+
+  // The tick: advance every live room one game day, and any League room whose
+  // scheduled time has come (even with nobody connected — "while you were away").
   const tick = setInterval(() => {
+    const now = Date.now();
+    for (const room of rooms.all()) {
+      if (room.dueToTick(now)) advanceLeagueDay(room);
+    }
     for (const id of playing) {
       const room = rooms.get(id);
       if (!room || room.status !== "live") {
@@ -390,16 +461,32 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
     io,
     rooms,
     auth,
-    listen: (port) =>
-      new Promise<number>((resolve) => {
+    listen: async (port) => {
+      // Restore any persisted League rooms, so a restart loses nothing.
+      try {
+        await store.init();
+        const saved = await store.loadAll();
+        for (const snap of saved) {
+          const room = Room.restore(snap);
+          rooms.adopt(room);
+          // A live league room keeps its schedule; a finished one stays as it is.
+          if (room.speed === "league" && room.status === "live" && room.nextTickAt === null) room.scheduleNextTick();
+        }
+        if (saved.length) console.log(`Restored ${saved.length} saved room(s) from the store.`);
+      } catch (e) {
+        console.warn("[store] restore skipped:", (e as Error).message);
+      }
+      return new Promise<number>((resolve) => {
         http.listen(port, () => {
           const addr = http.address();
           resolve(typeof addr === "object" && addr ? addr.port : port);
         });
-      }),
+      });
+    },
     close: () =>
       new Promise<void>((resolve) => {
         clearInterval(tick);
+        void store.close();
         io.close(() => http.close(() => resolve()));
       }),
   };
@@ -408,13 +495,13 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
 function applyAction(room: Room, workshopId: string, action: GameAction): void {
   switch (action.type) {
     case "setPrice":
-      room.session.setPrice(action.value, workshopId);
+      room.setPrice(action.value, workshopId);
       break;
     case "setWage":
-      room.session.setWage(action.value, workshopId);
+      room.setWage(action.value, workshopId);
       break;
     case "hire":
-      room.session.hire(workshopId);
+      room.hire(workshopId);
       break;
   }
 }

@@ -5,7 +5,7 @@ import { signIn } from "./helpers";
 test("capture room screens", async ({ page, browser }, testInfo) => {
   const tag = testInfo.project.name;
   await signIn(page, "Ada");
-  await page.getByRole("button", { name: "Create room" }).click();
+  await page.getByRole("button", { name: "Live room" }).click();
   await page.locator(".room__code-value").waitFor();
   await page.screenshot({ path: `e2e/__screens__/room-lobby-${tag}.png`, fullPage: true });
 

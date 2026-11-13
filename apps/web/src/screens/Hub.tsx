@@ -35,12 +35,12 @@ export function Hub() {
     setGoalCard(id);
   }
 
-  function onHost() {
+  function onHost(speed: "live" | "league" = "live") {
     if (!isSignedIn || !username) {
       navigate("/signin");
       return;
     }
-    room.createRoom(username);
+    room.createRoom(username, undefined, speed);
     navigate("/room");
   }
 
@@ -207,11 +207,19 @@ export function Hub() {
           <section className="hub__panel hub__row">
             <div>
               <h2>Host a room</h2>
-              <p>Invite up to 3 friends. AI fills the empty shops.</p>
+              <p>
+                Invite up to 3 friends. AI fills the empty shops. A <b>Live</b> room plays out in minutes; a{" "}
+                <b>League</b> room advances on a schedule (drop in across the week, or press Ready to skip ahead).
+              </p>
             </div>
-            <button type="button" className="hub__btn-linen" onClick={onHost}>
-              Create room
-            </button>
+            <div className="hub__host-btns">
+              <button type="button" className="hub__btn-linen" onClick={() => onHost("live")}>
+                Live room
+              </button>
+              <button type="button" className="hub__btn-linen" onClick={() => onHost("league")}>
+                League room
+              </button>
+            </div>
           </section>
 
           <section className="hub__panel hub__join">

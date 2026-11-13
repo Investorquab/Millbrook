@@ -11,6 +11,14 @@ import "./Room.css";
 /** The 3D diorama, loaded only when a room needs it (three.js is a big chunk). */
 const TownScene = lazy(() => import("../town3d/TownScene").then((m) => ({ default: m.TownScene })));
 
+/** A rough "in 2m" / "in 40s" / "soon" for a League room's next scheduled day. */
+function nextDayIn(at: number): string {
+  const s = Math.round((at - Date.now()) / 1000);
+  if (s <= 0) return "soon";
+  if (s < 60) return `in ${s}s`;
+  return `in ${Math.round(s / 60)}m`;
+}
+
 /** Keep in step with CHAT_MAX_LEN in apps/server/src/protocol.ts. */
 const CHAT_MAX_LEN = 240;
 
@@ -119,6 +127,43 @@ export function Room() {
         </button>
         <span className="room__role">{room.isHost ? "You're the host" : "In the room"}</span>
       </div>
+
+      {room.morningReport && (
+        <div className="room__morning" role="status">
+          <div className="room__morning-head">
+            <b>While you were away — days {room.morningReport.fromDay}–{room.morningReport.toDay}</b>
+            <button type="button" className="room__btn-ghost" onClick={room.dismissMorningReport}>
+              Got it
+            </button>
+          </div>
+          <p>
+            Your shop {room.morningReport.coinsDelta >= 0 ? "gained" : "lost"}{" "}
+            <b>{Math.abs(room.morningReport.coinsDelta)}</b> coins
+            {room.morningReport.decisionsResolved > 0
+              ? `; ${room.morningReport.decisionsResolved} decision${room.morningReport.decisionsResolved === 1 ? "" : "s"} resolved by default.`
+              : "."}
+          </p>
+          {room.morningReport.events.length > 0 && (
+            <ul>
+              {room.morningReport.events.map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {live && r.speed === "league" && (
+        <div className="room__league" role="group" aria-label="League">
+          <span className="room__league-label">
+            League · Season {r.seasonNumber} · Day {r.day}/{r.totalDays}
+            {r.nextTickAt ? ` · next day ${nextDayIn(r.nextTickAt)}` : ""}
+          </span>
+          <button type="button" className="room__btn-linen" onClick={room.markReady}>
+            Ready to skip ({r.readyCount}/{r.humanCount})
+          </button>
+        </div>
+      )}
 
       <div className="room__head">
         <div>

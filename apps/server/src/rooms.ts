@@ -21,7 +21,14 @@ import {
   type GmEventCard,
 } from "@millbrook/economy";
 import type { WorkshopType } from "@millbrook/shared";
-import { CHAT_MAX_LEN, type ChatMessage, type TradeOffer, type TownSnapshot } from "./protocol.js";
+import {
+  CHAT_MAX_LEN,
+  type ChatMessage,
+  type TradeOffer,
+  type TownSnapshot,
+  type RoomSpeed,
+  type MorningReport,
+} from "./protocol.js";
 
 /** Cap the walking figures sent to the 3D scene (matches the client). */
 const SNAPSHOT_FIGURES = 18;
@@ -62,6 +69,42 @@ export interface RoomState {
   standings: StandingRow[];
   /** The latest Game Master event, for the "Why did this happen?" card. */
   gm: GmEventCard | null;
+  /** How the room advances its days. */
+  speed: RoomSpeed;
+  /** League: wall-clock ms when the next day advances, or null (live / not running). */
+  nextTickAt: number | null;
+  /** League: how many present humans have pressed Ready, and how many there are. */
+  readyCount: number;
+  humanCount: number;
+  /** Which season this room is on (rolls over at day 28). */
+  seasonNumber: number;
+}
+
+/** One deterministic season mutation, replayed to restore a room's state. */
+export type Op =
+  | { t: "claim"; type: WorkshopType }
+  | { t: "release"; ws: string }
+  | { t: "price"; ws: string; v: number }
+  | { t: "wage"; ws: string; v: number }
+  | { t: "hire"; ws: string }
+  | { t: "decide"; id: string; opt: string }
+  | { t: "trade"; from: string; to: string; qty: number; coins: number }
+  | { t: "step" };
+
+/** A room's full state as plain data — persisted and replayed on restart. */
+export interface RoomSnapshot {
+  id: string;
+  code: string;
+  seed: number;
+  speed: RoomSpeed;
+  tickEveryMs: number;
+  status: RoomStatus;
+  hostId: string;
+  seasonNumber: number;
+  players: Player[];
+  chat: ChatMessage[];
+  ops: Op[];
+  nextTickAt: number | null;
 }
 
 /** Unambiguous invite codes: no 0/O/1/I. */
@@ -86,11 +129,34 @@ export class Room {
   /** How many Game Master events have been posted to chat so far. */
   private gmSeen = 0;
 
-  constructor(id: string, code: string, hostId: string, hostName: string, seed: number) {
+  // ── League ──────────────────────────────────────────────────────────────────
+  readonly speed: RoomSpeed;
+  /** League cadence: real ms between automatic day advances. */
+  readonly tickEveryMs: number;
+  /** Wall-clock ms of the next scheduled advance (league only), or null. */
+  nextTickAt: number | null = null;
+  seasonNumber = 1;
+  private readonly ready = new Set<string>();
+  /** The last game day each player saw, for the morning report. */
+  private readonly lastSeen = new Map<string, number>();
+
+  // ── Persistence: the ordered log of deterministic season mutations ──────────
+  private readonly ops: Op[] = [];
+
+  constructor(
+    id: string,
+    code: string,
+    hostId: string,
+    hostName: string,
+    seed: number,
+    opts: { speed?: RoomSpeed; tickEveryMs?: number } = {},
+  ) {
     this.id = id;
     this.code = code;
     this.seed = seed;
     this.hostId = hostId;
+    this.speed = opts.speed ?? "live";
+    this.tickEveryMs = opts.tickEveryMs ?? 6 * 60 * 60 * 1000; // 6h default for League
     this.session = createSoloSession(seed);
     // The host runs the bakery (the session's pre-claimed player shop).
     this.players.set(hostId, {
@@ -100,6 +166,35 @@ export class Room {
       workshopId: this.session.playerWorkshopId,
       workshopType: "bakery",
     });
+  }
+
+  private logOp(op: Op): void {
+    this.ops.push(op);
+  }
+
+  // ── Season mutations (logged so a room can be replayed from its seed) ────────
+
+  setPrice(value: number, workshopId?: string): void {
+    const ws = workshopId ?? this.session.playerWorkshopId;
+    this.session.setPrice(value, ws);
+    this.logOp({ t: "price", ws, v: this.session.view(ws).price });
+  }
+
+  setWage(value: number, workshopId?: string): void {
+    const ws = workshopId ?? this.session.playerWorkshopId;
+    this.session.setWage(value, ws);
+    this.logOp({ t: "wage", ws, v: this.session.view(ws).wage });
+  }
+
+  hire(workshopId?: string): void {
+    const ws = workshopId ?? this.session.playerWorkshopId;
+    this.session.hire(ws);
+    this.logOp({ t: "hire", ws });
+  }
+
+  decide(decisionId: string, optionId: string): void {
+    this.session.decide(decisionId, optionId);
+    this.logOp({ t: "decide", id: decisionId, opt: optionId });
   }
 
   addPlayer(id: string, name: string): Player {
@@ -118,11 +213,13 @@ export class Room {
     // Drop any shop they held first (but never the host's bakery).
     if (player.workshopId && player.workshopId !== this.session.playerWorkshopId) {
       this.session.release(player.workshopId);
+      this.logOp({ t: "release", ws: player.workshopId });
       player.workshopId = undefined;
       player.workshopType = undefined;
     }
     const id = this.session.claim(type);
     if (!id) return false;
+    this.logOp({ t: "claim", type });
     player.workshopId = id;
     player.workshopType = type;
     return true;
@@ -139,6 +236,7 @@ export class Room {
     // Hand their shop back to the AI (never the bakery; that passes to the next host).
     if (leaving?.workshopId && leaving.workshopId !== this.session.playerWorkshopId) {
       this.session.release(leaving.workshopId);
+      this.logOp({ t: "release", ws: leaving.workshopId });
     }
     this.dropOffersInvolving(id);
     this.players.delete(id);
@@ -150,6 +248,7 @@ export class Room {
         this.hostId = next.id;
         if (next.workshopId && next.workshopId !== this.session.playerWorkshopId) {
           this.session.release(next.workshopId);
+          this.logOp({ t: "release", ws: next.workshopId });
         }
         next.workshopId = this.session.playerWorkshopId;
         next.workshopType = "bakery";
@@ -173,17 +272,12 @@ export class Room {
     return this.players.get(playerId)?.name;
   }
 
-  /** Host starts the season. */
-  start(): boolean {
-    if (this.status !== "lobby") return false;
-    this.status = "live";
-    return true;
-  }
-
   /** Advance one game day while live; mark ended at the season's close. */
   step(): void {
     if (this.status !== "live") return;
     this.session.step();
+    this.logOp({ t: "step" });
+    this.ready.clear(); // a new day: everyone must opt to skip again
     if (this.session.view().ended) this.status = "ended";
   }
 
@@ -290,7 +384,10 @@ export class Room {
     if (!buyer?.workshopId) return { ok: false, reason: "Claim a shop before you accept a trade." };
     if (buyer.id === offer.fromPlayerId) return { ok: false, reason: "You can't accept your own offer." };
     const res = this.session.trade(offer.fromWorkshopId, buyer.workshopId, offer.qty, offer.coins);
-    if (res.ok) this.offers.delete(offerId);
+    if (res.ok) {
+      this.offers.delete(offerId);
+      this.logOp({ t: "trade", from: offer.fromWorkshopId, to: buyer.workshopId, qty: offer.qty, coins: offer.coins });
+    }
     return { ...res, offer };
   }
 
@@ -325,6 +422,11 @@ export class Room {
       totalDays: v.totalDays,
       standings: this.session.standings(),
       gm: this.session.gmEvents(1)[0] ?? null,
+      speed: this.speed,
+      nextTickAt: this.nextTickAt,
+      readyCount: this.readyCount,
+      humanCount: this.players.size,
+      seasonNumber: this.seasonNumber,
     };
   }
 
@@ -358,20 +460,190 @@ export class Room {
     this.gmSeen = all.length;
     return newCount > 0 ? all.slice(0, newCount).reverse() : [];
   }
+
+  // ── League: scheduler, ready-to-skip, morning report, season rollover ───────
+
+  /** Host starts the season; a league room also sets its first scheduled tick. */
+  start(): boolean {
+    if (this.status !== "lobby") return false;
+    this.status = "live";
+    if (this.speed === "league") this.nextTickAt = Date.now() + this.tickEveryMs;
+    return true;
+  }
+
+  /** True when the league clock says it's time to advance a day. */
+  dueToTick(now = Date.now()): boolean {
+    return this.status === "live" && this.speed === "league" && this.nextTickAt !== null && now >= this.nextTickAt;
+  }
+
+  /** Reschedule the next league advance after a day has been stepped. */
+  scheduleNextTick(now = Date.now()): void {
+    this.nextTickAt = this.status === "live" && this.speed === "league" ? now + this.tickEveryMs : null;
+  }
+
+  /** A present human opts to skip the wait; true once everyone present is ready. */
+  markReady(playerId: string): boolean {
+    if (this.status !== "live" || !this.players.has(playerId)) return false;
+    this.ready.add(playerId);
+    return this.allReady();
+  }
+
+  /** All present players have pressed Ready (and there is at least one). */
+  allReady(): boolean {
+    const present = [...this.players.keys()];
+    return present.length > 0 && present.every((id) => this.ready.has(id));
+  }
+
+  get readyCount(): number {
+    return this.ready.size;
+  }
+
+  /** Record the day — and coin position — a player last saw, for the next report.
+   *  Uses the engine's 0-indexed `world.day` so it lines up with feed event days. */
+  markSeen(playerId: string): void {
+    this.lastSeen.set(playerId, this.session.world.day);
+    const ws = this.workshopOf(playerId);
+    this.lastSeenCoins.set(playerId, ws ? Math.round(this.session.view(ws).coins) : 0);
+  }
+
+  /** What a returning player missed since they last saw the room (null if nothing). */
+  morningReportFor(playerId: string): MorningReport | null {
+    const from = this.lastSeen.get(playerId);
+    const to = this.session.world.day;
+    if (from === undefined || to <= from) return null;
+    const ws = this.workshopOf(playerId);
+    // Notable feed events across the days they were away.
+    const events = this.session.world.feed
+      .filter((e) => e.day >= from && e.day < to)
+      .filter((e) =>
+        ["gm_event", "election", "bankruptcy", "auction", "strike_start", "death", "birth", "public_works"].includes(e.kind),
+      )
+      .slice(-6)
+      .map((e) => e.text);
+    const decisionsResolved = this.session.world.feed.filter(
+      (e) => e.day >= from && e.day < to && e.kind === "decision",
+    ).length;
+    const prevCoins = this.lastSeenCoins.get(playerId) ?? 0;
+    const coinsDelta = ws ? Math.round(this.session.view(ws).coins) - prevCoins : 0;
+    return { fromDay: from + 1, toDay: to + 1, coinsDelta, events, decisionsResolved };
+  }
+
+  private readonly lastSeenCoins = new Map<string, number>();
+
+  /** At day 28 the season closes; open a fresh one so the League continues. */
+  rollSeason(): boolean {
+    if (this.status !== "ended") return false;
+    this.seasonNumber += 1;
+    const fresh = createSoloSession(this.seed + this.seasonNumber);
+    // Swap in the new season; keep the players and their host/bakery assignment.
+    (this as { session: SoloSession }).session = fresh;
+    this.ops.length = 0; // a new season starts a new op history (seed + number)
+    this.gmSeen = 0;
+    this.status = "lobby";
+    this.nextTickAt = null;
+    for (const p of this.players.values()) {
+      p.workshopId = p.isHost ? fresh.playerWorkshopId : undefined;
+      p.workshopType = p.isHost ? "bakery" : undefined;
+    }
+    return true;
+  }
+
+  // ── Persistence: snapshot and restore (event-sourced from the seed) ─────────
+
+  snapshot(): RoomSnapshot {
+    return {
+      id: this.id,
+      code: this.code,
+      seed: this.seed,
+      speed: this.speed,
+      tickEveryMs: this.tickEveryMs,
+      status: this.status,
+      hostId: this.hostId,
+      seasonNumber: this.seasonNumber,
+      players: [...this.players.values()],
+      chat: [...this.chatLog],
+      ops: [...this.ops],
+      nextTickAt: this.nextTickAt,
+    };
+  }
+
+  /** Rebuild a room from a snapshot by replaying its ops on a fresh season. */
+  static restore(snap: RoomSnapshot): Room {
+    const host = snap.players.find((p) => p.isHost) ?? snap.players[0];
+    const room = new Room(snap.id, snap.code, host?.id ?? snap.hostId, host?.name ?? "Host", snap.seed, {
+      speed: snap.speed,
+      tickEveryMs: snap.tickEveryMs,
+    });
+    room.status = snap.status === "ended" ? "live" : snap.status; // replaying needs live to step
+    // Replay every recorded mutation in order (deterministic from the seed).
+    for (const op of snap.ops) room.replay(op);
+    room.status = snap.status;
+    room.hostId = snap.hostId;
+    room.seasonNumber = snap.seasonNumber;
+    room.nextTickAt = snap.nextTickAt;
+    // Restore players (their shop ids match the replayed session) and chat.
+    room.players.clear();
+    for (const p of snap.players) room.players.set(p.id, { ...p });
+    room.chatLog.length = 0;
+    room.chatLog.push(...snap.chat);
+    room.gmSeen = room.session.gmEvents(1000).length; // don't re-post old GM events
+    return room;
+  }
+
+  /** Apply one recorded op during a restore. */
+  private replay(op: Op): void {
+    switch (op.t) {
+      case "claim":
+        this.session.claim(op.type);
+        break;
+      case "release":
+        this.session.release(op.ws);
+        break;
+      case "price":
+        this.session.setPrice(op.v, op.ws);
+        break;
+      case "wage":
+        this.session.setWage(op.v, op.ws);
+        break;
+      case "hire":
+        this.session.hire(op.ws);
+        break;
+      case "decide":
+        this.session.decide(op.id, op.opt);
+        break;
+      case "trade":
+        this.session.trade(op.from, op.to, op.qty, op.coins);
+        break;
+      case "step":
+        this.session.step();
+        break;
+    }
+  }
 }
 
 export class RoomManager {
   private readonly rooms = new Map<string, Room>();
   private readonly byCode = new Map<string, string>();
 
-  create(hostId: string, hostName: string, seed = Math.floor(Math.random() * 1_000_000)): Room {
+  create(
+    hostId: string,
+    hostName: string,
+    seed = Math.floor(Math.random() * 1_000_000),
+    opts: { speed?: RoomSpeed; tickEveryMs?: number } = {},
+  ): Room {
     const id = randomUUID();
     let code = makeCode();
     while (this.byCode.has(code)) code = makeCode();
-    const room = new Room(id, code, hostId, hostName, seed);
+    const room = new Room(id, code, hostId, hostName, seed, opts);
     this.rooms.set(id, room);
     this.byCode.set(code, id);
     return room;
+  }
+
+  /** Re-add a persisted room on boot (so a restart loses nothing). */
+  adopt(room: Room): void {
+    this.rooms.set(room.id, room);
+    this.byCode.set(room.code, room.id);
   }
 
   get(id: string): Room | undefined {
@@ -397,7 +669,9 @@ export class RoomManager {
     for (const room of this.rooms.values()) {
       if (room.hasPlayer(playerId)) {
         room.removePlayer(playerId);
-        if (room.playerCount === 0) {
+        // A League room keeps running while empty (players drop in across a week);
+        // a Live room with nobody left is dropped.
+        if (room.playerCount === 0 && room.speed !== "league") {
           this.rooms.delete(room.id);
           this.byCode.delete(room.code);
           return undefined;
@@ -410,6 +684,11 @@ export class RoomManager {
 
   list(): RoomState[] {
     return [...this.rooms.values()].map((r) => r.state());
+  }
+
+  /** Every room (for the league scheduler to find those due to advance). */
+  all(): Room[] {
+    return [...this.rooms.values()];
   }
 
   get size(): number {

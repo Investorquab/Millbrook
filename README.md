@@ -201,7 +201,16 @@ the same socket (lines trimmed and length-capped). Players also post **trade off
 — "N of my good for P coins" to the room or a named player — which another player
 accepts; coins move buyer→seller and goods seller→buyer (tools lift the buyer's
 output), always conserving the town's 10,000 coins. HTTP `/health` and `/rooms`.
-The `infra/` stack (Node server + Postgres 16 + Caddy) is ready for a VPS.
+
+A room can be **Live** (plays out in minutes — watch it tick) or a **League** season,
+which advances a day on a schedule so people drop in across the week. A League room
+keeps running while empty (the Foreman and decision defaults carry your shop), gives
+a returning player a **morning report** of what they missed, lets everyone present
+press **Ready to skip** to advance at once, and **rolls into a fresh season** at day 28.
+League rooms are **persisted** (event-sourced: a room is saved as its seed plus the
+ordered log of deterministic moves, replayed on boot), so with `DATABASE_URL` set they
+**survive a server restart**; without it they live in memory. The `infra/` stack (Node
+server + Postgres 16 + Caddy) is ready for a VPS.
 
 ---
 
@@ -265,15 +274,14 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
   account, the Game Master runs on town metrics with template reasoning and an
   unattested (but still hash-verifiable) receipt, and the UI says so.
 - **Rooms are early.** Each player claims and runs one of the four shops in a shared
-  town, can chat, and can trade goods for coins; rooms live in memory until Postgres
-  persistence lands.
+  town, can chat, and can trade goods for coins. Live rooms are in-memory; League
+  rooms persist to Postgres when `DATABASE_URL` is set (and to memory otherwise).
 
 ---
 
 ## Roadmap
 
 - Deeper moderation tools; trade offers as timed decision cards with a default answer
-- Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
 - The Carpenter and finished house parts (housing supply has rent today, no builder yet)
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join

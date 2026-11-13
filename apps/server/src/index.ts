@@ -18,6 +18,7 @@ import { createGameServer, type GameServerOptions } from "./server.js";
 import { AuthStore, makeEmailSender, pickEmailProvider } from "./auth.js";
 import { SettlementService, nearConfigFromEnv } from "./settlement-service.js";
 import { aiConfigFromEnv } from "./gazette-ai.js";
+import { makeRoomStore } from "./persistence.js";
 
 const PORT = Number(process.env.PORT ?? 8080);
 const isProd = process.env.NODE_ENV === "production";
@@ -70,6 +71,14 @@ console.log(
   ai
     ? `Gazette: NEAR AI (${ai.model}) with the template as fallback.`
     : "Gazette: template only (set NEAR_AI_API_KEY to let NEAR AI write it).",
+);
+
+// Room persistence (Step 5): Postgres when DATABASE_URL is set, else in-memory.
+opts.store = makeRoomStore(process.env.DATABASE_URL?.trim() || undefined);
+console.log(
+  process.env.DATABASE_URL
+    ? "Room store: Postgres (League rooms survive a restart)."
+    : "Room store: in-memory (set DATABASE_URL for persistence across restarts).",
 );
 
 const server = createGameServer(opts);

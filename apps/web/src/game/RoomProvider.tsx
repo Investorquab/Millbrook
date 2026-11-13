@@ -61,6 +61,22 @@ export interface RoomState {
   standings: StandingRow[];
   /** The latest Game Master event, for the "Why did this happen?" card. */
   gm: GmEventCard | null;
+  /** How the room advances its days ("live" ticks fast; "league" on a schedule). */
+  speed: "live" | "league";
+  /** League: wall-clock ms of the next scheduled day, or null. */
+  nextTickAt: number | null;
+  readyCount: number;
+  humanCount: number;
+  seasonNumber: number;
+}
+
+/** What a returning League player missed (mirrors server MorningReport). */
+export interface MorningReport {
+  fromDay: number;
+  toDay: number;
+  coinsDelta: number;
+  events: string[];
+  decisionsResolved: number;
 }
 
 /** Compact shared-town state for the 3D scene (mirrors server TownSnapshot). */
@@ -90,8 +106,13 @@ export interface RoomController {
   town: RoomTownSnapshot | null;
   messages: ChatMessage[];
   offers: TradeOffer[];
-  createRoom: (name: string, seed?: number) => void;
+  /** League: what I missed while away (cleared when dismissed), or null. */
+  morningReport: MorningReport | null;
+  dismissMorningReport: () => void;
+  createRoom: (name: string, seed?: number, speed?: "live" | "league") => void;
   joinRoom: (code: string, name: string) => void;
+  /** League: tell the server I'm ready to skip ahead a day. */
+  markReady: () => void;
   claimWorkshop: (type: WorkshopType) => void;
   sendChat: (text: string) => void;
   offerTrade: (spec: { qty: number; coins: number; toPlayerId?: string | null }) => void;
@@ -125,6 +146,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [offers, setOffers] = useState<TradeOffer[]>([]);
   const [town, setTown] = useState<RoomTownSnapshot | null>(null);
+  const [morningReport, setMorningReport] = useState<MorningReport | null>(null);
 
   const ensureSocket = useCallback((): Socket => {
     if (socketRef.current) return socketRef.current;
@@ -153,15 +175,18 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     socket.on("chat:history", (msgs: ChatMessage[]) => setMessages(msgs));
     socket.on("chat:message", (msg: ChatMessage) => setMessages((prev) => [...prev, msg]));
     socket.on("trade:offers", (list: TradeOffer[]) => setOffers(list));
+    socket.on("morning:report", (r: MorningReport) => setMorningReport(r));
     socket.on("error", (payload: { message: string }) => setError(payload.message));
     socketRef.current = socket;
     return socket;
   }, []);
 
   const createRoom = useCallback(
-    (name: string, seed?: number) => {
+    (name: string, seed?: number, speed: "live" | "league" = "live") => {
       setError(null);
-      ensureSocket().emit("room:create", { name, seed });
+      // For a league demo, a short tick (2 min) so judges see the schedule move.
+      const tickEveryMs = speed === "league" ? 2 * 60 * 1000 : undefined;
+      ensureSocket().emit("room:create", { name, seed, speed, tickEveryMs });
     },
     [ensureSocket],
   );
@@ -183,6 +208,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setTown(null);
     setMessages([]);
     setOffers([]);
+    setMorningReport(null);
     setStatus("idle");
   }, []);
 
@@ -203,8 +229,11 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     town,
     messages,
     offers,
+    morningReport,
+    dismissMorningReport: () => setMorningReport(null),
     createRoom,
     joinRoom,
+    markReady: () => emit("room:ready"),
     claimWorkshop: (type) => emit("room:claim", { type }),
     sendChat: (text) => {
       const t = text.trim();

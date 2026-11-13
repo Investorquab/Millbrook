@@ -16,10 +16,12 @@
     "@millbrook/economy": "workspace:*",
     "@millbrook/shared": "workspace:*",
     "near-api-js": "^5.1.1",
+    "pg": "^8.23.1",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "@types/pg": "^8.23.1",
     "socket.io-client": "^4.8.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",

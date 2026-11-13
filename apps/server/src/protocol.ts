@@ -39,13 +39,32 @@ export interface ChatMessage {
 /** Longest chat line the server will accept; longer is trimmed. */
 export const CHAT_MAX_LEN = 240;
 
+/** How a room advances its days. "live" ticks fast (watch it play); "league"
+ *  advances on a slow schedule (hours in real life, minutes for a demo) so people
+ *  drop in across a week. */
+export type RoomSpeed = "live" | "league";
+
+/** What a player missed since they were last in a League room. */
+export interface MorningReport {
+  fromDay: number;
+  toDay: number;
+  /** Net coins the player's shop gained (or lost) while they were away. */
+  coinsDelta: number;
+  /** Notable things that happened, newest last. */
+  events: string[];
+  /** Decisions that resolved to their default because they weren't answered. */
+  decisionsResolved: number;
+}
+
 /** Client → server events. */
 export interface ClientToServer {
-  "room:create": (payload: { name: string; seed?: number }) => void;
+  "room:create": (payload: { name: string; seed?: number; speed?: RoomSpeed; tickEveryMs?: number }) => void;
   "room:join": (payload: { code: string; name: string }) => void;
   "room:claim": (payload: { type: WorkshopType }) => void;
   "room:leave": () => void;
   "room:start": () => void;
+  /** League: this player is ready to skip ahead; when all present are ready, a day advances. */
+  "room:ready": () => void;
   "chat:send": (payload: { text: string }) => void;
   "trade:offer": (payload: { qty: number; coins: number; toPlayerId?: string | null }) => void;
   "trade:accept": (payload: { offerId: string }) => void;
@@ -76,6 +95,8 @@ export interface ServerToClient {
   "chat:history": (messages: ChatMessage[]) => void;
   /** The room's current open trade offers. */
   "trade:offers": (offers: TradeOffer[]) => void;
+  /** League: what a returning player missed while they were away. */
+  "morning:report": (report: MorningReport) => void;
   "error": (payload: { message: string }) => void;
 }
 

@@ -13,7 +13,7 @@ import { signIn } from "./helpers";
 test.describe("Rooms", () => {
   test("host creates a room, sees a live code, and starts the shared season", async ({ page }) => {
     await signIn(page, "Ada");
-    await page.getByRole("button", { name: "Create room" }).click();
+    await page.getByRole("button", { name: "Live room" }).click();
 
     // We land in the room as the host, with a real invite code from the server.
     await expect(page.getByText("You're the host")).toBeVisible({ timeout: 15000 });
@@ -41,7 +41,7 @@ test.describe("Rooms", () => {
   test("a joiner claims a shop and runs it; the host sees them in that slot", async ({ page, browser }) => {
     // Host a room.
     await signIn(page, "Ada");
-    await page.getByRole("button", { name: "Create room" }).click();
+    await page.getByRole("button", { name: "Live room" }).click();
     await expect(page.getByText("You're the host")).toBeVisible({ timeout: 15000 });
     const code = ((await page.locator(".room__code-value").textContent()) ?? "").trim();
     expect(code).toMatch(/^[A-Z2-9]{6}$/);
@@ -78,7 +78,7 @@ test.describe("Rooms", () => {
 
   test("players chat and see each other's messages, plus join/claim notices", async ({ page, browser }) => {
     await signIn(page, "Ada");
-    await page.getByRole("button", { name: "Create room" }).click();
+    await page.getByRole("button", { name: "Live room" }).click();
     await expect(page.getByText("You're the host")).toBeVisible({ timeout: 15000 });
     const code = ((await page.locator(".room__code-value").textContent()) ?? "").trim();
 
@@ -115,7 +115,7 @@ test.describe("Rooms", () => {
 
   test("a player posts a trade offer the others see, and can withdraw it", async ({ page, browser }) => {
     await signIn(page, "Ada");
-    await page.getByRole("button", { name: "Create room" }).click();
+    await page.getByRole("button", { name: "Live room" }).click();
     await expect(page.getByText("You're the host")).toBeVisible({ timeout: 15000 });
     const code = ((await page.locator(".room__code-value").textContent()) ?? "").trim();
 
