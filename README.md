@@ -150,11 +150,14 @@ stated plainly. Player accounts are **custodial** testnet sub-accounts, which is
 lets email login work with no wallet. **Testnet only** — no real value moves.
 
 > **On live settlement:** solo play is the deterministic sim in your browser, and the
-> Proof screen reads the live on-chain total. **Automatic daily settlement of a running
-> room** to the chain is **opt-in** (`SETTLE_ONCHAIN=1` with operator creds); because the
-> contract holds one town's 10,000, one room settles at a time. It's verified working
-> (settlements #4–#6 posted, total held at 10,000) but **off by default** on the public
-> demo, so the explorer's settlement count only climbs when it's enabled.
+> Proof screen reads the live on-chain total. Settlement to the contract is demonstrated
+> by `pnpm --filter @millbrook/server settle-season` — it drives a season **seeded to the
+> contract's genesis** and posts each day's net, conserving diff (settlements #4–#6, the
+> audited total held at exactly 10,000). **Automatic settlement of an arbitrary live
+> room** needs the contract seeded to match that room's opening distribution (a diff that
+> doesn't is correctly rejected as coin-creating), so it's **opt-in and off by default**
+> on the public demo; wiring a fresh, per-room-seeded contract for continuous room
+> settlement is on the roadmap.
 
 ---
 
