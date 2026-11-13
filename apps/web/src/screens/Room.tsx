@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN } from "@millbrook/economy";
+import { PRICE_MAX, PRICE_MIN, WAGE_MAX, WAGE_MIN, GOAL_CARDS } from "@millbrook/economy";
 import type { StandingRow, GmEventCard } from "@millbrook/economy";
 import { useRoom, type WorkshopType } from "../game/RoomProvider";
 import type { TownData } from "../town3d/townData";
@@ -21,6 +21,25 @@ function nextDayIn(at: number): string {
 
 /** Keep in step with CHAT_MAX_LEN in apps/server/src/protocol.ts. */
 const CHAT_MAX_LEN = 240;
+
+/** Plain-words name of a room's goal card (reuses the economy catalog, no drift). */
+function goalName(id: string): string {
+  return GOAL_CARDS[id]?.name ?? "Tycoon";
+}
+
+/** How a town size reads in the lobby ("the four Phase-1 workshops", etc.). */
+function townSizeLabel(size: number): string {
+  switch (size) {
+    case 6:
+      return "six workshops (Tailor + Tavern)";
+    case 7:
+      return "seven workshops (+ Apothecary)";
+    case 8:
+      return "eight workshops (+ Carpenter)";
+    default:
+      return "the four Phase-1 workshops";
+  }
+}
 
 /**
  * A networked room — the lobby and the live town over Socket.IO, driven by
@@ -223,7 +242,7 @@ export function Room() {
             <div>
               <h2>This town</h2>
               <p>
-                30 residents, the four Phase-1 workshops, seed #{r.seed}.{" "}
+                30 residents, {townSizeLabel(r.townSize)}, seed #{r.seed}.{" "}
                 {room.myWorkshop
                   ? `You run the ${shopName(room.myWorkshop).toLowerCase()}.`
                   : "Claim a shop above to run one, or watch."}
@@ -231,7 +250,10 @@ export function Room() {
             </div>
             <div>
               <h2>Speed &amp; goal</h2>
-              <p>Live, ~20 minutes · Tycoon. Speed, goal-card and chat pickers are on the roadmap.</p>
+              <p>
+                {r.speed === "league" ? "League, on a schedule" : "Live, ~20 minutes"} · Goal:{" "}
+                <b>{goalName(r.goalCard)}</b>. The host sets the goal card and town size when hosting.
+              </p>
             </div>
           </div>
           <div className="room__start-row">

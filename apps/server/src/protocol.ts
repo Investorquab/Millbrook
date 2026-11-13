@@ -58,7 +58,16 @@ export interface MorningReport {
 
 /** Client → server events. */
 export interface ClientToServer {
-  "room:create": (payload: { name: string; seed?: number; speed?: RoomSpeed; tickEveryMs?: number }) => void;
+  "room:create": (payload: {
+    name: string;
+    seed?: number;
+    speed?: RoomSpeed;
+    tickEveryMs?: number;
+    /** The goal card the room season is scored against (default "tycoon"). */
+    goalCard?: string;
+    /** How many workshops the room opens (4 classic … 8 with the Carpenter). */
+    townSize?: 4 | 6 | 7 | 8;
+  }) => void;
   "room:join": (payload: { code: string; name: string }) => void;
   "room:claim": (payload: { type: WorkshopType }) => void;
   "room:leave": () => void;

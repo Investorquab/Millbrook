@@ -68,6 +68,10 @@ export interface RoomState {
   readyCount: number;
   humanCount: number;
   seasonNumber: number;
+  /** How many workshops the room opened (4 classic … 8 with the Carpenter). */
+  townSize: 4 | 6 | 7 | 8;
+  /** The goal card the room season is scored against. */
+  goalCard: string;
 }
 
 /** What a returning League player missed (mirrors server MorningReport). */
@@ -109,7 +113,12 @@ export interface RoomController {
   /** League: what I missed while away (cleared when dismissed), or null. */
   morningReport: MorningReport | null;
   dismissMorningReport: () => void;
-  createRoom: (name: string, seed?: number, speed?: "live" | "league") => void;
+  createRoom: (
+    name: string,
+    seed?: number,
+    speed?: "live" | "league",
+    opts?: { goalCard?: string; townSize?: 4 | 6 | 7 | 8 },
+  ) => void;
   joinRoom: (code: string, name: string) => void;
   /** League: tell the server I'm ready to skip ahead a day. */
   markReady: () => void;
@@ -182,11 +191,23 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const createRoom = useCallback(
-    (name: string, seed?: number, speed: "live" | "league" = "live") => {
+    (
+      name: string,
+      seed?: number,
+      speed: "live" | "league" = "live",
+      opts?: { goalCard?: string; townSize?: 4 | 6 | 7 | 8 },
+    ) => {
       setError(null);
       // For a league demo, a short tick (2 min) so judges see the schedule move.
       const tickEveryMs = speed === "league" ? 2 * 60 * 1000 : undefined;
-      ensureSocket().emit("room:create", { name, seed, speed, tickEveryMs });
+      ensureSocket().emit("room:create", {
+        name,
+        seed,
+        speed,
+        tickEveryMs,
+        goalCard: opts?.goalCard,
+        townSize: opts?.townSize,
+      });
     },
     [ensureSocket],
   );

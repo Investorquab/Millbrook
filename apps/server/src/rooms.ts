@@ -12,9 +12,8 @@
 
 import { randomUUID } from "node:crypto";
 import {
-  createSoloSession,
+  SoloSession,
   rules,
-  type SoloSession,
   type SoloView,
   type WorkshopSlot,
   type StandingRow,
@@ -29,6 +28,21 @@ import {
   type RoomSpeed,
   type MorningReport,
 } from "./protocol.js";
+
+/** Workshop line-ups by town size (byte-identical to the web SoloProvider so a
+ *  room's season matches what a solo player of the same size/goal would see). */
+export type TownSize = 4 | 6 | 7 | 8;
+const TOWN_WORKSHOPS: Record<TownSize, WorkshopType[]> = {
+  4: ["bakery", "weaver", "smithy", "brewery"],
+  6: ["bakery", "smithy", "weaver", "tailor", "tavern", "brewery"],
+  7: ["bakery", "smithy", "weaver", "tailor", "tavern", "brewery", "apothecary"],
+  8: ["bakery", "smithy", "weaver", "tailor", "tavern", "brewery", "apothecary", "carpenter"],
+};
+
+/** Build a room's season for a town size + goal card (bakery is the host's shop). */
+function makeRoomSession(seed: number, townSize: TownSize, goalCard: string): SoloSession {
+  return new SoloSession({ seed, days: 28, openWorkshops: TOWN_WORKSHOPS[townSize] as never, goalCard });
+}
 
 /** Cap the walking figures sent to the 3D scene (matches the client). */
 const SNAPSHOT_FIGURES = 18;
@@ -78,6 +92,10 @@ export interface RoomState {
   humanCount: number;
   /** Which season this room is on (rolls over at day 28). */
   seasonNumber: number;
+  /** How many workshops the room opened. */
+  townSize: TownSize;
+  /** The goal card the room season is scored against. */
+  goalCard: string;
 }
 
 /** One deterministic season mutation, replayed to restore a room's state. */
@@ -98,6 +116,8 @@ export interface RoomSnapshot {
   seed: number;
   speed: RoomSpeed;
   tickEveryMs: number;
+  townSize: TownSize;
+  goalCard: string;
   status: RoomStatus;
   hostId: string;
   seasonNumber: number;
@@ -143,13 +163,16 @@ export class Room {
   // ── Persistence: the ordered log of deterministic season mutations ──────────
   private readonly ops: Op[] = [];
 
+  readonly townSize: TownSize;
+  readonly goalCardId: string;
+
   constructor(
     id: string,
     code: string,
     hostId: string,
     hostName: string,
     seed: number,
-    opts: { speed?: RoomSpeed; tickEveryMs?: number } = {},
+    opts: { speed?: RoomSpeed; tickEveryMs?: number; townSize?: TownSize; goalCard?: string } = {},
   ) {
     this.id = id;
     this.code = code;
@@ -157,7 +180,9 @@ export class Room {
     this.hostId = hostId;
     this.speed = opts.speed ?? "live";
     this.tickEveryMs = opts.tickEveryMs ?? 6 * 60 * 60 * 1000; // 6h default for League
-    this.session = createSoloSession(seed);
+    this.townSize = opts.townSize ?? 4;
+    this.goalCardId = opts.goalCard ?? "tycoon";
+    this.session = makeRoomSession(seed, this.townSize, this.goalCardId);
     // The host runs the bakery (the session's pre-claimed player shop).
     this.players.set(hostId, {
       id: hostId,
@@ -427,6 +452,8 @@ export class Room {
       readyCount: this.readyCount,
       humanCount: this.players.size,
       seasonNumber: this.seasonNumber,
+      townSize: this.townSize,
+      goalCard: this.goalCardId,
     };
   }
 
@@ -534,7 +561,7 @@ export class Room {
   rollSeason(): boolean {
     if (this.status !== "ended") return false;
     this.seasonNumber += 1;
-    const fresh = createSoloSession(this.seed + this.seasonNumber);
+    const fresh = makeRoomSession(this.seed + this.seasonNumber, this.townSize, this.goalCardId);
     // Swap in the new season; keep the players and their host/bakery assignment.
     (this as { session: SoloSession }).session = fresh;
     this.ops.length = 0; // a new season starts a new op history (seed + number)
@@ -557,6 +584,8 @@ export class Room {
       seed: this.seed,
       speed: this.speed,
       tickEveryMs: this.tickEveryMs,
+      townSize: this.townSize,
+      goalCard: this.goalCardId,
       status: this.status,
       hostId: this.hostId,
       seasonNumber: this.seasonNumber,
@@ -573,6 +602,8 @@ export class Room {
     const room = new Room(snap.id, snap.code, host?.id ?? snap.hostId, host?.name ?? "Host", snap.seed, {
       speed: snap.speed,
       tickEveryMs: snap.tickEveryMs,
+      townSize: snap.townSize,
+      goalCard: snap.goalCard,
     });
     room.status = snap.status === "ended" ? "live" : snap.status; // replaying needs live to step
     // Replay every recorded mutation in order (deterministic from the seed).
@@ -629,7 +660,7 @@ export class RoomManager {
     hostId: string,
     hostName: string,
     seed = Math.floor(Math.random() * 1_000_000),
-    opts: { speed?: RoomSpeed; tickEveryMs?: number } = {},
+    opts: { speed?: RoomSpeed; tickEveryMs?: number; townSize?: TownSize; goalCard?: string } = {},
   ): Room {
     const id = randomUUID();
     let code = makeCode();

@@ -58,6 +58,42 @@ describe("event-sourced snapshot + restore", () => {
     expect(b.workshopOf("p2")).toBe(a.workshopOf("p2"));
     expect(b.chatHistory().some((m) => m.text === "hello town")).toBe(true);
   });
+
+  it("carries a room's goal card + town size across a restore (depth parity)", () => {
+    // A deeper room: six workshops, scored on "biggest_employer" not Tycoon.
+    const a = new Room("id", "CODE12", "host", "Host", 42, { townSize: 6, goalCard: "biggest_employer" });
+    // The six-shop line-up really opened (more claimable slots than the classic four).
+    expect(a.state().slots.length).toBe(6);
+    expect(a.state().townSize).toBe(6);
+    expect(a.state().goalCard).toBe("biggest_employer");
+    playScripted(a);
+
+    const b = Room.restore(a.snapshot());
+    // Settings and the scored card survive the round-trip…
+    expect(b.townSize).toBe(6);
+    expect(b.goalCardId).toBe("biggest_employer");
+    expect(b.state().slots.length).toBe(6);
+    // …and the replay is byte-identical (day, coins, the goal-ranked standings)…
+    expect(b.view().day).toBe(a.view().day);
+    expect(b.view().coins).toBe(a.view().coins);
+    expect(b.state().standings.map((r) => [r.name, r.score])).toEqual(
+      a.state().standings.map((r) => [r.name, r.score]),
+    );
+    // …with the 10,000-coin invariant intact.
+    b.session.world.ledger.assertInvariant(TOTAL_COINS);
+  });
+
+  it("a Live room with no depth options is byte-identical to the classic four-shop Tycoon room", () => {
+    const plain = new Room("id", "CODE12", "host", "Host", 99);
+    const explicit = new Room("id", "CODE12", "host", "Host", 99, { townSize: 4, goalCard: "tycoon" });
+    playScripted(plain);
+    playScripted(explicit);
+    expect(explicit.state().slots.length).toBe(4);
+    expect(plain.view().coins).toBe(explicit.view().coins);
+    expect(plain.state().standings.map((r) => [r.name, r.score])).toEqual(
+      explicit.state().standings.map((r) => [r.name, r.score]),
+    );
+  });
 });
 
 describe("MemoryRoomStore", () => {

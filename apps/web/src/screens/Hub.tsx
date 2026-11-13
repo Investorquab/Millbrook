@@ -40,7 +40,9 @@ export function Hub() {
       navigate("/signin");
       return;
     }
-    room.createRoom(username, undefined, speed);
+    // Carry the host's chosen goal card + town size into the room season, so a
+    // room is as deep as a solo game (not always 4-shop tycoon).
+    room.createRoom(username, undefined, speed, { goalCard, townSize });
     navigate("/room");
   }
 

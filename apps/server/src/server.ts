@@ -215,12 +215,14 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
     }
     const nameFrom = (claimed: string) => (session ? session.username : claimed);
 
-    socket.on("room:create", ({ name, seed, speed, tickEveryMs }) => {
+    socket.on("room:create", ({ name, seed, speed, tickEveryMs, goalCard, townSize }) => {
       const resolved = nameFrom(name);
       socket.data.name = resolved;
       const room = rooms.create(socket.id, resolved, seed, {
         speed: speed === "league" ? "league" : "live",
         tickEveryMs,
+        goalCard,
+        townSize,
       });
       socket.data.roomId = room.id;
       void socket.join(room.id);
