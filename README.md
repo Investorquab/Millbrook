@@ -12,7 +12,7 @@ that nobody scripted.
 
 Built for the **NEAR Hackathon — Games With Real Economies** · *the economy is the gameplay.*
 
-**[▶ Play the live game](https://millbrook.185-7-81-139.sslip.io)** · **[🔗 Contract on NEAR testnet](https://testnet.nearblocks.io/address/game.millbrook.testnet)** · **[💻 Source](https://github.com/Investorquab/Millbrook)**
+**[▶ Play the live game](https://millbrook.185-7-81-139.sslip.io)** · **[🎬 Watch the demo](docs/Millbrook_NEAR_GamesWithRealEconomies.mp4)** · **[🔗 Contract on NEAR testnet](https://testnet.nearblocks.io/address/game.millbrook.testnet)** · **[💻 Source](https://github.com/Investorquab/Millbrook)**
 
 </div>
 
@@ -78,7 +78,7 @@ economy move without waiting.
 5. **Play together:** on the Hub pick a 6-shop town + a goal card and **host a room**; share the code; a second browser joins and claims a shop; chat and send a trade offer.
 6. **Verify the contract** on the [explorer](https://testnet.nearblocks.io/address/game.millbrook.testnet): `audit_total` = 10,000, the NEP-245 views, and the NEP-297 settlement/receipt events. No `mint`, `burn`, `owner`, `upgrade` or `pause` method exists.
 
-A full **[5-minute walkthrough for judges is in `docs/DEMO.md`](docs/DEMO.md)**.
+**Short on time? [🎬 Watch the demo video](docs/Millbrook_NEAR_GamesWithRealEconomies.mp4)** (click to play on GitHub). A full written **[5-minute walkthrough is in `docs/DEMO.md`](docs/DEMO.md)**.
 
 ---
 
