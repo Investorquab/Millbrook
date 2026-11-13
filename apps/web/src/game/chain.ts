@@ -8,7 +8,10 @@
  * `u64` views, so each result decodes as a plain JSON number.
  */
 
-export const CONTRACT_ID = "millbrook.testnet";
+// The Millbrook ledger contract (a sub-account), operated by millbrook.testnet.
+// It is seeded clean to 10,000 and settles each game day, so the Proof screen's
+// live audit read and the explorer both reflect the real, closed economy.
+export const CONTRACT_ID = "game.millbrook.testnet";
 export const EXPLORER = `https://testnet.nearblocks.io/address/${CONTRACT_ID}`;
 
 // FastNEAR's public testnet RPC (CORS-enabled); the legacy near.org public RPC

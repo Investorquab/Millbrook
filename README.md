@@ -12,7 +12,7 @@ that nobody scripted.
 
 Built for the **NEAR Hackathon — Games With Real Economies** · *the economy is the gameplay.*
 
-**[▶ Play the live game](https://millbrook.185-7-81-139.sslip.io)** · **[🔗 Contract on NEAR testnet](https://testnet.nearblocks.io/address/millbrook.testnet)** · **[💻 Source](https://github.com/Investorquab/Millbrook)**
+**[▶ Play the live game](https://millbrook.185-7-81-139.sslip.io)** · **[🔗 Contract on NEAR testnet](https://testnet.nearblocks.io/address/game.millbrook.testnet)** · **[💻 Source](https://github.com/Investorquab/Millbrook)**
 
 </div>
 
@@ -73,10 +73,10 @@ economy move without waiting.
 
 1. **Open [the live game](https://millbrook.185-7-81-139.sslip.io)** → *Play solo* → hire a worker, set a price, press play. You'll see a sale (and hear a coin) within a minute; a guided tour walks the loop.
 2. **Cause a recession:** slash your wage and **Fast-forward** a week — watch town unemployment rise and everyone's sales fall. Nobody scripted it.
-3. **Audit the money:** open **Proof**. It reads the **live** on-chain total from `millbrook.testnet` (10,000) and lets you **Follow a coin** hand-to-hand across the town.
+3. **Audit the money:** open **Proof**. It reads the **live** on-chain total from `game.millbrook.testnet` (10,000) and lets you **Follow a coin** hand-to-hand across the town.
 4. **See the AI act inside the rules:** play until a **Game Master** event fires, then click *"Why did this happen?"* for the data it read, its reasoning, and the on-chain receipt.
 5. **Play together:** on the Hub pick a 6-shop town + a goal card and **host a room**; share the code; a second browser joins and claims a shop; chat and send a trade offer.
-6. **Verify the contract** on the [explorer](https://testnet.nearblocks.io/address/millbrook.testnet): `audit_total` = 10,000, the NEP-245 views, and the NEP-297 settlement/receipt events. No `mint`, `burn`, `owner`, `upgrade` or `pause` method exists.
+6. **Verify the contract** on the [explorer](https://testnet.nearblocks.io/address/game.millbrook.testnet): `audit_total` = 10,000, the NEP-245 views, and the NEP-297 settlement/receipt events. No `mint`, `burn`, `owner`, `upgrade` or `pause` method exists.
 
 A full **[5-minute walkthrough for judges is in `docs/DEMO.md`](docs/DEMO.md)**.
 
@@ -123,7 +123,7 @@ play is guest-friendly; hosting or joining a room asks you to sign in first.
 
 ## On-chain: the NEAR stack
 
-### The contract — `contracts/millbrook` (Rust / near-sdk), **live at [`millbrook.testnet`](https://testnet.nearblocks.io/address/millbrook.testnet)**
+### The contract — `contracts/millbrook` (Rust / near-sdk), **live at [`game.millbrook.testnet`](https://testnet.nearblocks.io/address/game.millbrook.testnet)** (operated by `millbrook.testnet`)
 A **two-crate** design: a pure `millbrook-ledger` core holds the invariant logic (unit-tested without a VM), and a thin `#[near]` shell persists it on-chain.
 
 - **Fixed supply.** Seeded to exactly **10,000 coins** and **re-audited on-chain after every settlement** — a batch that doesn't sum to 10,000 is reverted.
@@ -133,7 +133,7 @@ A **two-crate** design: a pure `millbrook-ledger` core holds the invariant logic
 - **Verified live:** seeded + audited at 10,000, real settlements posted, and the NEP-245 interface exercised on-chain (mint → standard views → a 1-yocto `mt_transfer`).
 
 ### NEAR tools & standards we used
-- **NEAR testnet** — the contract account `millbrook.testnet`, deployed and settled against live chain state.
+- **NEAR testnet** — the ledger contract `game.millbrook.testnet`, operated by `millbrook.testnet`, deployed and settled against live chain state.
 - **near-sdk (Rust)** — the contract, pinned and built to `wasm32-unknown-unknown`.
 - **NEP-245** (multi-token goods) and **NEP-297** (event format for settlements, mints and receipts).
 - **NEAR AI Cloud** — the Game Master's reasoning model (OpenAI-compatible), with a deterministic template fallback when no key is set.
@@ -150,14 +150,14 @@ stated plainly. Player accounts are **custodial** testnet sub-accounts, which is
 lets email login work with no wallet. **Testnet only** — no real value moves.
 
 > **On live settlement:** solo play is the deterministic sim in your browser, and the
-> Proof screen reads the live on-chain total. Settlement to the contract is demonstrated
-> by `pnpm --filter @millbrook/server settle-season` — it drives a season **seeded to the
-> contract's genesis** and posts each day's net, conserving diff (settlements #4–#6, the
-> audited total held at exactly 10,000). **Automatic settlement of an arbitrary live
-> room** needs the contract seeded to match that room's opening distribution (a diff that
-> doesn't is correctly rejected as coin-creating), so it's **opt-in and off by default**
-> on the public demo; wiring a fresh, per-room-seeded contract for continuous room
-> settlement is on the roadmap.
+> Proof screen reads the live on-chain total. The ledger contract is seeded clean to a
+> season's genesis, so `pnpm --filter @millbrook/server settle-season` posts each game
+> day's net, conserving diff to it and the audited total holds at exactly 10,000 (a diff
+> that didn't conserve would be rejected as coin-creating — that guard is the whole
+> point). **Automatic settlement of an arbitrary live *room*** needs the contract seeded
+> to match that room's opening distribution, so it's **opt-in and off by default** on the
+> public demo; wiring a fresh, per-room-seeded contract for continuous room settlement is
+> on the roadmap.
 
 ---
 

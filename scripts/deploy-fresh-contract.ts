@@ -49,7 +49,28 @@ function readEnv(): Record<string, string> {
     network: get("NEAR_NETWORK") || "testnet",
     operatorId: get("NEAR_OPERATOR_ACCOUNT_ID"),
     operatorKey: get("NEAR_OPERATOR_PRIVATE_KEY"),
+    subKey: get("NEAR_CONTRACT_SUBACCOUNT_KEY"),
   };
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Retry an on-chain call through transient propagation errors (new access key
+ *  not yet visible on the queried node). */
+async function withRetry<T>(label: string, fn: () => Promise<T>, tries = 5): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < tries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      const msg = (e as { message?: string })?.message ?? String(e);
+      if (!/no matching key pair|does not exist|doesn't exist|UnknownAccount|InvalidNonce|not found/i.test(msg)) throw e;
+      console.log(`  …${label} not ready yet, retrying (${i + 1}/${tries})`);
+      await sleep(2500);
+    }
+  }
+  throw lastErr;
 }
 
 /** Upsert a KEY=value line in .env without touching anything else (0600). */
@@ -78,7 +99,7 @@ function arg(name: string, fallback: string): string {
 }
 
 async function main() {
-  const { network, operatorId, operatorKey } = readEnv();
+  const { network, operatorId, operatorKey, subKey } = readEnv();
   if (network !== "testnet") throw new Error(`NEAR_NETWORK is "${network}", expected testnet`);
   if (!operatorId || !operatorKey) throw new Error("operator id/key missing in .env");
   if (!existsSync(WASM_PATH)) throw new Error(`wasm not found — run pnpm contract:build\n  ${WASM_PATH}`);
@@ -92,47 +113,67 @@ async function main() {
   const keyStore = new keyStores.InMemoryKeyStore();
   await keyStore.setKey(network, operatorId, KeyPair.fromString(operatorKey as `ed25519:${string}`));
 
-  // A fresh key for the new contract account.
-  const contractKey = KeyPair.fromRandom("ed25519");
-  await keyStore.setKey(network, contractId, contractKey);
-
   const near = await connect({ networkId: network, nodeUrl: RPC_URL, keyStore });
   const operator = await near.account(operatorId);
 
-  console.log(`→ Creating ${contractId} (funded ${fund} NEAR from ${operatorId}) …`);
+  // Does the sub-account already exist (e.g. a half-finished earlier run)?
+  let exists = false;
   try {
+    await operator.viewFunction({ contractId, methodName: "noop_does_not_exist", args: {} }).catch(() => {});
+    await (await near.account(contractId)).state();
+    exists = true;
+  } catch {
+    exists = false;
+  }
+
+  if (exists) {
+    if (!subKey) {
+      throw new Error(`${contractId} already exists but NEAR_CONTRACT_SUBACCOUNT_KEY is missing — can't sign for it.`);
+    }
+    await keyStore.setKey(network, contractId, KeyPair.fromString(subKey as `ed25519:${string}`));
+    console.log(`→ ${contractId} already exists — reusing its key, deploying onto it.`);
+  } else {
+    const contractKey = KeyPair.fromRandom("ed25519");
+    await keyStore.setKey(network, contractId, contractKey);
+    console.log(`→ Creating ${contractId} (funded ${fund} NEAR from ${operatorId}) …`);
     await operator.createAccount(
       contractId,
       contractKey.getPublicKey(),
       BigInt(utils.format.parseNearAmount(fund)!) as unknown as bigint,
     );
-    // Persist the new account's key immediately (recovery), never printed.
-    writeEnvVar("NEAR_CONTRACT_SUBACCOUNT_KEY", contractKey.toString());
-    console.log("  sub-account created (key saved to .env)");
-  } catch (e) {
-    const msg = (e as { message?: string })?.message ?? String(e);
-    if (/already exists|AccountAlreadyExists/i.test(msg)) {
-      throw new Error(
-        `${contractId} already exists. Pick another --name, or reuse it only if you still hold its key.`,
-      );
-    }
-    throw e;
+    writeEnvVar("NEAR_CONTRACT_SUBACCOUNT_KEY", contractKey.toString()); // recovery; never printed
+    console.log("  sub-account created (key saved to .env); waiting for the key to propagate …");
+    await sleep(3000);
   }
 
   const contractAccount = await near.account(contractId);
-  console.log(`→ Deploying wasm to ${contractId} …`);
   const wasm = readFileSync(WASM_PATH);
-  await contractAccount.deployContract(wasm);
+  console.log(`→ Deploying wasm to ${contractId} …`);
+  await withRetry("deploy", () => contractAccount.deployContract(wasm));
   console.log(`  deployed ${(wasm.length / 1024).toFixed(0)} KB`);
 
-  console.log(`→ Seeding (seed ${seedN}, ${seed.length} accounts, operator ${operatorId}) …`);
-  await contractAccount.functionCall({
-    contractId,
-    methodName: "new",
-    args: { operator: operatorId, seed },
-    gas: 100_000_000_000_000n as unknown as bigint,
-    attachedDeposit: 0n as unknown as bigint,
-  });
+  // Seed only if not already initialised (so a resumed run doesn't try twice).
+  let initialised = false;
+  try {
+    const supply = await operator.viewFunction({ contractId, methodName: "total_supply", args: {} });
+    initialised = typeof supply === "number";
+  } catch {
+    initialised = false;
+  }
+  if (initialised) {
+    console.log("  ledger already initialised — skipping `new`.");
+  } else {
+    console.log(`→ Seeding (seed ${seedN}, ${seed.length} accounts, operator ${operatorId}) …`);
+    await withRetry("seed", () =>
+      contractAccount.functionCall({
+        contractId,
+        methodName: "new",
+        args: { operator: operatorId, seed },
+        gas: 100_000_000_000_000n as unknown as bigint,
+        attachedDeposit: 0n as unknown as bigint,
+      }),
+    );
+  }
 
   const supply = await operator.viewFunction({ contractId, methodName: "total_supply", args: {} });
   const audited = await operator.viewFunction({ contractId, methodName: "audit_total", args: {} });
