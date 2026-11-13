@@ -33,6 +33,6 @@ test("hosting a room requires signing in first", async ({ page }) => {
   test.setTimeout(45_000);
   await page.goto("/hub");
   // Signed out: the host button sends us to sign-in rather than a room.
-  await page.getByRole("button", { name: "Create room" }).click();
+  await page.getByRole("button", { name: "Live room" }).click();
   await expect(page).toHaveURL(/\/signin$/);
 });

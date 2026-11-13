@@ -27,5 +27,5 @@ test("the decision card is wired into rooms too (same component)", async ({ page
   // A lightweight check that the room screen imports and renders without error;
   // the decision data flows over the socket (covered by server behaviour).
   await page.goto("/hub");
-  await expect(page.getByRole("button", { name: "Create room" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Live room" })).toBeVisible();
 });
