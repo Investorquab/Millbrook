@@ -13,6 +13,7 @@ import { RoomManager, type Room } from "./rooms.js";
 import { ROOM_DAY_MS, type ClientToServer, type GameAction, type ServerToClient } from "./protocol.js";
 import { AuthStore, magicLinkEmail, type EmailSender } from "./auth.js";
 import { SettlementService } from "./settlement-service.js";
+import { writeGazetteWithAi, type AiConfig } from "./gazette-ai.js";
 
 export interface GameServer {
   http: ReturnType<typeof createHttp>;
@@ -35,6 +36,8 @@ export interface GameServerOptions {
   isProd?: boolean;
   /** Live on-chain settlement (Step 3.5); a disabled no-op one is used if omitted. */
   settlement?: SettlementService;
+  /** NEAR AI config for the Gazette (Step 3.4); omitted → template only. */
+  ai?: AiConfig | null;
 }
 
 export function createGameServer(opts: GameServerOptions = {}): GameServer {
@@ -44,6 +47,7 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
   const email = opts.email;
   const isProd = opts.isProd ?? false;
   const settlement = opts.settlement ?? new SettlementService(null);
+  const ai = opts.ai ?? null;
   const playing = new Set<string>();
 
   const CORS = {
@@ -142,6 +146,32 @@ export function createGameServer(opts: GameServerOptions = {}): GameServer {
       const session = auth.session(token);
       if (!session) return sendJson(res, 401, { error: "Not signed in." });
       sendJson(res, 200, { username: session.username, email: session.email });
+      return;
+    }
+
+    // ── Gazette prose by NEAR AI (Step 3.4) ──────────────────────────────────
+    // Rewrites the week's REAL events into a lead story; the client keeps its
+    // deterministic template whenever this isn't available (no key, a 402 for an
+    // unfunded budget, or any error) — so the Gazette works with or without AI.
+    if (req.method === "POST" && url === "/gazette") {
+      void (async () => {
+        if (!ai) return sendJson(res, 200, { source: "template" });
+        const body = (await readBody(req)) as { week?: number; printDay?: number; events?: unknown } | null;
+        const events = Array.isArray(body?.events)
+          ? body!.events.filter((e): e is string => typeof e === "string").slice(0, 20)
+          : [];
+        try {
+          const result = await writeGazetteWithAi(ai, {
+            week: Number(body?.week) || 1,
+            printDay: Number(body?.printDay) || 1,
+            events,
+          });
+          sendJson(res, 200, result);
+        } catch (e) {
+          console.warn(`[gazette] AI write failed (${(e as Error).message}); client keeps the template.`);
+          sendJson(res, 200, { source: "template" });
+        }
+      })();
       return;
     }
 

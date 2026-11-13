@@ -1,13 +1,21 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSolo } from "../game/SoloProvider";
+import { apiUrl } from "../game/serverUrl";
 import "./Gazette.css";
 
 /**
- * The Millbrook Gazette — ported from `design/screenshots/Gazette.png`. This is
- * the deterministic template edition: every line is built from the week's real
- * feed events and the live price history (`session.gazette()`), nothing invented.
- * The NEAR-AI-written edition arrives in M5; until then the page says so.
+ * The Millbrook Gazette — ported from `design/screenshots/Gazette.png`. Every
+ * line is built from the week's real feed events and the live price history
+ * (`session.gazette()`), nothing invented. When a server with a NEAR AI key is
+ * reachable it rewrites the lead story from the same real events (Step 3.4);
+ * otherwise the deterministic template edition is shown.
  */
+
+interface AiLead {
+  heading: string;
+  paragraphs: string[];
+}
 
 const OWNER_KEYS = ["gus", "fern", "sam", "rita"] as const;
 
@@ -29,7 +37,32 @@ function leadFigure(paragraphs: string[]): { src: string; name: string } | null 
 export function Gazette() {
   const { session } = useSolo();
   const g = session.gazette();
-  const figure = leadFigure(g.lead.paragraphs);
+
+  // Ask a server (the full deploy) to rewrite the lead from this week's real
+  // events with NEAR AI. On the static solo deploy, or without a funded key,
+  // the fetch returns "template" (or fails) and we keep the template edition.
+  const [aiLead, setAiLead] = useState<AiLead | null>(null);
+  useEffect(() => {
+    let alive = true;
+    setAiLead(null);
+    fetch(apiUrl("/gazette"), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ week: g.week, printDay: g.day, events: g.facts }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { source?: string; lead?: AiLead } | null) => {
+        if (alive && j?.source === "near-ai" && j.lead) setAiLead(j.lead);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+    // Facts are fixed by the week; join to a stable dep (arrays change identity).
+  }, [g.week, g.day, g.facts.join("\u0001")]);
+
+  const lead = aiLead ?? g.lead;
+  const figure = leadFigure(lead.paragraphs);
 
   return (
     <div className="gz">
@@ -45,8 +78,9 @@ export function Gazette() {
           Back to town
         </Link>
         <span className="gz__rail-note">
-          Written each game week from what really happened in your town. This is the template edition; the
-          NEAR-AI-written Gazette arrives in M5.
+          {aiLead
+            ? "Written by NEAR AI from this week's real events — the model reports only what happened, invents nothing."
+            : "Written each game week from what really happened in your town. Template edition (NEAR AI writes it when the server has a key)."}
         </span>
       </div>
 
@@ -58,11 +92,11 @@ export function Gazette() {
 
         <div className="gz__columns">
           <div className="gz__main">
-            <h2 className="gz__lead-head">{g.lead.heading}</h2>
+            <h2 className="gz__lead-head">{lead.heading}</h2>
             <div className="gz__lead-body">
               {figure && <img src={figure.src} alt={figure.name} className="gz__figure" />}
               <div className="gz__lead-text">
-                {g.lead.paragraphs.map((p, i) => (
+                {lead.paragraphs.map((p, i) => (
                   <p key={i}>{p}</p>
                 ))}
               </div>

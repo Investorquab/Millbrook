@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { createGameServer, type GameServerOptions } from "./server.js";
 import { AuthStore, makeEmailSender, pickEmailProvider } from "./auth.js";
 import { SettlementService, nearConfigFromEnv } from "./settlement-service.js";
+import { aiConfigFromEnv } from "./gazette-ai.js";
 
 const PORT = Number(process.env.PORT ?? 8080);
 const isProd = process.env.NODE_ENV === "production";
@@ -60,6 +61,15 @@ console.log(
   settlement.enabled
     ? "On-chain settlement: ON — the first live room settles to the contract as it plays."
     : "On-chain settlement: off (set SETTLE_ONCHAIN=1 with NEAR operator creds to enable).",
+);
+
+// The Gazette is written by NEAR AI when a key is configured, else the template.
+const ai = aiConfigFromEnv(readRepoEnv());
+opts.ai = ai;
+console.log(
+  ai
+    ? `Gazette: NEAR AI (${ai.model}) with the template as fallback.`
+    : "Gazette: template only (set NEAR_AI_API_KEY to let NEAR AI write it).",
 );
 
 const server = createGameServer(opts);

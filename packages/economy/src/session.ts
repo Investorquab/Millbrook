@@ -302,6 +302,8 @@ export interface Gazette {
   prices: GazettePriceRow[];
   comingsAndGoings: string[];
   notice: string;
+  /** The week's real feed lines — the only facts a NEAR-AI edition may use. */
+  facts: string[];
 }
 
 /** A daily snapshot of the four finished-good prices + wheat, for the Gazette. */
@@ -1478,6 +1480,7 @@ export class SoloSession {
       prices,
       comingsAndGoings,
       notice,
+      facts: inWeek.map((e) => e.text),
     };
   }
 }

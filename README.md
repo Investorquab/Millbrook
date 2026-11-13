@@ -130,6 +130,16 @@ tooltips explain every number.
   reading real moves from the season's ledger; "trace another coin" picks a new path.
   (On the static demo these are the deterministic sim's moves, which the server nets
   into the day's on-chain settlement; per-transaction explorer links are roadmap.)
+- **Live on-chain settlement.** On the full (server) deploy, one live room settles
+  itself to the contract as it plays: each game day the server posts that room's
+  net, conserving transfers to `millbrook.testnet` with the operator key, so the
+  audited total stays exactly 10,000 and the settlement count climbs. The Proof
+  screen lists the most recent settlements with testnet explorer links. (Opt-in via
+  `SETTLE_ONCHAIN=1`; the contract holds one town's 10,000, so one room settles at a
+  time. Verified live: real settlements #4–#6 posted, total held at 10,000.)
+- **The Gazette** is written each game week from the town's real events. On the full
+  deploy, if a NEAR AI key is configured the model rewrites the lead story from those
+  same events (inventing nothing); otherwise the deterministic template edition shows.
 
 ### The chain (`contracts/millbrook`) — **live on testnet**
 A Rust (near-sdk) economy ledger. A pure `millbrook-ledger` core holds the invariant
@@ -265,7 +275,6 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full picture,
 - Deeper moderation tools; trade offers as timed decision cards with a default answer
 - Postgres persistence so a server restart loses nothing
 - The Foreman as an on-chain NEAR account (function-call key) with AI-written notes
-- The Gazette written live by NEAR AI; real NEAR AI + OutLayer keys in the enclave
 - The Carpenter and finished house parts (housing supply has rent today, no builder yet)
 - Deploy to a VPS behind a domain (HTTPS via Caddy) with a demo room to join
 
