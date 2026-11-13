@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { TOTAL_COINS } from "@millbrook/shared";
+import { TOTAL_COINS, TOWN_HALL_ID } from "@millbrook/shared";
 import { SoloSession } from "./session.js";
-import { repayLoan } from "./loans.js";
+import { repayLoan, callInLoans } from "./loans.js";
 import type { Decision } from "./types.js";
 
 function session(seed = 42) {
@@ -77,6 +77,24 @@ describe("decision cards", () => {
     const before = s.world.workshops.get(ws)!.wage;
     s.decide(demand!.id, "accept");
     expect(s.world.workshops.get(ws)!.wage).toBeGreaterThan(before);
+  });
+
+  it("the bank panic (callInLoans) calls loans in, conserving the total", () => {
+    const s = session();
+    const ws = s.playerWorkshopId;
+    // Take a loan so there's something to call in.
+    s.world.decisions.push(card(ws, { id: "loan1", kind: "loan", defaultOptionId: "decline", data: { amount: 100 } }));
+    s.decide("loan1", "accept");
+    expect(s.world.loans.get(ws)).toBe(100);
+    const hallBefore = s.world.ledger.get(TOWN_HALL_ID);
+    const total = s.world.ledger.total();
+
+    callInLoans(s.world);
+
+    expect(s.world.loans.has(ws)).toBe(false); // the loan is settled/written off
+    expect(s.world.ledger.get(TOWN_HALL_ID)).toBeGreaterThan(hallBefore); // repaid to the Hall
+    expect(s.world.ledger.total()).toBe(total); // coins never left town
+    s.world.ledger.assertInvariant(TOTAL_COINS);
   });
 
   it("the 10,000-coin total holds all season with decisions and loans on", () => {

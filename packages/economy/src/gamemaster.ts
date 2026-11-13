@@ -27,11 +27,13 @@ import {
 import type { Rng } from "./rng.js";
 import { townAverageWage, unemploymentRate } from "./rules.js";
 import { formUnion, lowestPaidShop } from "./unions.js";
+import { callInLoans } from "./loans.js";
 import type { ActiveGmEvent, FiredGmEvent, WeatherReading, World } from "./types.js";
 
 /** The events the Game Master actually runs in solo mode. `bank_panic` (needs
- *  loans) stays in the catalog but is not yet wired, so the GM never picks it
- *  here; `union_forms` is wired below and fires only when wages run low. */
+ *  loans, and an outstanding one to call in) and `union_forms` (needs wages to
+ *  run low) are gated in `eligibleEvents` below, so each only fires when its
+ *  feature is on and its situation applies. */
 const SOLO_EVENT_IDS = new Set([
   "drought",
   "bumper_harvest",
@@ -45,6 +47,7 @@ const SOLO_EVENT_IDS = new Set([
   "migration_wave",
   "epidemic",
   "union_forms",
+  "bank_panic",
 ]);
 
 /** Metrics the Game Master reads, and surfaces on the "Why did this happen?" card. */
@@ -140,6 +143,8 @@ function eligibleEvents(world: World, m: GmMetrics, weather: WeatherReading): Ga
       world.day >= e.minPhaseDay &&
       // `union_forms` only makes sense when collective bargaining is switched on.
       (e.id !== "union_forms" || world.config.unions === true) &&
+      // `bank_panic` needs the bank on and an outstanding loan to call in.
+      (e.id !== "bank_panic" || (world.config.loans === true && world.loans.size > 0)) &&
       triggerActive(e.trigger, m, weather),
   );
 }
@@ -295,6 +300,19 @@ function buildChosen(world: World, def: GameMasterEvent, m: GmMetrics, weather: 
           const target = lowestPaidShop(w);
           if (target) formUnion(w, target);
           return { organised: target ?? "none" };
+        },
+      };
+    }
+    case "bank_panic": {
+      const owed = [...world.loans.values()].reduce((s, n) => s + n, 0);
+      return {
+        def, source: weather.source,
+        active: base(1, {}),
+        reason: `A bank panic grips Millbrook: the Town Hall calls in ${world.loans.size} outstanding loan(s) early — shops repay what they can from their tills.`,
+        data: data({ loansOutstanding: world.loans.size, owed }),
+        oneTime: (w) => {
+          callInLoans(w);
+          return { loansCalledIn: owed };
         },
       };
     }
