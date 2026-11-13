@@ -130,7 +130,7 @@ A **two-crate** design: a pure `millbrook-ledger` core holds the invariant logic
 - **No privileged power.** **No mint, no burn, no owner, no upgrade, no migrate, no pause.** The operator's *only* ability is conservation-preserving settlement; an overdraw is refused.
 - **Goods are [NEP-245](https://nomicon.io/Standards/Tokens/MultiToken/Core) multi tokens.** One contract holds every item type; each good is a `token_id` with per-account balances. Full standard surface — `mt_transfer`/`mt_batch_transfer`, `mt_balance_of`/`mt_batch_balance_of`, `mt_supply`, `mt_token(s)`, `mt_tokens_for_owner`, `mt_metadata` — emitting `mt_mint`/`mt_burn`/`mt_transfer` events. Goods never touch the coin total.
 - **Auditable moves.** Every coin move emits a **[NEP-297](https://nomicon.io/Standards/EventsFormat)** `EVENT_JSON`, so *Follow a coin* needs no indexer; Game Master decisions anchor a `gm_receipt` the same way.
-- **Verified live:** seeded + audited at 10,000, real settlements posted, and the NEP-245 interface exercised on-chain (mint → standard views → a 1-yocto `mt_transfer`).
+- **Verified live (click to check):** seeded + audited at **10,000**, a NEP-245 [`mt_transfer`](https://testnet.nearblocks.io/txns/AknkLqD1Tu26tXisZuoMkPVEcujveem1HuocrvEah4jh) (mint → standard views → a 1-yocto transfer), and a Game Master [`gm_receipt`](https://testnet.nearblocks.io/txns/83D4zUaYecfY5t7YBz1AitqYmyCbNwSrbce3QDjRhoJb) anchored on NEAR. `settle-season` posts real daily `settle` events to it, each re-auditing to exactly 10,000.
 
 ### NEAR tools & standards we used
 - **NEAR testnet** — the ledger contract `game.millbrook.testnet`, operated by `millbrook.testnet`, deployed and settled against live chain state.
